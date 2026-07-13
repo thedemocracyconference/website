@@ -1,0 +1,101 @@
+/* Sticky header + scroll-spy underline, layered on top of the Framer export */
+.framer-1kfysrm-container,
+.framer-1kfysrm-container nav {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 999 !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.framer-1kfysrm-container a.framer-YmthU {
+  border-bottom: 2px solid transparent;
+  padding-bottom: 4px;
+  transition: border-color 0.2s ease;
+}
+
+.framer-1kfysrm-container a.framer-YmthU.demcon-nav-active {
+  border-bottom-color: #ff0074;
+}
+
+.framer-1kfysrm-container,
+.framer-1kfysrm-container .framer-8gkjzd,
+.framer-1kfysrm-container nav,
+.framer-1kfysrm-container .framer-text,
+.framer-1kfysrm-container img,
+.framer-1kfysrm-container svg,
+.framer-1kfysrm-container [data-border='true']::after {
+  transition: background-color 0.25s ease, color 0.25s ease, filter 0.25s ease, border-color 0.25s ease;
+}
+
+/* Solid brand-color fill that snaps to whatever section is behind the header. */
+.framer-1kfysrm-container.demcon-nav-yellow,
+.framer-1kfysrm-container.demcon-nav-yellow .framer-8gkjzd,
+.framer-1kfysrm-container.demcon-nav-yellow nav {
+  background-color: #fff500 !important;
+  backdrop-filter: none !important;
+}
+
+.framer-1kfysrm-container.demcon-nav-white,
+.framer-1kfysrm-container.demcon-nav-white .framer-8gkjzd,
+.framer-1kfysrm-container.demcon-nav-white nav {
+  background-color: #faf9f5 !important;
+  backdrop-filter: none !important;
+}
+
+.framer-1kfysrm-container.demcon-nav-black,
+.framer-1kfysrm-container.demcon-nav-black .framer-8gkjzd,
+.framer-1kfysrm-container.demcon-nav-black nav {
+  background-color: #030509 !important;
+  backdrop-filter: none !important;
+}
+
+.framer-1kfysrm-container.demcon-nav-yellow,
+.framer-1kfysrm-container.demcon-nav-white {
+  --border-color: #000;
+}
+
+.framer-1kfysrm-container.demcon-nav-yellow .framer-text,
+.framer-1kfysrm-container.demcon-nav-white .framer-text {
+  color: #000 !important;
+}
+
+.framer-1kfysrm-container.demcon-nav-black {
+  --border-color: #fff;
+}
+
+.framer-1kfysrm-container.demcon-nav-black .framer-text {
+  color: #fff !important;
+}
+
+.framer-1kfysrm-container.demcon-nav-black img,
+.framer-1kfysrm-container.demcon-nav-black svg {
+  filter: brightness(0) invert(1) !important;
+}
+
+.demcon-hover-grow {
+  transition: transform 0.2s ease;
+}
+
+.demcon-hover-grow:hover {
+  transform: scale(1.06);
+  cursor: none;
+}
+
+.demcon-custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  will-change: transform;
+}
+
+.demcon-custom-cursor.demcon-custom-cursor-visible {
+  opacity: 1;
+}
