@@ -1,0 +1,64 @@
+[
+  {
+    "url": "https://fresh-connection-882713--waxy-ridge-erwehiheh.framer.app/contact",
+    "score": 78,
+    "issues": [
+      {
+        "type": "warning",
+        "message": "Meta description too long (249 chars). May be truncated."
+      },
+      {
+        "type": "error",
+        "message": "Missing <h1> heading"
+      },
+      {
+        "type": "warning",
+        "message": "5 image(s) missing alt text"
+      }
+    ],
+    "passed": [
+      "Title tag is properly configured",
+      "Canonical URL is set",
+      "Open Graph meta tags present",
+      "Viewport meta tag present",
+      "Language attribute set"
+    ],
+    "meta": {
+      "title": "DemCon 2027 | A Global Left Summit",
+      "description": "February 02–04, 2027 in Brussels, Belgium • DemCon is a gathering for progressive voices who believe democracy is worth fighting for. Together, we're mapping the future, sharing strategies, and building the alliances needed to shape what comes next.",
+      "canonical": "https://fresh-connection-882713.framer.app/contact",
+      "ogImage": "https://framerusercontent.com/images/WHrCIWNxtHtUKIvg3kfESw1VGY.png"
+    }
+  },
+  {
+    "url": "https://fresh-connection-882713--waxy-ridge-erwehiheh.framer.app/",
+    "score": 83,
+    "issues": [
+      {
+        "type": "warning",
+        "message": "Meta description too long (249 chars). May be truncated."
+      },
+      {
+        "type": "warning",
+        "message": "Multiple <h1> tags found (6). Best practice is to have only one."
+      },
+      {
+        "type": "warning",
+        "message": "18 image(s) missing alt text"
+      }
+    ],
+    "passed": [
+      "Title tag is properly configured",
+      "Canonical URL is set",
+      "Open Graph meta tags present",
+      "Viewport meta tag present",
+      "Language attribute set"
+    ],
+    "meta": {
+      "title": "DemCon 2027 | A Global Left Summit",
+      "description": "February 02–04, 2027 in Brussels, Belgium • DemCon is a gathering for progressive voices who believe democracy is worth fighting for. Together, we're mapping the future, sharing strategies, and building the alliances needed to shape what comes next.",
+      "canonical": "https://fresh-connection-882713.framer.app/",
+      "ogImage": "https://framerusercontent.com/images/WHrCIWNxtHtUKIvg3kfESw1VGY.png"
+    }
+  }
+]
