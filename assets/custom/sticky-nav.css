@@ -1,3 +1,9 @@
+/* Speaker lineup isn't announced yet -- hidden until it's ready. Content and
+   markup are left in place so this is a one-line revert once it's ready. */
+#speakers {
+  display: none !important;
+}
+
 /* Sticky header + scroll-spy underline, layered on top of the Framer export */
 .framer-1kfysrm-container,
 .framer-1kfysrm-container nav {
@@ -11,14 +17,19 @@
   visibility: visible !important;
 }
 
+/* The nav links have their own native onMouseEnter/data-highlight hover
+   behavior (from Framer's built-in current-hash highlighting), which
+   otherwise fights with our scroll-driven underline over the same visual
+   real estate on hover/mouse-leave. Force ours to win unconditionally. */
 .framer-1kfysrm-container a.framer-YmthU {
-  border-bottom: 2px solid transparent;
+  border-bottom: 2px solid transparent !important;
   padding-bottom: 4px;
+  text-decoration: none !important;
   transition: border-color 0.2s ease;
 }
 
 .framer-1kfysrm-container a.framer-YmthU.demcon-nav-active {
-  border-bottom-color: #ff0074;
+  border-bottom-color: #ff0074 !important;
 }
 
 .framer-1kfysrm-container,
@@ -98,4 +109,33 @@
 
 .demcon-custom-cursor.demcon-custom-cursor-visible {
   opacity: 1;
+}
+
+.demcon-read-more {
+  display: block;
+  width: fit-content;
+  margin: 12px 0 0;
+  font-family: 'League Spartan', 'League Spartan Placeholder', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 120%;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #030509;
+  text-decoration: underline;
+  text-decoration-color: #030509;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.demcon-newsletter-note {
+  margin: 0 0 32px;
+  max-width: 260px;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 14px;
+  line-height: 1.5em;
+  letter-spacing: -0.01em;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.7);
 }

@@ -1,6 +1,6 @@
 (function () {
   var HEADER_SELECTOR = '.framer-1kfysrm-container';
-  var SECTION_IDS = ['about', 'salons', 'agenda', 'speakers'];
+  var SECTION_IDS = ['about', 'salons', 'agenda', 'participate'];
 
   // Framer's own modal/overlay (triggered by the Register button) is a
   // fixed, dark-backdrop element carrying one of these variant classes
@@ -18,6 +18,32 @@
 
   function isModalOpen() {
     return !!document.querySelector(MODAL_SELECTOR);
+  }
+
+  // The "Join Us" overlay's whole markup (heading, fields, button) is
+  // generated entirely by React at runtime -- it never appears in the
+  // static HTML, so there's nothing to edit there. Insert a clarifying
+  // newsletter note into the empty space in the dark left panel, right
+  // after the "DEMCON 2027" heading (framer-l5ua6f/cohij2 are that
+  // heading's desktop/mobile wrapper classes, found by reading the
+  // component source in script_main.mjs).
+  function setupNewsletterNote() {
+    var NOTE_TEXT =
+      "By signing up for our newsletter you’ll be the first to know when ticket sales and the speaker lineup go live.";
+
+    function inject() {
+      if (!isModalOpen()) return;
+      if (document.querySelector('.demcon-newsletter-note')) return;
+      var target = document.querySelector('.framer-l5ua6f, .framer-cohij2');
+      if (!target) return;
+      var note = document.createElement('p');
+      note.className = 'demcon-newsletter-note';
+      note.textContent = NOTE_TEXT;
+      target.insertAdjacentElement('afterend', note);
+    }
+
+    inject();
+    new MutationObserver(inject).observe(document.body, { childList: true, subtree: true });
   }
 
   function pinHeader(header, nav) {
@@ -134,10 +160,7 @@
     // Card grids mix light/dark photos or cards over one solid section
     // background; forcing the section's actual background color avoids the
     // navbar flickering as it passes over individual cards.
-    var FORCED_SECTIONS = [
-      { selector: '#speakers', bucket: 'yellow' },
-      { selector: '[data-framer-name="Participation"]', bucket: 'black' }
-    ];
+    var FORCED_SECTIONS = [{ selector: '[data-framer-name="Participation"]', bucket: 'black' }];
 
     function forcedBucket(y) {
       for (var i = 0; i < FORCED_SECTIONS.length; i++) {
@@ -230,6 +253,50 @@
     new MutationObserver(enforce).observe(header, { childList: true, subtree: true });
   }
 
+  // Same hydration issue as the nav order: force the Navbar Button's label
+  // to "JOIN US" and keep re-asserting it if Framer resets it to "REGISTER".
+  function keepJoinUsLabel(header) {
+    function enforce() {
+      var button = header.querySelector('[data-framer-name="Navbar Button"]');
+      if (!button) return;
+      var label = button.querySelector('p');
+      if (label && label.textContent.trim() === 'REGISTER') {
+        label.textContent = 'JOIN US';
+      }
+    }
+    enforce();
+    new MutationObserver(enforce).observe(header, { childList: true, subtree: true, characterData: true });
+  }
+
+  // Same hydration issue again: the Speakers link was swapped for a
+  // Participate link (pointing at the Participation section instead, since
+  // the speaker lineup isn't public yet) -- keep re-asserting both the
+  // label and the href if Framer resets them.
+  function keepParticipateLabel(header) {
+    function enforce() {
+      var links = header.querySelectorAll('a.framer-YmthU');
+      for (var i = 0; i < links.length; i++) {
+        var href = links[i].getAttribute('href') || '';
+        var label = links[i].querySelector('p');
+        if (!label) continue;
+        if (href.indexOf('#speakers') !== -1) {
+          links[i].setAttribute('href', href.replace('#speakers', '#participate'));
+        }
+        if (label.textContent.trim() === 'SPEAKERS') {
+          label.textContent = 'PARTICIPATE';
+        }
+      }
+    }
+    enforce();
+    new MutationObserver(enforce).observe(header, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['href']
+    });
+  }
+
   function init() {
     var header = document.querySelector(HEADER_SELECTOR);
     if (!header) return;
@@ -245,62 +312,106 @@
     pinHeader(header, nav);
     watchHeaderContrast(header, getHeaderHeight);
     keepSalonsBeforeAbout(header);
+    keepJoinUsLabel(header);
+    keepParticipateLabel(header);
 
-    var links = Array.prototype.slice.call(header.querySelectorAll('a.framer-YmthU'));
-    var linksByHash = {};
-    links.forEach(function (link) {
+    // Links are looked up fresh every time, by hash, rather than cached once
+    // at init(). Hydration-triggered fixes elsewhere (Participate's label,
+    // for instance) can cause React to replace a link's DOM node entirely;
+    // a cached reference would then point at a detached, invisible node,
+    // silently breaking both its click-to-scroll and its active underline.
+    function linkHash(link) {
       var href = link.getAttribute('href');
-      if (!href) return;
-      var url;
+      if (!href) return null;
       try {
-        url = new URL(href, window.location.href);
+        return new URL(href, window.location.href).hash.replace('#', '');
       } catch (e) {
-        return;
+        return null;
       }
-      var hash = url.hash.replace('#', '');
-      if (!hash) return;
-      if (!linksByHash[hash]) linksByHash[hash] = [];
-      linksByHash[hash].push(link);
-    });
+    }
+
+    function currentLinks() {
+      return Array.prototype.slice.call(header.querySelectorAll('a.framer-YmthU'));
+    }
 
     // Cross-page links (e.g. Contact) get a permanent underline when they point at the current page.
-    links.forEach(function (link) {
+    currentLinks().forEach(function (link) {
       if (link.hasAttribute('data-framer-page-link-current')) {
         link.classList.add('demcon-nav-active');
       }
     });
 
+    // "participate" has no real id in the DOM -- a hand-added id attribute
+    // doesn't survive hydration the way Framer's own authored about/salons/
+    // agenda ids do, so it's looked up the same way FORCED_SECTIONS finds
+    // it: by its stable data-framer-name.
+    var SECTION_SELECTOR_OVERRIDES = { participate: '[data-framer-name="Participation"]' };
+
+    function findSectionEl(id) {
+      var selector = SECTION_SELECTOR_OVERRIDES[id];
+      return selector ? document.querySelector(selector) : document.getElementById(id);
+    }
+
     var sections = [];
     SECTION_IDS.forEach(function (id) {
-      var el = document.getElementById(id);
-      var sectionLinks = linksByHash[id];
-      if (!el || !sectionLinks) return;
-      sections.push({ id: id, el: el, links: sectionLinks });
-
-      sectionLinks.forEach(function (link) {
-        link.addEventListener('click', function (e) {
-          e.preventDefault();
-          var top = el.getBoundingClientRect().top + window.pageYOffset - getHeaderHeight() - 8;
-          window.scrollTo({ top: top, behavior: 'smooth' });
-          if (history.pushState) history.pushState(null, '', '#' + id);
-        });
-      });
+      var el = findSectionEl(id);
+      if (!el) return;
+      sections.push({ id: id, el: el });
     });
 
     if (!sections.length) return;
 
-    function setActive(id) {
-      sections.forEach(function (s) {
-        s.links.forEach(function (link) {
-          link.classList.toggle('demcon-nav-active', s.id === id);
-        });
+    var sectionsById = {};
+    sections.forEach(function (s) {
+      sectionsById[s.id] = s;
+    });
+
+    // The active id is kept here and continuously re-applied (on scroll,
+    // after clicks, and whenever the nav's DOM changes) rather than set
+    // once per scroll event. Framer's native per-link hover behavior swaps
+    // in a different DOM node on hover/mouse-leave (its own onMouseEnter
+    // handler + data-highlight system), which would otherwise silently
+    // carry away our class and never restore it.
+    var currentActiveId = null;
+
+    function applyActiveState() {
+      currentLinks().forEach(function (link) {
+        link.classList.toggle('demcon-nav-active', currentActiveId !== null && linkHash(link) === currentActiveId);
       });
     }
+
+    function setActive(id) {
+      currentActiveId = id;
+      applyActiveState();
+    }
+
+    new MutationObserver(applyActiveState).observe(header, { childList: true, subtree: true });
+
+    // Event delegation: one listener on the header handles clicks on
+    // whichever link element currently exists for each hash, so a node
+    // swap never leaves a stale handler bound to a detached element.
+    header.addEventListener('click', function (e) {
+      var link = e.target.closest && e.target.closest('a.framer-YmthU');
+      if (!link) return;
+      var id = linkHash(link);
+      var s = id && sectionsById[id];
+      if (!s) return;
+      e.preventDefault();
+      setActive(id);
+      var top = s.el.getBoundingClientRect().top + window.pageYOffset - getHeaderHeight() - 8;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+      if (history.pushState) history.pushState(null, '', '#' + id);
+    });
 
     var observer = new IntersectionObserver(
       function (entries) {
         entries.forEach(function (entry) {
-          if (entry.isIntersecting) setActive(entry.target.id);
+          if (entry.isIntersecting) {
+            var match = sections.filter(function (s) {
+              return s.el === entry.target;
+            })[0];
+            if (match) setActive(match.id);
+          }
         });
       },
       { rootMargin: '-' + Math.round(getHeaderHeight() + 8) + 'px 0px -60% 0px', threshold: 0 }
@@ -309,6 +420,58 @@
     sections.forEach(function (s) {
       observer.observe(s.el);
     });
+  }
+
+  // Add a "Read more" link under the About paragraph, scrolling down to the
+  // movement gallery that already sits right below it. Plain DOM insertion
+  // (not a Framer component), so it's naturally responsive on mobile/desktop.
+  function addReadMoreLink() {
+    var paragraphs = document.querySelectorAll('.framer-fobxvj p');
+    var target = null;
+    for (var i = 0; i < paragraphs.length; i++) {
+      if (paragraphs[i].textContent.indexOf('DemCon brings together') !== -1) {
+        target = paragraphs[i];
+        break;
+      }
+    }
+    if (!target) return;
+
+    // React hydration restores this paragraph's original text from
+    // Framer's own component data, wiping a static-HTML edit. Append the
+    // Brussels sentence here at runtime instead, same as the nav-order fix,
+    // and keep re-asserting it via MutationObserver in case hydration
+    // touches this text again later.
+    var brusselsNote = ' Held in Brussels, the capital of the EU.';
+    function ensureBrusselsNote() {
+      if (target.textContent.indexOf('Brussels, the capital of the EU') === -1) {
+        target.appendChild(document.createTextNode(brusselsNote));
+      }
+    }
+    ensureBrusselsNote();
+    new MutationObserver(ensureBrusselsNote).observe(target, { childList: true, characterData: true, subtree: true });
+
+    // .framer-fobxvj wraps the paragraph in a plain (non-flex) block, so
+    // appending inside it -- rather than as a sibling in the flex "Text"
+    // row above -- stacks it under the text instead of getting spread
+    // across the row by the parent's justify-content:space-between.
+    var wrapper = target.closest('.framer-fobxvj');
+    if (!wrapper || wrapper.querySelector('.demcon-read-more')) return;
+
+    var link = document.createElement('a');
+    link.href = '#';
+    link.className = 'demcon-read-more';
+    link.textContent = 'READ MORE';
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      var gallery = document.querySelector('[data-framer-name="Gallery"]');
+      if (!gallery) return;
+      var header = document.querySelector(HEADER_SELECTOR);
+      var headerHeight = header ? header.getBoundingClientRect().height : 0;
+      var top = gallery.getBoundingClientRect().top + window.pageYOffset - headerHeight - 24;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+    });
+
+    wrapper.appendChild(link);
   }
 
   // Grow real "buttons" (filled or bordered clickable elements) on hover.
@@ -353,13 +516,17 @@
 
   if (document.readyState === 'complete') {
     init();
+    addReadMoreLink();
     enhanceButtons();
     setupCustomCursor();
+    setupNewsletterNote();
   } else {
     window.addEventListener('load', function () {
       init();
+      addReadMoreLink();
       enhanceButtons();
       setupCustomCursor();
+      setupNewsletterNote();
     });
   }
 })();
