@@ -199,6 +199,37 @@
     check();
   }
 
+  // React hydration re-renders the nav from Framer's own (original-order)
+  // component tree shortly after first paint, clobbering our static HTML
+  // reorder of the About/Salons links. It replaces the actual DOM nodes
+  // (not just their position), so cached element references go stale --
+  // re-query fresh on every mutation, and observe a stable ancestor with
+  // subtree:true in case the whole "Menu List" wrapper gets replaced too.
+  function keepSalonsBeforeAbout(header) {
+    var enforcing = false;
+
+    function enforce() {
+      if (enforcing) return;
+      var aboutLink = header.querySelector('a[href*="#about"]');
+      var salonsLink = header.querySelector('a[href*="#salons"]');
+      if (!aboutLink || !salonsLink) return;
+      var aboutContainer = aboutLink.parentElement;
+      var salonsContainer = salonsLink.parentElement;
+      var parent = aboutContainer && aboutContainer.parentElement;
+      if (!parent || salonsContainer.parentElement !== parent) return;
+      if (aboutContainer.compareDocumentPosition(salonsContainer) & Node.DOCUMENT_POSITION_FOLLOWING) {
+        enforcing = true;
+        try {
+          parent.insertBefore(salonsContainer, aboutContainer);
+        } catch (e) {}
+        enforcing = false;
+      }
+    }
+
+    enforce();
+    new MutationObserver(enforce).observe(header, { childList: true, subtree: true });
+  }
+
   function init() {
     var header = document.querySelector(HEADER_SELECTOR);
     if (!header) return;
@@ -213,6 +244,7 @@
 
     pinHeader(header, nav);
     watchHeaderContrast(header, getHeaderHeight);
+    keepSalonsBeforeAbout(header);
 
     var links = Array.prototype.slice.call(header.querySelectorAll('a.framer-YmthU'));
     var linksByHash = {};
