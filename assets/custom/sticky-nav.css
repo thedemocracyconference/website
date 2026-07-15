@@ -17,6 +17,15 @@
   visibility: visible !important;
 }
 
+/* Hides the header while the Join Us modal is open. Needs the extra class
+   for specificity to win over the "visibility: visible !important" rule
+   directly above. */
+.framer-1kfysrm-container.demcon-header-hidden,
+.framer-1kfysrm-container.demcon-header-hidden nav {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* The nav links have their own native onMouseEnter/data-highlight hover
    behavior (from Framer's built-in current-hash highlighting), which
    otherwise fights with our scroll-driven underline over the same visual
@@ -26,10 +35,25 @@
   padding-bottom: 4px;
   text-decoration: none !important;
   transition: border-color 0.2s ease;
+  overflow: visible !important;
 }
 
 .framer-1kfysrm-container a.framer-YmthU.demcon-nav-active {
   border-bottom-color: #ff0074 !important;
+}
+
+/* Nav item labels pop up slightly on hover (transform, not font-size, so
+   growing one item never reflows/shifts its neighbors) and switch to the
+   same pink as the active-item underline, except the current section's
+   already-underlined item. */
+.framer-1kfysrm-container a.framer-YmthU p {
+  transition: transform 0.15s ease, color 0.15s ease;
+  transform: translateY(0) scale(1);
+}
+
+.framer-1kfysrm-container a.framer-YmthU:not(.demcon-nav-active):hover p.framer-text {
+  transform: translateY(-3px) scale(1.15) !important;
+  color: #ff0074 !important;
 }
 
 .framer-1kfysrm-container,
@@ -87,13 +111,59 @@
   filter: brightness(0) invert(1) !important;
 }
 
+/* `*` here (not just the tagged element) is what actually stops the native
+   pointer from flashing back: Framer bakes explicit `cursor: pointer` onto
+   arbitrary descendants (icons, number labels, nav links inside the header),
+   and an element's own explicit cursor always wins over one inherited from
+   an ancestor, so an ancestor-only rule leaves every such descendant
+   uncovered. !important is needed to beat those baked declarations
+   regardless of their own specificity. */
+.demcon-cursor-target:hover,
+.demcon-cursor-target:hover * {
+  cursor: none !important;
+}
+
 .demcon-hover-grow {
   transition: transform 0.2s ease;
 }
 
 .demcon-hover-grow:hover {
   transform: scale(1.06);
-  cursor: none;
+}
+
+/* Header "JOIN US" button: turns solid red on hover (excluded from the
+   generic .demcon-hover-grow box-scale above -- see enhanceButtons in
+   sticky-nav.js), with only its label growing slightly in place. */
+.framer-NoclU {
+  transition: background-color 0.2s ease-out;
+}
+
+.framer-NoclU:hover {
+  background-color: rgb(255, 0, 0) !important;
+}
+
+.framer-NoclU p {
+  transition: font-size 0.2s ease-out, color 0.2s ease-out;
+}
+
+.framer-NoclU:hover p.framer-text {
+  font-size: 18px !important;
+  color: #fff !important;
+}
+
+/* Hero email-capture "SUBSCRIBE" button: turns solid red on hover (excluded
+   from the generic .demcon-hover-grow box-scale -- see enhanceButtons in
+   sticky-nav.js), with only its label growing slightly in place. */
+.framer-qtbtE:hover {
+  background-color: rgb(255, 0, 0) !important;
+}
+
+.framer-qtbtE p {
+  transition: font-size 0.2s ease-out;
+}
+
+.framer-qtbtE:hover p.framer-text {
+  font-size: 18px !important;
 }
 
 .demcon-custom-cursor {
@@ -109,6 +179,14 @@
 
 .demcon-custom-cursor.demcon-custom-cursor-visible {
   opacity: 1;
+}
+
+/* Belt-and-suspenders alongside the JS-side check in setupCustomCursor:
+   force it invisible on touch devices regardless of any stray JS state. */
+@media (hover: none) {
+  .demcon-custom-cursor {
+    display: none !important;
+  }
 }
 
 .demcon-read-more {
@@ -138,4 +216,632 @@
   letter-spacing: -0.01em;
   text-align: left;
   color: rgba(255, 255, 255, 0.7);
+}
+
+/* Comic-book speech bubble shown on hover over the hero's Subscribe button. */
+.demcon-subscribe-bubble {
+  position: fixed;
+  z-index: 2147483000;
+  left: 0;
+  top: 0;
+  transform: translate(14px, -50%);
+  background: #fff;
+  border: 2.5px solid #030509;
+  border-radius: 16px;
+  padding: 10px 16px;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4em;
+  text-align: center;
+  color: #030509;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 3px 3px 0 #030509;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.demcon-subscribe-bubble::after,
+.demcon-subscribe-bubble::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  border-style: solid;
+}
+
+.demcon-subscribe-bubble::after {
+  left: -10px;
+  transform: translateY(-50%);
+  border-width: 8px 10px 8px 0;
+  border-color: transparent #030509 transparent transparent;
+}
+
+.demcon-subscribe-bubble::before {
+  left: -6.5px;
+  transform: translateY(-50%);
+  border-width: 6px 8px 6px 0;
+  border-color: transparent #fff transparent transparent;
+  z-index: 1;
+}
+
+.demcon-subscribe-bubble.demcon-subscribe-bubble-visible {
+  opacity: 1;
+  transform: translate(20px, -50%);
+}
+
+/* Hero "Pensive Woman in White Hood" fade-in-on-load, reproducing the real
+   spec from Framer's (now removed) appear-animation data: a pure opacity
+   fade, delay 1.5s, duration 1.3s. The baked SSR placeholder on this element
+   said translateY(40px), but that never matched its real per-element config
+   (x:0, y:0) -- intentionally not carried over here. sticky-nav.js flips the
+   inline opacity directly once loaded (its baked inline opacity:0 takes
+   precedence over any class-based rule, so only the transition lives here). */
+.framer-1mmgwc5 {
+  transition: opacity 1.3s ease-out 1.5s;
+}
+
+/* "SAME SHIT, DIFFERENT CENTURY" bubble -- originally an on-scroll rotate-in
+   (rotate 50deg -> 0deg, spring bounce), moved to fire on load alongside the
+   hero image above instead. A spring has no exact CSS equivalent; this
+   back-out cubic-bezier approximates the same slight overshoot. */
+.framer-1sl0blg {
+  transition: opacity 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 1.5s, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 1.5s;
+}
+
+/* Generic scroll-reveal fade-up for every other baked-hidden element on the
+   page (not just data-framer-appear-id ones -- see setupScrollReveal in
+   sticky-nav.js) is applied entirely via inline styles set right before
+   each element is revealed, so no shared selector-based rule is needed
+   here. */
+
+/* Text Ticker marquee -- setupMarquee() in sticky-nav.js duplicates the
+   track once (two identical, back-to-back copies of the repeating text),
+   so animating exactly halfway across loops seamlessly regardless of the
+   text's actual width. */
+.demcon-marquee-track {
+  animation: demcon-marquee 90s linear infinite;
+}
+
+@keyframes demcon-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Agenda list row hover highlight, cycling through 4 colors by row index
+   (see setupAgendaHover in sticky-nav.js, which tags each row with one of
+   these classes). Each row's title already carries "transition: all 0.15s
+   ease" baked into its inline style (Framer's own authored transition,
+   meant to animate exactly this), so plain :hover rules are enough -- no
+   JS needed for the animation itself. !important is required because the
+   same properties (background-color, padding) are also set inline for the
+   resting state, which otherwise always wins over a stylesheet rule. */
+.demcon-agenda-hue-0:hover,
+.demcon-agenda-hue-1:hover,
+.demcon-agenda-hue-2:hover,
+.demcon-agenda-hue-3:hover {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  font-size: 32px !important;
+}
+
+.demcon-agenda-hue-0:hover {
+  background-color: #aee9f5 !important;
+}
+
+.demcon-agenda-hue-1:hover {
+  background-color: #b3f5a3 !important;
+}
+
+.demcon-agenda-hue-2:hover {
+  background-color: #fff500 !important;
+}
+
+.demcon-agenda-hue-3:hover {
+  background-color: #ff99e5 !important;
+}
+
+/* Participate section CTA buttons ("Apply to Speak" / "Register to Attend"
+   / "Request Info") -- the small icon-wrapper square (already black by
+   default via Framer's own CSS) turns red while hovering anywhere on the
+   button. Framer originally drove this via a JS-toggled ".hover" class
+   rather than plain CSS :hover; a plain :hover selector reaches the same
+   element without needing to replicate that class-toggling. Exact color
+   (rgb(255, 0, 0), not a rounder-looking approximation) and the 45deg
+   rotation below are both pulled directly from the original compiled
+   bundle's "Default" button variant (still recoverable via git history --
+   see commit 6ea3780), which is what these plain CTA buttons use. */
+button:hover [data-framer-name="Icon Wrapper"] {
+  background-color: rgb(255, 0, 0) !important;
+}
+
+[data-framer-name="Icon Wrapper"] {
+  transition: background-color 0.2s ease-out;
+}
+
+/* The arrow points diagonally (up-right) at rest and rotates to point
+   straight right on hover. */
+button:hover [data-framer-name="Icon Wrapper"] svg {
+  transform: rotate(45deg) !important;
+}
+
+[data-framer-name="Icon Wrapper"] svg {
+  transition: transform 0.2s ease-out;
+}
+
+/* Text-swap-on-hover: the visible label slides right while a second copy
+   (fixed to match by setupCtaButtonHover in sticky-nav.js) slides in from
+   its off-screen resting position to replace it. Framer's own original CSS
+   drove this by toggling the "position" property itself (relative <->
+   absolute) between the two states -- but "position" can never be
+   animated by a CSS transition, in either direction, so that approach can
+   only ever snap instantly no matter what transition/duration is set on
+   it. Using transform: translateX() instead (leaving "position" alone at
+   all times) produces the same visual end state while actually being
+   transitionable. The exact slide distance (--cta-slide) is measured per
+   button in JS rather than a single guessed constant: .framer-1g31bsy
+   (position:absolute, fixed left:-200px) and .framer-12vo1jw
+   (position:relative, wherever this particular button's own padding and
+   text length puts it) sit relative to different things, so the real gap
+   between their resting spots varies by button -- a guessed constant
+   overshoots on some buttons and undershoots on others. */
+.framer-TkHaO .framer-1g31bsy,
+.framer-TkHaO .framer-12vo1jw {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+/* .framer-dk5ask (the shared clipping container both slide through) has
+   overflow:hidden, so without this a sliding text is fully opaque right up
+   until the instant it crosses the clip boundary, where it gets abruptly
+   chopped off mid-character rather than fading -- reads as the box itself
+   glitching/disappearing rather than a clean slide transition. Fading each
+   copy out as it leaves and in as it arrives means the clip boundary is
+   never crossed by fully-opaque text. !important is required: this
+   element's baked SSR inline style says opacity:1 (Framer's static export
+   default for a RichTextContainer, unaware that in this particular
+   component it's meant to start hidden), which otherwise beats a plain
+   stylesheet rule regardless of specificity. */
+.framer-TkHaO .framer-1g31bsy {
+  opacity: 0 !important;
+}
+
+.framer-TkHaO:hover .framer-1g31bsy,
+.framer-TkHaO:hover .framer-12vo1jw {
+  transform: translateX(var(--cta-slide, 200px)) !important;
+}
+
+.framer-TkHaO:hover .framer-1g31bsy {
+  opacity: 1 !important;
+}
+
+.framer-TkHaO:hover .framer-12vo1jw {
+  opacity: 0 !important;
+}
+
+/* The Text Wrapper's ::after pseudo-element (Framer's own generic
+   data-border="true" outline mechanism) is already present at rest -- this
+   isn't a border this conversion added or removed. What read as it
+   "expanding" on hover was the sliding text uncovering more of that
+   already-there edge as it moves out of the way, making a border that was
+   always the same size suddenly more noticeable. Pinning it to one fixed
+   value, unconditionally (never toggled by :hover), keeps it visually
+   identical in both states -- present, but never appearing to change. */
+.framer-TkHaO .framer-6fk6yc[data-border]::after {
+  border: 1px solid rgb(35, 31, 32) !important;
+}
+
+/* Join Us modal -- hand-built to replace Framer's React-only overlay, which
+   this session confirmed rendered underneath the sticky header. */
+.demcon-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.demcon-modal[hidden] {
+  display: none;
+}
+
+.demcon-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 5, 9, 0.7);
+}
+
+.demcon-modal-dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  max-width: 940px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border: 2.5px solid #030509;
+  border-radius: 16px;
+  box-shadow: 8px 8px 0 #030509;
+  background: #fff;
+}
+
+.demcon-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border: 2px solid #030509;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.demcon-modal-panel-dark,
+.demcon-modal-panel-light {
+  flex: 1 1 50%;
+  min-width: 0;
+  padding: 48px 36px;
+}
+
+.demcon-modal-panel-dark {
+  background: #030509;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.demcon-modal-mark {
+  margin: 0;
+  font-family: 'League Spartan', 'League Spartan Placeholder', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.demcon-modal-mark span {
+  display: block;
+  font-size: 40px;
+  color: #ff66ff;
+}
+
+.demcon-modal-note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6em;
+}
+
+.demcon-modal-when h6 {
+  margin: 0 0 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.demcon-modal-when p {
+  margin: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  line-height: 1.7em;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #fff500;
+}
+
+.demcon-modal-when p span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.demcon-modal-panel-light h2 {
+  margin: 0 0 28px;
+  font-family: 'RT Goodneighbor Script', 'RT Goodneighbor Script Placeholder', sans-serif;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.1em;
+  color: #030509;
+}
+
+.demcon-modal-panel-light h2 span {
+  font-family: 'Hidalgo Regular', 'Hidalgo Regular Placeholder', sans-serif;
+  font-size: 40px;
+  color: #00b3ff;
+  -webkit-text-stroke: 1px #030509;
+}
+
+.demcon-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.demcon-modal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #030509;
+}
+
+.demcon-modal-form label em {
+  font-style: normal;
+  font-weight: 400;
+  text-transform: none;
+  opacity: 0.5;
+}
+
+.demcon-modal-form input {
+  padding: 12px 14px;
+  border: 1.5px solid rgba(3, 5, 9, 0.3);
+  border-radius: 8px;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 15px;
+  color: #030509;
+}
+
+.demcon-modal-form input:focus {
+  outline: none;
+  border-color: #030509;
+}
+
+.demcon-modal-form button {
+  margin-top: 8px;
+  padding: 14px 20px;
+  border: 2px solid #030509;
+  border-radius: 999px;
+  background: #ff0074;
+  color: #fff;
+  font-family: 'League Spartan', 'League Spartan Placeholder', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+@media (max-width: 767.98px) {
+  .demcon-modal-dialog {
+    flex-direction: column;
+  }
+}
+
+/* Blinking cursor for the hero typewriter effect (sticky-nav.js's
+   setupTypewriter). Framer's own runtime drove this blink at runtime; no
+   equivalent keyframes existed in the static export's retained CSS. */
+.text-type__cursor {
+  animation: demcon-cursor-blink 1s step-end infinite;
+}
+
+@keyframes demcon-cursor-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Mobile support -- the static export only ever baked in the Desktop nav
+   variant (Framer's React runtime used to swap in a separate Mobile variant
+   client-side based on viewport, and hydration is gone), so the header and
+   several big display headings need their own hand-built responsive rules
+   here instead of relying on missing Framer breakpoint markup. */
+
+/* Hamburger button: hidden on desktop, shown only below the mobile
+   breakpoint (see the @media block further down). */
+.demcon-mobile-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border: 2px solid #030509;
+  border-radius: 50%;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.demcon-mobile-menu-toggle svg {
+  width: 22px;
+  height: 22px;
+}
+
+@media (max-width: 767.98px) {
+  /* Framer's own nav-content rule hardcodes a 1200px desktop width with no
+     mobile override (only the Desktop breakpoint variant was baked into
+     this static export), which pushes the logo and hamburger off-screen at
+     narrow widths since the row centers itself around that phantom width. */
+  .framer-1kfysrm-container .framer-k2S74.framer-1fjhuce {
+    width: 100% !important;
+  }
+
+  /* Same problem one level down: the logo's own flex:none wrapper is stuck
+     at a fixed 317px (sized to fit the desktop menu list that lived
+     alongside it), which is wider than most phones. Let it size to its
+     actual content (just the logo now that the menu list is hidden). */
+  .framer-1kfysrm-container .framer-fiv2ey,
+  .framer-1kfysrm-container .framer-qf0vfz {
+    width: auto !important;
+  }
+
+  /* The row centers its two children (logo group + button/hamburger group)
+     as a pair, which only looked right on desktop because the menu list
+     padded that pair out to the full row width. With the menu list hidden,
+     centering pulls both groups toward the middle and off-screen at each
+     edge -- push them to opposite ends instead. */
+  .framer-1kfysrm-container .framer-wyw1yc {
+    place-content: space-between !important;
+  }
+
+  /* Extra breathing room so the logo isn't jammed against the screen edge. */
+  .framer-1kfysrm-container .framer-8gkjzd {
+    padding-left: 36px !important;
+  }
+
+  /* Hide the desktop link row and "JOIN US" button in their normal flow
+     position; both reappear as a stacked full-width dropdown below the
+     header when .demcon-mobile-menu-open is toggled on. */
+  .framer-1kfysrm-container .framer-1ce9b2z,
+  .framer-1kfysrm-container .framer-qf0vfz .framer-fp7wp4-container {
+    display: none;
+  }
+
+  .demcon-mobile-menu-toggle {
+    display: flex;
+  }
+
+  .framer-1kfysrm-container.demcon-mobile-menu-open .framer-1ce9b2z,
+  .framer-1kfysrm-container.demcon-mobile-menu-open .framer-qf0vfz .framer-fp7wp4-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: 100%;
+    gap: 28px !important;
+    padding: 36px;
+    background: #030509;
+    border-bottom: none;
+    box-sizing: border-box;
+  }
+
+  .framer-1kfysrm-container.demcon-mobile-menu-open .framer-qf0vfz .framer-fp7wp4-container {
+    padding-top: 0;
+  }
+
+  /* Match the mobile dropdown's look to the reference site's old mobile
+     menu: black background, bold white uppercase labels, no border box
+     around "JOIN US" -- it reads as just another link in the stack. */
+  .framer-1kfysrm-container.demcon-mobile-menu-open .framer-1ce9b2z a.framer-YmthU {
+    width: 100%;
+    border-bottom: none !important;
+  }
+
+  .framer-1kfysrm-container.demcon-mobile-menu-open .framer-1ce9b2z a.framer-YmthU p.framer-text,
+  .framer-1kfysrm-container.demcon-mobile-menu-open .framer-qf0vfz .framer-fp7wp4-container p.framer-text {
+    color: #fff !important;
+    font-size: 28px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+  }
+
+  .framer-1kfysrm-container.demcon-mobile-menu-open .framer-qf0vfz .framer-fp7wp4-container a {
+    width: 100%;
+  }
+
+  .framer-1kfysrm-container.demcon-mobile-menu-open .framer-qf0vfz .framer-fp7wp4-container [data-border='true']::after {
+    border: none !important;
+  }
+
+  /* The toggle turns into a yellow "X" close button while the menu is open
+     (icon itself is swapped in sticky-nav.js). */
+  .framer-1kfysrm-container.demcon-mobile-menu-open .demcon-mobile-menu-toggle {
+    position: fixed;
+    top: 18px;
+    right: 24px;
+    z-index: 1;
+    background: #fff500;
+    border-color: #030509;
+  }
+
+  /* Oversized display headings: Framer baked one fixed desktop font-size
+     per element with no mobile override, so each is scaled down here.
+     Grouped by their shared current size/font rather than one rule per
+     element. */
+  .framer-1mzcc26 h1,
+  .framer-158qr1l h1,
+  .framer-1dq21v1 h1,
+  .framer-1eig5wz h1 {
+    --framer-font-size: 36px !important;
+  }
+
+  .framer-vc8yb8 h1 {
+    --framer-font-size: 56px !important;
+  }
+
+  .framer-1un2mu8 h1 {
+    --framer-font-size: 44px !important;
+  }
+
+  .framer-10hfbqq h2,
+  .framer-tylev3 h2 {
+    --framer-font-size: 40px !important;
+  }
+
+  .framer-1b7xxj1 h2 {
+    --framer-font-size: 32px !important;
+  }
+
+  .framer-hvsa7k h4,
+  .framer-1g3j7jn h2 {
+    --framer-font-size: 34px !important;
+  }
+
+  .framer-1xjikn1 h2 {
+    --framer-font-size: 40px !important;
+  }
+
+  .framer-l9qtcv h2 {
+    --framer-font-size: 32px !important;
+  }
+
+  /* Footer: Framer actually did author a mobile layout for this one (real
+     column-stacking rules exist in the retained stylesheet), but every rule
+     is scoped under a ".framer-v-1769wxc" mobile-variant class that only
+     the removed React runtime ever applied at hydration time -- it's not on
+     the real <footer> element (which only ever carries the Desktop variant
+     class), so none of it can match. Re-applying the same values directly
+     on the base classes here, using 100% instead of the variant's hardcoded
+     390px so it holds up narrower than one specific phone. */
+  .framer-wxmzE.framer-f91918 {
+    width: 100% !important;
+    flex-direction: column !important;
+    padding: 60px 20px 14px !important;
+  }
+
+  .framer-13tog5q,
+  .framer-8w9uat {
+    flex: none !important;
+    width: 100% !important;
+  }
+
+  .framer-1fyds12 {
+    flex-direction: column !important;
+    gap: 40px !important;
+  }
+
+  .framer-1kn4y54,
+  .framer-1ves7pb {
+    width: 100% !important;
+  }
+
+  .framer-5jaly6 {
+    flex-direction: column !important;
+    place-content: flex-start !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+
+  .framer-md55zm {
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    gap: 12px 32px !important;
+    width: 100% !important;
+  }
 }
