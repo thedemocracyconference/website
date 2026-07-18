@@ -190,21 +190,41 @@
 }
 
 .demcon-read-more {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   width: fit-content;
-  margin: 12px 0 0;
+  margin: 36px 0 0;
+  padding: 12px 22px;
+  border: 2px solid #030509;
+  border-radius: 999px;
+  background: #030509;
   font-family: 'League Spartan', 'League Spartan Placeholder', sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   line-height: 120%;
   letter-spacing: -0.02em;
   text-transform: uppercase;
-  color: #030509;
-  text-decoration: underline;
-  text-decoration-color: #030509;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
+  color: #faf9f5;
+  text-decoration: none;
   cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.demcon-read-more::after {
+  content: '\2192';
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.demcon-read-more:hover {
+  background: #ff3131;
+  border-color: #ff3131;
+  color: #faf9f5;
+}
+
+.demcon-read-more:hover::after {
+  transform: translateX(4px);
 }
 
 .demcon-newsletter-note {
@@ -270,23 +290,131 @@
   transform: translate(20px, -50%);
 }
 
-/* Hero "Pensive Woman in White Hood" fade-in-on-load, reproducing the real
-   spec from Framer's (now removed) appear-animation data: a pure opacity
-   fade, delay 1.5s, duration 1.3s. The baked SSR placeholder on this element
-   said translateY(40px), but that never matched its real per-element config
+/* Hero "Pensive Woman in White Hood" fade-in-on-load. Framer's original
+   appear-animation spec (delay 1.5s, duration 1.3s) read as sluggish once
+   this became the very first thing a visitor sees -- retimed to fire almost
+   immediately instead. The baked SSR placeholder on this element said
+   translateY(40px), but that never matched its real per-element config
    (x:0, y:0) -- intentionally not carried over here. sticky-nav.js flips the
    inline opacity directly once loaded (its baked inline opacity:0 takes
    precedence over any class-based rule, so only the transition lives here). */
 .framer-1mmgwc5 {
-  transition: opacity 1.3s ease-out 1.5s;
+  transition: opacity 0.6s ease-out 0.1s;
 }
 
 /* "SAME SHIT, DIFFERENT CENTURY" bubble -- originally an on-scroll rotate-in
    (rotate 50deg -> 0deg, spring bounce), moved to fire on load alongside the
-   hero image above instead. A spring has no exact CSS equivalent; this
-   back-out cubic-bezier approximates the same slight overshoot. */
+   hero image above instead, on the same fast timing. A spring has no exact
+   CSS equivalent; this back-out cubic-bezier approximates the same slight
+   overshoot. */
 .framer-1sl0blg {
-  transition: opacity 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 1.5s, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 1.5s;
+  transition: opacity 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s;
+}
+
+/* Extra scroll runway for the whole hero section (map background included)
+   before the next section (Salons) begins -- this section's own height is
+   `min-content` (Framer), driven by its flex children/padding, so adding
+   bottom padding is what actually makes it vertically longer. Without this
+   the map's parallax barely gets to play before Salons arrives underneath
+   it. Matches the specificity of Framer's own baked padding shorthand on
+   this selector so it reliably wins regardless of stylesheet order. */
+.framer-L1F0F .framer-10ecca0 {
+  padding-bottom: 60vh;
+}
+
+/* Scroll-driven hero intro (setupHeroIntro in sticky-nav.js): the
+   illustration + speech bubble are pinned full-screen on load, with a
+   "scroll down" prompt, then fade out (and the "Welcome to DEMCON" content
+   pops in) over a short scroll distance -- spacer height is set inline by
+   sticky-nav.js to match that same distance exactly. Transparent background
+   so the map/yellow section behind it stays visible and parallaxes
+   underneath the illustration the whole time, not just after it fades. */
+.demcon-hero-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  /* flex-end (not center) so her skirt/feet sit flush with the bottom of
+     the viewport regardless of viewport height, instead of leaving a
+     gap below her that grows/shrinks with the window. */
+  align-items: flex-end;
+  justify-content: center;
+  background: transparent;
+}
+
+/* Repositioned next to her head (this element is now a child of the
+   illustration itself, not the viewport-wide overlay -- see setupHeroIntro
+   in sticky-nav.js -- so these percentages are relative to *her*, not the
+   screen, and stay put next to her head regardless of viewport width). The
+   illustration's overflow:visible lets it hang past her own box edge.
+   Width also needs a fixed override, not just position: Framer's own width
+   is a percentage (meant to resolve against the much wider ancestor it used
+   to sit in before this element moved here), so against the illustration's
+   own ~510px box it rendered tiny -- aspect-ratio (still Framer's own rule,
+   untouched) derives the matching height from this fixed width. */
+.demcon-hero-intro-overlay .framer-1sl0blg {
+  top: 6% !important;
+  right: -38% !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: 420px !important;
+  height: auto !important;
+}
+
+/* Bottom-right rather than bottom-center -- centered under her, this sat
+   right on top of her own artwork (skirt/legs) at most viewport heights
+   and was easy to lose against it. */
+.demcon-hero-scroll-arrow {
+  position: absolute;
+  right: 40px;
+  bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.demcon-hero-scroll-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #030509;
+}
+
+.demcon-hero-scroll-arrow {
+  transition: opacity 0.3s ease-out;
+}
+
+/* Used on the About page's text-reveal hero (setupHeroTextRevealLock),
+   which sits on a black background -- the default dark label would be
+   invisible there. The circle+arrow itself already has its own light
+   background regardless, so it needs no override. */
+.demcon-hero-scroll-arrow-on-dark .demcon-hero-scroll-label {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.demcon-hero-scroll-circle {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #030509;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  animation: demcon-arrow-bounce 1.6s ease-in-out infinite;
+}
+
+@keyframes demcon-arrow-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
 }
 
 /* Generic scroll-reveal fade-up for every other baked-hidden element on the
@@ -343,6 +471,55 @@
 
 .demcon-agenda-hue-3:hover {
   background-color: #ff99e5 !important;
+}
+
+/* Agenda row accordion -- each of the 8 verticals expands to show a
+   one-line description on click, same grid-template-rows 0fr/1fr height
+   trick and single-open-per-list behavior as the Principles accordion
+   (about/index.html), just applied to plain divs instead of a <ul>/<li>
+   since that's what Agenda's own markup already uses. Placeholder copy:
+   this content never existed anywhere in the static export (confirmed
+   against the original pristine zip) -- it lived in Framer's own hosted
+   component code, which isn't part of any export. Swap in real copy for
+   each vertical whenever it's ready. */
+.demcon-agenda-row {
+  border-radius: 4px;
+  transition: transform 0.15s ease;
+}
+
+.demcon-agenda-item-detail {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.demcon-agenda-item.is-open .demcon-agenda-item-detail {
+  grid-template-rows: 1fr;
+}
+
+.demcon-agenda-item-detail p {
+  overflow: hidden;
+  margin: 0;
+  max-width: 640px;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-weight: 300;
+  font-size: 17px;
+  line-height: 1.55em;
+  color: #3a3a3a;
+  padding: 0;
+}
+
+.demcon-agenda-item.is-open .demcon-agenda-item-detail p {
+  padding-bottom: 24px;
+}
+
+.demcon-agenda-item.is-open .ux-title + span {
+  transform: rotate(90deg) !important;
+}
+
+.ux-title + span {
+  transition: transform 0.2s ease;
+  display: inline-block;
 }
 
 /* Participate section CTA buttons ("Apply to Speak" / "Register to Attend"
@@ -843,5 +1020,967 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
     justify-content: flex-start !important;
     gap: 12px 32px !important;
     width: 100% !important;
+  }
+}
+
+/* DemCon Principles summary (about/index.html) -- hand-built, not a Framer
+   export, since this content/section doesn't exist in the original design.
+   Matches the site's existing type (IBM Plex Mono labels, League Spartan
+   headings/body) and near-black palette used elsewhere. Yellow margins
+   (matching the homepage hero's background) rather than pink, which
+   clashed sitting right next to the pink text marquee below it; accents
+   (label, toggle icon, link) use the marquee's own pink instead, so the
+   two read as intentionally paired rather than clashing. */
+.demcon-principles-section {
+  background: #fff500;
+  padding: 140px 30px;
+  position: relative;
+  overflow: hidden;
+  /* Unlike the Framer-native sections around it, which each explicitly
+     set flex:none + width:100% on themselves, this one is hand-built and
+     had no such override -- it was picking up some other flex default
+     (flex: 0 1 auto) from the page's flex layout instead of stretching,
+     leaving equal gaps on both sides instead of spanning the viewport. */
+  flex: none;
+  width: 100%;
+}
+
+/* The Universal Declaration of Human Rights, recreated as text (public
+   domain -- not an image), zoomed in and run behind the DemCon Principles
+   card. setupUDHRSequence (sticky-nav.js) locks scrolling once this
+   section reaches the top of the viewport and animates .demcon-udhr-stage
+   upward through the text, pausing on each "right to" in turn -- see
+   .demcon-udhr-hit below. */
+.demcon-udhr-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.demcon-udhr-stage {
+  position: relative;
+  padding: 0 60px;
+  column-count: 2;
+  column-gap: 80px;
+  transition: transform 0.6s cubic-bezier(0.34, 0.76, 0.4, 1);
+  will-change: transform;
+}
+
+.demcon-udhr-article {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(20px, 2.4vw, 32px);
+  line-height: 1.6;
+  text-align: justify;
+  color: rgba(3, 5, 9, 0.14);
+  margin: 0 0 2.2em;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+
+.demcon-udhr-num {
+  font-weight: 700;
+}
+
+.demcon-udhr-hit {
+  background: none;
+  color: rgba(255, 0, 116, 0.4);
+  font-weight: 700;
+  font-style: italic;
+  transition: color 0.4s ease, background-color 0.4s ease, font-size 0.4s ease;
+}
+
+.demcon-udhr-hit.is-active {
+  color: #ff0074;
+  background-color: rgba(255, 255, 255, 0.92);
+  font-size: 1.2em;
+  border-radius: 4px;
+  padding: 0 0.1em;
+}
+
+@media (max-width: 767.98px) {
+  .demcon-udhr-stage {
+    padding: 0 24px;
+    column-count: 1;
+  }
+}
+
+.demcon-principles-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: rgba(250, 249, 245, 0.86);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  padding: 80px;
+  border-radius: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 767.98px) {
+  .demcon-principles-container {
+    padding: 48px 28px;
+  }
+}
+
+.demcon-principles-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #ff99ff;
+  margin: 0 0 24px;
+}
+
+.demcon-principles-heading {
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 700;
+  font-size: clamp(36px, 5vw, 56px);
+  letter-spacing: -0.02em;
+  color: #030509;
+  margin: 0 0 32px;
+}
+
+.demcon-principles-intro {
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 300;
+  font-size: 20px;
+  line-height: 1.5em;
+  color: #3a3a3a;
+  max-width: 760px;
+  margin: 0 0 64px;
+}
+
+/* Single column now -- the two category subtitles are tabs (click to
+   switch which list of items shows below) rather than two permanent
+   side-by-side lists. */
+.demcon-principles-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  margin-bottom: 32px;
+}
+
+.demcon-principles-tab {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: rgba(3, 5, 9, 0.35);
+  padding-bottom: 8px;
+  border-bottom: 3px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.demcon-principles-tab:hover {
+  color: rgba(3, 5, 9, 0.7);
+}
+
+.demcon-principles-tab.is-active {
+  color: #030509;
+  border-bottom-color: #ff99ff;
+}
+
+.demcon-principles-panels {
+  margin-bottom: 56px;
+}
+
+.demcon-principles-panel {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.demcon-principles-panel.is-active {
+  display: block;
+}
+
+/* Each item is a toggle button (click to expand a 1-sentence explanation)
+   that also "pops" on hover -- a slight lift/scale plus a highlight color,
+   cycling through the same 4 hues the Agenda list's rows already use (see
+   setupAgendaHover/demcon-agenda-hue-* ), so the two interactions feel like
+   one shared pattern rather than two different ones. */
+.demcon-principles-item {
+  border-top: 1px solid rgba(3, 5, 9, 0.12);
+}
+
+.demcon-principles-toggle {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  color: #3a3a3a;
+  padding: 12px 12px 12px 24px;
+  position: relative;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s ease, transform 0.15s ease, padding 0.15s ease;
+}
+
+.demcon-principles-toggle:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 12px;
+  height: 2px;
+  background: #ff99ff;
+  transition: opacity 0.15s ease;
+}
+
+.demcon-principles-toggle:hover,
+.demcon-principles-toggle:focus-visible {
+  transform: scale(1.03);
+  padding-left: 30px;
+  padding-right: 18px;
+}
+
+.demcon-principles-toggle:hover:before,
+.demcon-principles-toggle:focus-visible:before {
+  opacity: 0;
+}
+
+.demcon-principles-hue-0 .demcon-principles-toggle:hover {
+  background-color: #aee9f5;
+}
+
+.demcon-principles-hue-1 .demcon-principles-toggle:hover {
+  background-color: #b3f5a3;
+}
+
+.demcon-principles-hue-2 .demcon-principles-toggle:hover {
+  background-color: #fff500;
+}
+
+.demcon-principles-hue-3 .demcon-principles-toggle:hover {
+  background-color: #ff99e5;
+}
+
+.demcon-principles-item-icon {
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1;
+  color: #030509;
+  transition: transform 0.2s ease;
+}
+
+.demcon-principles-item.is-open .demcon-principles-item-icon {
+  transform: rotate(45deg);
+}
+
+.demcon-principles-item-detail {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.demcon-principles-item.is-open .demcon-principles-item-detail {
+  grid-template-rows: 1fr;
+}
+
+.demcon-principles-item-detail p {
+  overflow: hidden;
+  margin: 0;
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.5em;
+  color: #3a3a3a;
+  padding: 0 12px 0 24px;
+}
+
+.demcon-principles-item.is-open .demcon-principles-item-detail p {
+  padding-bottom: 16px;
+}
+
+.demcon-principles-full-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #030509;
+  background-color: #ff99ff;
+  border: 2px solid #030509;
+  border-radius: 999px;
+  padding: 14px 26px;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.demcon-principles-full-link-arrow {
+  transition: transform 0.2s ease;
+}
+
+.demcon-principles-full-link:hover,
+.demcon-principles-full-link:focus-visible {
+  background-color: #030509;
+  color: #ff99ff;
+  border-color: #030509;
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 #ff99ff;
+}
+
+.demcon-principles-full-link:hover .demcon-principles-full-link-arrow,
+.demcon-principles-full-link:focus-visible .demcon-principles-full-link-arrow {
+  transform: translateX(4px);
+}
+
+.demcon-principles-full-link:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
+@media (max-width: 767.98px) {
+  .demcon-principles-section {
+    padding: 90px 24px;
+  }
+
+  .demcon-principles-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+/* The page root renders `display:contents`, so its actual flex layout (and
+   this reordering) comes from the grandparent -- Framer bakes a flex
+   `order` on every section, per breakpoint, reflecting each one's position
+   in the *original homepage's* section sequence (e.g. order:2 and order:9
+   here, since that's where "Statistics - Section" and "Bruxelles Calling"
+   used to sit among many other homepage sections). Reusing them on this
+   new page needs their order reset to match *this* page's sequence
+   instead, at every breakpoint -- our own new Principles section has no
+   baked order at all (defaults to 0), which otherwise puts it first.
+   Sequence here: hero, Principles, marquee, Bruxelles Calling, Join Us.
+   Scoped to .demcon-about-page so it doesn't touch these same classes'
+   ordering back on the homepage, where they're shared from. */
+.demcon-about-page .framer-tuaoj3 {
+  order: 1 !important;
+}
+
+.demcon-about-page .demcon-principles-section {
+  order: 2 !important;
+}
+
+.demcon-about-page .framer-ok10fm {
+  order: 3 !important;
+}
+
+.demcon-about-page .framer-1rbxc9t {
+  order: 4 !important;
+}
+
+/* Join Us section, duplicated from the homepage and placed right after
+   Bruxelles Calling in the HTML -- but source order doesn't matter here
+   (see above), so it needs its own explicit order too, or it defaults to
+   0 and renders first. */
+.demcon-about-page .framer-13wosc3 {
+  order: 5 !important;
+}
+
+/* As a hero, this section should cover the full viewport on load, not
+   just whatever height its baked padding (114px) + text naturally add up
+   to -- min-height:100vh overrides the baked height:min-content. Content
+   stays centered via the baked place-content:center/align-items:center on
+   this same class. Scoped to .demcon-about-page so the homepage's own,
+   mid-scroll use of this same section is untouched. */
+.demcon-about-page .framer-tuaoj3 {
+  min-height: 100vh !important;
+}
+
+/* Homepage stacking-cards scroll: each main section pins to the top of
+   the viewport and holds there while the next one scrolls up over it, so
+   sections stack rather than scroll past each other. Increasing z-index
+   in document order makes each later section cover the ones before it --
+   DemocracySalons now covers the Hero itself too (the Hero keeps its own
+   separate scroll-locked intro via setupHeroIntro's wheel/touch lock, it
+   just no longer sits permanently above the stack once that intro is
+   done). Clamped to exactly one viewport with overflow:hidden (no
+   scrollbar, nothing native to scroll) -- a card whose own content is
+   taller than that gets revealed by setupTallCardReveal (sticky-nav.js)
+   instead, which translateY's just that inner content wrapper as the
+   visitor keeps wheeling/touching, so it still reads as one continuous
+   scroll gesture rather than a nested scrollable region, and only lets
+   the real page scroll (and the next card's cover) proceed once the
+   current card's content has fully scrolled by. The box-shadow sits on
+   each card's top edge, so as it slides up it visibly casts a shadow
+   onto whatever it's covering underneath. */
+.demcon-home-page [data-framer-name="Hero Section"] {
+  position: relative;
+  z-index: 0;
+}
+
+.demcon-home-page [data-framer-name="DemocracySalons"],
+.demcon-home-page [data-framer-name="Journey Section"],
+.demcon-home-page [data-framer-name="Agenda"],
+.demcon-home-page [data-framer-name="Speakers - Section"],
+.demcon-home-page [data-framer-name="Participation"],
+.demcon-home-page [data-framer-name="JOIN US"] {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  box-shadow: 0 -40px 60px -20px rgba(3, 5, 9, 0.45);
+  /* Forces its own isolated compositing layer -- without this, the
+     frosted-glass card's backdrop-filter:blur can sample straight through
+     into whatever's rendered behind it in a sibling sticky section
+     (Agenda's dotted background) during the moment one card is sliding
+     up to cover another, instead of respecting the z-index stacking that
+     should make the covering card fully opaque on top. */
+  isolation: isolate;
+}
+
+.demcon-home-page [data-framer-name="DemocracySalons"] { z-index: 1; }
+.demcon-home-page [data-framer-name="Journey Section"] { z-index: 2; }
+.demcon-home-page [data-framer-name="Agenda"] { z-index: 3; }
+/* Agenda's own baked layout centers its content (place-content:center)
+   within whatever height it's given -- clamped to exactly 100vh with
+   overflow:hidden, that meant its actual content (eyebrow + heading +
+   intro + all 7 rows), being taller than one viewport, got clipped
+   symmetrically top AND bottom: the eyebrow ("THE ARCHITECTURE // 02")
+   above the visible window, presumably the last row or so below it. The
+   old setupTallCardReveal-based pan (sticky-nav.js) only ever revealed
+   more content by scrolling *down* from that already-clipped starting
+   point, so the eyebrow was never reachable. Same fix as the others: let
+   it grow to its natural height and hand the scroll-through to
+   setupStackedSectionOffsets instead (its entry in setupTallCardReveal's
+   config has been removed). */
+.demcon-home-page [data-framer-name="Agenda"] {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+/* The dotted background layer (.framer-ple7iu) is Framer's own
+   "full-bleed decoration" pattern -- baked with oversized width/height
+   (up to 208%) and negative top/left offsets so it overhangs Agenda's own
+   box on the bottom and sides. That overhang was invisible back when
+   Agenda clipped with overflow:hidden, but now that the section needs
+   overflow:visible (see above, for the eyebrow fix), the overhang is
+   free to bleed into whatever's adjacent instead of staying contained to
+   Agenda's own card. Pin it flush to Agenda's actual box on all four
+   sides instead, so it can't extend anywhere the section itself doesn't. */
+.demcon-home-page [data-framer-name="Agenda"] .framer-ple7iu {
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+.demcon-home-page [data-framer-name="Speakers - Section"] { z-index: 4; }
+/* Participation ("PARTICIPATE // 04") was never added to this stacking
+   system at all -- it's ordinary, non-sticky content sitting between
+   Agenda (sticky, z-index:3) and JOIN US (sticky, z-index:5), so as the
+   page scrolled, Agenda just stayed permanently stuck/opaque on top of it
+   the entire time Participation scrolled by underneath, and JOIN US's
+   cover began before Participation was ever revealed -- effectively
+   invisible the whole time despite rendering correctly in the DOM. Giving
+   it its own slot (z-index:4, between the two) fixes that. Its own
+   height is left natural (auto/visible, not clamped to 100vh) since its
+   3-card grid is slightly taller than one viewport and would otherwise
+   get clipped -- setupStackedSectionOffsets (sticky-nav.js) handles the
+   scroll-through the same way it does for Journey Section. */
+.demcon-home-page [data-framer-name="Participation"] {
+  z-index: 4;
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+.demcon-home-page [data-framer-name="JOIN US"] { z-index: 5; }
+/* JOIN US is the last stacked card, and the footer is now its last child
+   (moved in the HTML) instead of separate ordinary content the visitor
+   only reached once this sticky section released -- so the footer needs
+   to be part of the same scroll-through as the card, not clipped by the
+   100vh+overflow:hidden the other clamped cards use. */
+.demcon-home-page [data-framer-name="JOIN US"] {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+/* "The Movement" (Journey Section) rebuild: unlike the other stacking
+   cards, this one isn't clamped to one viewport at all -- its height is
+   left to grow to whatever the video's own natural aspect ratio renders
+   at (full width, auto height, never cropped), and native position:sticky
+   handles the rest: since the section is taller than the viewport and
+   nothing clips it, it stays pinned at top:0 while the page keeps
+   scrolling past its own extra height, only letting the next card's
+   cover begin once the section's full height -- video included -- has
+   actually scrolled by. No JS panning/reveal needed for this one now
+   (setupTallCardReveal no longer has an entry for it). The video (moved
+   in the HTML to be a direct child of the section, ahead of Container) is
+   a normal in-flow element that drives the section's height; the
+   translucent text card is pulled out of flow instead (absolute) so it
+   can overlay the lower portion of the image without adding to that
+   height. */
+.demcon-home-page [data-framer-name="Journey Section"] {
+  position: sticky;
+  height: auto;
+  /* The video is width:100%, height:auto at a fixed aspect ratio -- its
+     rendered height tracks the viewport's WIDTH only, never its height.
+     On a wide-but-short window the video comfortably exceeds one
+     viewport, but on a fullscreen/tall window (more height, similar
+     width) it can end up SHORTER than the viewport -- confirmed via two
+     side-by-side screenshots, narrow window fine, fullscreen bleeding.
+     That gap at the bottom of the section exposed Agenda's dotted
+     background underneath while "stuck", not a compositing artifact.
+     min-height is a floor against that, independent of the video. */
+  min-height: 100vh;
+  overflow: visible;
+  display: block;
+  /* min-height above stretches the SECTION's own box, but the video
+     inside only ever sizes to its own aspect ratio (height:auto) -- it
+     never stretches to match. So whenever min-height actually kicks in
+     (video shorter than viewport), there's a literal transparent gap
+     between the video's bottom edge and the section's bottom edge. The
+     section itself has no background of its own (its only visual
+     content is the full-bleed video), so that gap let whatever's
+     stacked behind it on screen (Agenda, higher z-index) show straight
+     through -- the real remaining cause of the dots "bleeding in" after
+     the first min-height fix. A solid fallback color closes it without
+     stretching/distorting the video itself. */
+  background-color: #030509;
+  /* Framer's own baked padding (118px top, 48px sides) on this section
+     used to be harmless when the video was pulled out via
+     position:absolute (which ignores the parent's padding box), but now
+     that it's a normal in-flow child, that padding was leaving a visible
+     cream margin around three sides of it instead of true full-bleed. */
+  padding: 0 !important;
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] > .framer-17um2q1 {
+  position: static;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] > .framer-17um2q1 video {
+  display: block;
+  width: 100%;
+  height: auto !important;
+  object-fit: initial !important;
+}
+
+/* Text card overlays the lower portion of the image, roughly where the
+   banner photo's subject (a dog on a leash) is in frame -- absolute +
+   centered instead of flex-positioned, since it's no longer a flex
+   sibling of the video (which is why the Section above needs its own
+   position:relative removed in favor of this being the Section's own
+   sticky box acting as containing block). */
+.demcon-home-page [data-framer-name="Journey Section"] > .framer-lnr63p {
+  position: absolute;
+  left: 50%;
+  bottom: 110px;
+  transform: translateX(-50%);
+  z-index: 1;
+  width: calc(100% - 80px);
+  max-width: 760px;
+  background: rgba(250, 249, 245, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 12px;
+  padding: 56px 56px 80px;
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] .framer-1ibrk5w {
+  align-items: center;
+  place-content: center;
+  text-align: center;
+  gap: 32px !important;
+}
+
+/* .framer-wcxrxy (the heading's real flex-item wrapper -- .ssr-variant in
+   between is display:contents and passes through), .framer-hvsa7k
+   (heading), and .framer-fobxvj (paragraph) all use Framer's
+   "flex:1 0 0; width:1px" row-fill trick -- grow from a 1px basis to
+   fill available width, which only works with a horizontal main axis.
+   Highlight is now flex-direction:column above, so nothing is growing
+   that "width:1px" anymore and it renders literally: framer-wcxrxy
+   collapses to 1px, and framer-hvsa7k's own "width:100%" (still needed,
+   since it's a real 1px width otherwise) is 100% of that collapsed 1px
+   parent. Override every level back to filling the column's width. */
+.demcon-home-page [data-framer-name="Journey Section"] .framer-wcxrxy,
+.demcon-home-page [data-framer-name="Journey Section"] .framer-hvsa7k,
+.demcon-home-page [data-framer-name="Journey Section"] .framer-fobxvj {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: none !important;
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] .framer-1m75x1d {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Highlight's real direct children are just .framer-e571rj (arrow) and
+   .framer-wcxrxy (which originally held BOTH the heading and the
+   paragraph side by side as its own nested row, via space-between --
+   that's what put the paragraph off the right edge of the card, since a
+   648px-wide paragraph doesn't fit in whatever sliver of that row the
+   heading left behind). The paragraph (.framer-fobxvj) has been moved in
+   the HTML to be its own direct sibling within Highlight instead, so all
+   three -- heading wrapper, arrow, paragraph -- can be ordered
+   independently in Highlight's column: heading, then arrow directly
+   under it, then paragraph. */
+.demcon-home-page [data-framer-name="Journey Section"] .framer-1m75x1d > .framer-wcxrxy {
+  order: 1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] .framer-1m75x1d > .framer-e571rj {
+  order: 2;
+  margin-top: -36px;
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] .framer-1m75x1d > .framer-fobxvj {
+  order: 3;
+  margin-top: -73px;
+}
+
+/* The arrow's own baked SVG is a tall, vertical squiggle-and-arrow inside
+   a wrapper sized to match (aspect-ratio:.228, ~39x277px) -- rotating
+   just the <img> visually lays it on its side but leaves the WRAPPER's
+   layout box tall and narrow, so the rotated image overflows sideways
+   into the heading above it instead of getting its own row. Give the
+   wrapper a swapped, and larger, horizontal box instead so nothing
+   overlaps, then rotate + mirror the image within it and pulse it.
+   Opacity/transform (both the wrapper's slide-in and Framer's own baked
+   inline "opacity:0, revealed on scroll by setupScrollReveal") are owned
+   by setupMovementReveal + the .demcon-movement-card rules below instead
+   of forced here -- that generic reveal never actually fired for this
+   element (confirmed: its rect legitimately satisfies the reveal check
+   once the card is in view, but nothing ever flips it, and nothing then
+   re-hides it either -- it just never gets the one-time trigger), so
+   setupMovementReveal clears the baked inline styles and this stylesheet
+   takes over instead of fighting that trigger. */
+.demcon-home-page [data-framer-name="Journey Section"] .framer-e571rj {
+  width: 460px !important;
+  height: 125px !important;
+  aspect-ratio: auto !important;
+  overflow: visible;
+  position: relative;
+}
+
+/* Framer's own image rule (.framer-jmwsl6) ships with position:absolute
+   plus large negative top/right offsets tuned for a totally different
+   layout -- left unchecked, the image escapes this wrapper entirely and
+   renders up near the page's top edge instead of under the heading where
+   the wrapper actually sits. Pinned back to absolute-but-centered instead
+   of static flow, because the -90deg rotation below swaps this element's
+   effective on-screen width/height: the box is sized narrow-and-tall
+   (165x620) so that once rotated it PAINTS as wide-and-short (620x165),
+   matching the wrapper's own footprint above -- sizing it 620x165 before
+   rotation (matching the wrapper 1:1) was the earlier bug, since that
+   paints as a tall 165-wide sliver post-rotation instead of a wide one. */
+.demcon-home-page [data-framer-name="Journey Section"] .framer-e571rj img {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 125px !important;
+  height: 460px !important;
+  margin: 0;
+  transform-origin: center;
+  transform: translate(-50%, -50%) rotate(-90deg) scaleX(-1);
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] > .framer-lnr63p.demcon-movement-revealed .framer-e571rj img {
+  animation: demcon-arrow-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes demcon-arrow-pulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) rotate(-90deg) scaleX(-1) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(-90deg) scaleX(-1) scale(1.15);
+    opacity: 0.55;
+  }
+}
+
+/* Staged reveal once the card scrolls into view (setupMovementReveal):
+   the card fades in first, then the heading slides in from the left
+   together with the arrow directly beneath it, then the paragraph (and
+   its "read more" link) slides up -- each group's own transition-delay
+   creates the sequence off the single .demcon-movement-revealed class
+   toggle, rather than separate JS timers. setupMovementReveal clears
+   Framer's baked inline opacity/transform on these elements first, so
+   these rules have sole control -- no !important needed here. */
+.demcon-home-page [data-framer-name="Journey Section"] > .framer-lnr63p.demcon-movement-card {
+  opacity: 0;
+  transition: opacity 0.8s ease 0.2s;
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] > .framer-lnr63p.demcon-movement-revealed {
+  opacity: 1;
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] .framer-1m75x1d > .framer-wcxrxy,
+.demcon-home-page [data-framer-name="Journey Section"] .framer-1m75x1d > .framer-e571rj {
+  opacity: 0;
+  transform: translateX(-60px);
+  transition: opacity 0.6s ease 0.55s, transform 0.6s ease 0.55s;
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] > .framer-lnr63p.demcon-movement-revealed .framer-1m75x1d > .framer-wcxrxy,
+.demcon-home-page [data-framer-name="Journey Section"] > .framer-lnr63p.demcon-movement-revealed .framer-1m75x1d > .framer-e571rj {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] .framer-1m75x1d > .framer-fobxvj {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.6s ease 0.95s, transform 0.6s ease 0.95s;
+}
+
+.demcon-home-page [data-framer-name="Journey Section"] > .framer-lnr63p.demcon-movement-revealed .framer-1m75x1d > .framer-fobxvj {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Homepage's JOIN US section, replaced with a hand-built contact form
+   (matching contact/index.html's own field set: Name, Email, Phone,
+   Message) over the same background illustration contact/index.html's
+   Hero Section uses. Hand-built rather than transplanting Framer's own
+   Contact Section markup -- that markup leans on ancestor context (the
+   exact "flex:1 0 0; width:1px" row-fill trick that broke the Movement
+   heading above) that doesn't carry over cleanly to a new home, and it's
+   a lot of animation-wrapper markup for a single form. This section
+   keeps data-framer-name="JOIN US" so it inherits the stacking-cards
+   position/height/overflow/shadow/z-index rules already set above. */
+.demcon-contact-cta-section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 80px 30px 0;
+  /* Base fill behind the ::before image layer, so whatever the
+     circle-clip hasn't reached yet during the paint-in wipe shows a
+     solid backdrop instead of nothing -- matches the same cream used by
+     the other stacking cards (Journey, Agenda, Participation). */
+  background-color: #faf9f5;
+}
+
+/* Background lives on a ::before instead of the section's own
+   background-image, so it can be masked/"painted in" independently of
+   the card sitting on top of it (masking the section itself would also
+   hide the card). No reference for the original effect exists anywhere
+   in the export or the pristine zip, so this is a built interpretation
+   of "paints in" -- a soft-edged diagonal sweep (mask-image gradient,
+   not a hard clip-path line) reading more like a brush stroke than a
+   mechanical wipe. A plain top-to-bottom edge also read as barely
+   visible against this particular image, since its top is mostly flat
+   yellow sky that matches the site's own yellow brand color used
+   elsewhere, so revealing top-first didn't look like much was changing
+   until the wipe was most of the way done -- sweeping diagonally
+   exposes a mix of sky and ground together instead. Driven directly off
+   scroll position via the --demcon-reveal-progress custom property
+   (setupContactCtaReveal, sticky-nav.js), not a fixed-duration
+   transition -- a timed transition either finishes long before the
+   visitor scrolls all the way to the section or gets blown past
+   entirely, so it's scrubbed 1:1 with actual scroll instead.
+   .demcon-contact-revealed only gets added once that scroll-driven
+   reveal reaches 100%, which is what the card's own (separately timed)
+   fade-in keys off below. */
+.demcon-contact-cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('/assets/framer/images/2pNkAt6qf7rO0fSwFrouSKBTE.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(
+    115deg,
+    #000 0%,
+    #000 calc(var(--demcon-reveal-progress, 0%) - 14%),
+    transparent calc(var(--demcon-reveal-progress, 0%) + 14%),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    115deg,
+    #000 0%,
+    #000 calc(var(--demcon-reveal-progress, 0%) - 14%),
+    transparent calc(var(--demcon-reveal-progress, 0%) + 14%),
+    transparent 100%
+  );
+}
+
+/* Footer (moved in the HTML to be the last child of this section, right
+   after the card) so it's part of the same scroll-through as the card
+   instead of a separate chunk of ordinary content the visitor only
+   reaches after this sticky section finally releases -- see the
+   height:auto override below, same technique as Journey Section and
+   Participation. */
+.demcon-contact-cta-section > .framer-1yncser-container {
+  width: 100%;
+  margin-top: 80px;
+}
+
+.demcon-contact-cta-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 620px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 16px;
+  padding: 48px;
+  box-shadow: 0 20px 60px rgba(3, 5, 9, 0.35);
+  opacity: 0;
+  /* .demcon-contact-revealed only gets added once the scroll-driven wipe
+     above has actually reached 100% (see setupContactCtaReveal), so this
+     half-second delay is purely the "pause after it paints in" -- no
+     need to also account for a wipe duration now that it's scroll-scrubbed. */
+  transition: opacity 0.7s ease 0.5s;
+}
+
+.demcon-contact-cta-section.demcon-contact-revealed .demcon-contact-cta-card {
+  opacity: 1;
+}
+
+.demcon-contact-cta-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #ff0074;
+  margin: 0 0 12px;
+}
+
+.demcon-contact-cta-heading {
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 700;
+  font-size: clamp(28px, 4vw, 36px);
+  letter-spacing: -0.02em;
+  color: #030509;
+  margin: 0 0 16px;
+}
+
+.demcon-contact-cta-intro {
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.5em;
+  color: #3a3a3a;
+  margin: 0 0 32px;
+}
+
+.demcon-contact-cta-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.demcon-contact-cta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #030509;
+  flex: 1;
+  min-width: 0;
+}
+
+.demcon-contact-cta-field input,
+.demcon-contact-cta-field textarea {
+  padding: 12px 14px;
+  border: 1.5px solid rgba(3, 5, 9, 0.25);
+  border-radius: 8px;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #030509;
+}
+
+.demcon-contact-cta-field input:focus,
+.demcon-contact-cta-field textarea:focus {
+  outline: none;
+  border-color: #030509;
+}
+
+.demcon-contact-cta-field textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+}
+
+.demcon-contact-cta-row {
+  display: flex;
+  gap: 16px;
+}
+
+.demcon-contact-cta-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 14px;
+  color: #3a3a3a;
+}
+
+.demcon-contact-cta-checkbox-row input {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.demcon-contact-cta-form button {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 14px 28px;
+  border: 2px solid #030509;
+  border-radius: 999px;
+  background: #ff0074;
+  color: #fff;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.demcon-contact-cta-form button:hover {
+  background: #030509;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 767.98px) {
+  .demcon-contact-cta-row {
+    flex-direction: column;
+  }
+
+  .demcon-contact-cta-card {
+    padding: 32px 24px;
   }
 }
