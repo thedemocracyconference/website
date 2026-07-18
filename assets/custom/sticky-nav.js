@@ -110,6 +110,26 @@
     // navbar flickering as it passes over individual cards.
     var FORCED_SECTIONS = [{ selector: '[data-framer-name="Participation"]', bucket: 'black' }];
 
+    // About page stacking cards: Principles and Join Us both sample as
+    // "white" instead of their real yellow, because the pinned sub-nav
+    // marquee (opaque pink) always sits directly under the header's
+    // sample point once it's pinned, and pink's nearest swatch match is
+    // white/cream -- there's no pixel to sample here that would ever
+    // read as yellow. Listed in z-index order (matches the CSS stacking
+    // order): a plain "does the sample point fall inside this section's
+    // rect" check isn't enough on its own, because each sticky card's own
+    // rect keeps satisfying that well past the point a later, higher
+    // z-index card has visually covered it (same reason
+    // setupAboutSubNav's scroll-spy has to walk these in z-index order
+    // too, rather than trusting IntersectionObserver) -- so this instead
+    // finds the *last* one (highest z-index) whose top has reached the
+    // sample point.
+    var ABOUT_STACK_BUCKETS = [
+      { selector: '.demcon-about-page .demcon-principles-section', bucket: 'yellow' },
+      { selector: '.demcon-about-page .framer-1rbxc9t', bucket: 'white' },
+      { selector: '.demcon-about-page .framer-13wosc3', bucket: 'yellow' }
+    ];
+
     function forcedBucket(y) {
       for (var i = 0; i < FORCED_SECTIONS.length; i++) {
         var el = document.querySelector(FORCED_SECTIONS[i].selector);
@@ -117,7 +137,13 @@
         var r = el.getBoundingClientRect();
         if (y >= r.top && y <= r.bottom) return FORCED_SECTIONS[i].bucket;
       }
-      return null;
+      var current = null;
+      for (var j = 0; j < ABOUT_STACK_BUCKETS.length; j++) {
+        var stackEl = document.querySelector(ABOUT_STACK_BUCKETS[j].selector);
+        if (!stackEl) continue;
+        if (stackEl.getBoundingClientRect().top <= y) current = ABOUT_STACK_BUCKETS[j].bucket;
+      }
+      return current;
     }
 
     var currentBucket = null;
@@ -1048,24 +1074,190 @@
     window.addEventListener('resize', onScrollOrResize, { passive: true });
   }
 
-  // Text Ticker marquee ("DEMCON 2027 / FOR THE GLOBAL LEFT / THE ROAD TO
-  // BRUXELLES / JOIN US", repeating). Framer drove this with a continuous
-  // JS-updated translateX; the static export just froze whatever position
-  // it was at, at export time. A CSS keyframe loop is far more robust than
-  // trying to replicate a continuous JS animation loop here: duplicate the
-  // track once so the content is two identical, back-to-back copies, then
-  // animate exactly halfway across -- the second copy lands exactly where
-  // the first started, so the loop is seamless regardless of text width.
+  // Text Ticker / about-page sub-nav marquee. Originally Framer's own
+  // "DEMCON 2027 / FOR THE GLOBAL LEFT / THE ROAD TO BRUXELLES / JOIN US"
+  // ticker, driven by a continuous JS-updated translateX that the static
+  // export just froze in place. Repurposed as a 3-link sub-nav with the
+  // same scrolling-marquee motion. Reusing Framer's own markup/padding
+  // for this kept causing a black gap down one or both edges at some
+  // viewport widths (its inherited box model has more layers -- an outer
+  // section padding, an inner container, an inline-styled track div --
+  // than were obvious from the rendered page, and something in that
+  // stack kept reintroducing an inset). Rebuilt from scratch instead:
+  // this owns its entire DOM subtree and CSS, so there's no inherited
+  // padding/width left to fight. The viewport div uses the standard
+  // "full-bleed" trick (100vw + 50%-left + negative margin) so it always
+  // spans edge to edge regardless of any ancestor's box model, and the
+  // track is filled with enough repeated copies to exceed twice the
+  // viewport width before being doubled for the seamless loop -- so it
+  // can never run out of content regardless of screen size.
   function setupMarquee() {
     var section = document.querySelector('[data-framer-name="Text Ticker"]');
     if (!section) return;
-    var track = section.querySelector('div[style*="overflow:hidden"]');
-    var content = track && track.children[0];
-    if (!content) return;
-    content.style.transform = 'none';
-    var clone = content.cloneNode(true);
-    track.appendChild(clone);
-    track.classList.add('demcon-marquee-track');
+    var existingLinks = Array.prototype.slice.call(section.querySelectorAll('.demcon-subnav-link'));
+    var seen = {};
+    var uniqueLinks = existingLinks.filter(function (link) {
+      var id = link.getAttribute('data-subnav-id');
+      if (!id || seen[id]) return false;
+      seen[id] = true;
+      return true;
+    });
+    if (!uniqueLinks.length) return;
+
+    function buildGroup() {
+      var group = document.createElement('div');
+      group.className = 'demcon-marquee-group';
+      uniqueLinks.forEach(function (link) {
+        group.appendChild(link.cloneNode(true));
+        var sep = document.createElement('span');
+        sep.className = 'demcon-subnav-sep';
+        sep.innerHTML = '&nbsp;&bull;&nbsp;';
+        group.appendChild(sep);
+      });
+      return group;
+    }
+
+    section.innerHTML = '';
+    section.classList.add('demcon-marquee-section');
+    var viewport = document.createElement('div');
+    viewport.className = 'demcon-marquee-viewport';
+    var track = document.createElement('div');
+    track.className = 'demcon-marquee-track';
+    viewport.appendChild(track);
+    section.appendChild(viewport);
+
+    // Rebuilds the track's contents from a clean slate every time it's
+    // called, rather than trying to incrementally extend it -- simpler,
+    // and self-correcting regardless of *why* a previous pass came up
+    // short (this environment has a known quirk where window.innerWidth
+    // briefly reads 0 right after navigation, but the same fallback also
+    // covers a real, legitimate window resize).
+    function rebuildTrack() {
+      track.innerHTML = '';
+      track.appendChild(buildGroup());
+
+      // This section is display:none by default (it only becomes
+      // visible once pinned -- see setupAboutSubNav/CSS) and stays that
+      // way until scroll reaches Principles, which on page load it
+      // hasn't yet -- track.scrollWidth would read 0 the whole time
+      // otherwise, since a display:none ancestor has no layout box to
+      // measure. Force it visible just for this synchronous measurement
+      // pass; nothing paints in between since the browser can't paint
+      // mid-task.
+      var prevDisplay = section.style.display;
+      section.style.display = 'block';
+
+      var minWidth = Math.max(window.innerWidth, 320) * 2;
+      var guard = 0;
+      while (track.scrollWidth < minWidth && guard < 50) {
+        track.appendChild(buildGroup());
+        guard++;
+      }
+      var singlePass = Array.prototype.slice.call(track.children);
+      singlePass.forEach(function (group) {
+        track.appendChild(group.cloneNode(true));
+      });
+
+      section.style.display = prevDisplay;
+    }
+
+    rebuildTrack();
+    // Safety net for the innerWidth-reads-0-right-after-navigate quirk:
+    // if that's what happened, this repeats the measurement shortly
+    // after layout has definitely settled.
+    setTimeout(rebuildTrack, 250);
+    window.addEventListener('resize', rebuildTrack, { passive: true });
+  }
+
+  // The marquee (about/index.html) is now also a mini sub-nav for the 3
+  // stacked cards below it (Principles, Bruxelles Calling, Join Us):
+  // sticky right under the real (fixed) header, with links to smooth-
+  // scroll to each, and the current one bold+underlined as you scroll
+  // past it. setupMarquee duplicates its content once for the seamless
+  // loop, so every link exists twice in the DOM -- click handling and the
+  // active-state toggle both need to account for both copies.
+  function setupAboutSubNav() {
+    var section = document.querySelector('[data-framer-name="Text Ticker"]');
+    // The container itself carries no height -- its nav child is
+    // *independently* position:fixed too (see the shared header rule
+    // above), which removes it from the container's own box, leaving the
+    // container's own bounding rect at 0. The nav element is what's
+    // actually visible on screen, so measure that instead.
+    var header = document.querySelector('.framer-1kfysrm-container nav') || document.querySelector('.framer-1kfysrm-container');
+    var principlesSection = document.getElementById('principles');
+    if (!section || !header || !principlesSection) return;
+
+    function setTop() {
+      section.style.top = header.getBoundingClientRect().height + 'px';
+    }
+    setTop();
+    window.addEventListener('resize', setTop, { passive: true });
+
+    // Plain position:sticky would pin this the moment Hero scrolls away,
+    // and nesting it inside Principles to delay that would trap it in
+    // Principles' own stacking context -- Bruxelles/Join Us (higher
+    // z-index as siblings) would then cover it once they slid up. Instead
+    // toggle a fixed-position class by hand once scroll actually reaches
+    // the top of the Principles section, and remove it again if scrolled
+    // back above that point.
+    function updatePinned() {
+      var reachedPrinciples = principlesSection.getBoundingClientRect().top <= 0;
+      section.classList.toggle('demcon-subnav-pinned', reachedPrinciples);
+      if (reachedPrinciples) setTop();
+    }
+    updatePinned();
+    window.addEventListener('scroll', updatePinned, { passive: true });
+    window.addEventListener('resize', updatePinned, { passive: true });
+
+    function linksFor(id) {
+      return Array.prototype.slice.call(section.querySelectorAll('.demcon-subnav-link[data-subnav-id="' + id + '"]'));
+    }
+
+    section.addEventListener('click', function (e) {
+      var link = e.target.closest && e.target.closest('.demcon-subnav-link');
+      if (!link) return;
+      var id = link.getAttribute('data-subnav-id');
+      var target = id && document.getElementById(id);
+      if (!target) return;
+      e.preventDefault();
+      var top = target.getBoundingClientRect().top + window.pageYOffset - section.getBoundingClientRect().height - header.getBoundingClientRect().height;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+    });
+
+    var ids = ['principles', 'bruxelles-calling', 'about-join-us'];
+    var sections = ids
+      .map(function (id) {
+        var el = document.getElementById(id);
+        return el ? { id: id, el: el } : null;
+      })
+      .filter(Boolean);
+    if (!sections.length) return;
+
+    function setActive(id) {
+      ids.forEach(function (otherId) {
+        linksFor(otherId).forEach(function (link) {
+          link.classList.toggle('is-active', otherId === id);
+        });
+      });
+    }
+
+    // These 3 sections are stacking cards -- each stays full-height in the
+    // DOM and visually covers the ones before it once its turn comes up, so
+    // their rects all overlap the same screen space at once and a normal
+    // IntersectionObserver mid-screen-band check can't tell them apart.
+    // Instead walk them in z-index (i.e. list) order and take the LAST one
+    // that has already reached the top of the viewport -- that's the one
+    // currently drawn on top.
+    function updateActiveFromScroll() {
+      var current = sections[0].id;
+      sections.forEach(function (s) {
+        if (s.el.getBoundingClientRect().top <= 1) current = s.id;
+      });
+      setActive(current);
+    }
+    updateActiveFromScroll();
+    window.addEventListener('scroll', updateActiveFromScroll, { passive: true });
+    window.addEventListener('resize', updateActiveFromScroll, { passive: true });
   }
 
   // Agenda list rows cycle through 4 hover-highlight colors (cyan, green,
@@ -1130,7 +1322,15 @@
   // already baked into the markup (demcon-principles-hue-0..3, cycling
   // the same 4 colors the Agenda list's hover uses); this just owns the
   // expand/collapse state.
-  function setupPrinciplesToggle() {
+  function setupPrinciplesToggle(adjustStackedSections) {
+    // Opening an item animates its detail panel from grid-template-rows:
+    // 0fr to 1fr over 0.25s (sticky-nav.css) -- the Principles card's own
+    // height, and so how far the stack lets you scroll before Bruxelles
+    // Calling covers it, is computed from its content's actual height.
+    // Without recomputing that after a toggle, the card's scrollable
+    // range stays stuck at whatever it was on page load, so an opened
+    // item's extra height gets cut off by the next card sliding over
+    // before the user can scroll down to see all of it.
     document.querySelectorAll('.demcon-principles-toggle').forEach(function (button) {
       button.addEventListener('click', function () {
         var item = button.closest('.demcon-principles-item');
@@ -1147,6 +1347,15 @@
         }
         item.classList.toggle('is-open', !wasOpen);
         button.setAttribute('aria-expanded', String(!wasOpen));
+
+        if (!adjustStackedSections) return;
+        adjustStackedSections();
+        // transitionend on a grid-template-rows transition can fire
+        // before the resulting layout has actually settled to its final
+        // pixel height (observed: offsetHeight kept growing for a beat
+        // after the event fired) -- a flat timeout past the 0.25s
+        // transition is simpler and more reliable than trusting it.
+        setTimeout(adjustStackedSections, 300);
       });
     });
   }
@@ -1155,7 +1364,7 @@
   // based on:" / "We believe a true democracy guarantees:" -- switches
   // which .demcon-principles-panel is shown, matching the pattern already
   // used for the Agenda's category filters.
-  function setupPrinciplesTabs() {
+  function setupPrinciplesTabs(adjustStackedSections) {
     var tabs = document.querySelectorAll('.demcon-principles-tab');
     if (!tabs.length) return;
     var panels = document.querySelectorAll('.demcon-principles-panel');
@@ -1170,6 +1379,14 @@
         panels.forEach(function (p) {
           p.classList.toggle('is-active', p.getAttribute('data-panel') === panel);
         });
+        // Switching panels (display:none <-> block, no transition) can
+        // change the Principles card's content height just as much as
+        // opening an accordion item does -- e.g. one panel simply having
+        // more items than the other -- so the stacking system's scroll
+        // range needs recomputing here too, not just on accordion
+        // toggle. No animation to wait out here, so one immediate call
+        // is enough (unlike the accordion's timeout-delayed recompute).
+        if (adjustStackedSections) adjustStackedSections();
       });
     });
   }
@@ -1383,18 +1600,20 @@
 
     // When this section sits at the very top of the page (used as a
     // page's hero -- e.g. about/index.html) rather than deep in a long
-    // scroll (its original homepage placement), it's locked and driven by
-    // time instead of scroll position (see setupHeroTextRevealLock) --
-    // otherwise a fast scroll blows straight through the reveal, and left
-    // scroll-driven it'd also already be inside the viewport-relative
-    // reveal window the instant the page loads (every word lit with
-    // nothing left to reveal). Detected once, up front, via the section's
-    // own natural position before any scrolling.
+    // scroll (its original homepage placement), the viewport-relative
+    // reveal window below doesn't work: the paragraph's rect.top is
+    // already near 0 (inside that window) from the very first frame, so
+    // every word would read as lit with nothing left to reveal. Scrub
+    // this one off raw scrollY instead (see setupHeroScrollScrub) --
+    // still fully scroll-driven, just measured from the top of the page
+    // rather than the paragraph's position in the viewport. Detected
+    // once, up front, via the section's own natural position before any
+    // scrolling.
     var sectionEl = paragraph.closest('section');
     var isHero = !!sectionEl && sectionEl.getBoundingClientRect().top < 10 && window.scrollY === 0;
 
     if (isHero) {
-      setupHeroTextRevealLock(sectionEl, setWords);
+      setupHeroScrollScrub(sectionEl, setWords);
       return;
     }
 
@@ -1416,18 +1635,25 @@
     window.addEventListener('resize', update, { passive: true });
   }
 
-  // Locks scrolling the instant the visitor first tries to scroll, and
-  // plays the word-by-word reveal over fixed time instead of scroll
-  // position -- same lock-until-the-sequence-finishes pattern as the
-  // homepage hero's setupHeroIntro, just without any tumble/pin (there's
-  // nothing here to freeze in place afterward, only text to light up).
-  // Also adds the same bottom-right "Scroll" prompt used there, so a
-  // visitor landing on a hero with no visible motion still has a cue that
-  // scrolling does something.
-  function setupHeroTextRevealLock(sectionEl, setWords) {
-    var DURATION_MS = 3000;
-    var phase = 'idle'; // 'idle' -> 'animating' -> 'released'
-    var startTime = null;
+  // Scrubs the word-by-word reveal off consumed wheel/touch/key input
+  // instead of raw scrollY -- and holds real page scrolling paused (via
+  // preventDefault on that same input) until the reveal actually
+  // finishes, same "windowed reveal" technique as setupTallCardReveal
+  // below: each tick of input adds to an internal offset instead of
+  // moving the page, and only once that offset reaches the full reveal
+  // distance do the listeners get removed and normal scrolling resumes.
+  // Without the hold, a single fast flick scrolls straight past this
+  // section (and off to the next one) before the reveal has gone
+  // anywhere. This section doesn't move relative to the viewport while
+  // it's the first thing on the page anyway, so there's no rect.top
+  // range to measure a plain scroll-position reveal window against, and
+  // a fixed-duration timer (tried first) always "just happened" on the
+  // first nudge rather than tracking the visitor's own scrolling. Same
+  // bottom-right "Scroll" prompt as before, fading out once done.
+  function setupHeroScrollScrub(sectionEl, setWords) {
+    var REVEAL_DISTANCE = 700; // total consumed input needed to fully reveal
+    var offset = 0;
+    var done = false;
 
     setWords(0);
 
@@ -1439,64 +1665,130 @@
     if (getComputedStyle(sectionEl).position === 'static') sectionEl.style.position = 'relative';
     sectionEl.appendChild(arrow);
 
-    // setTimeout rather than requestAnimationFrame -- rAF callbacks have
-    // proven unreliable elsewhere in this file (queued but silently never
-    // firing in some conditions/tabs); a ~60fps timer tick is plenty
-    // smooth for this and doesn't share that failure mode.
-    function tick() {
-      var t = Math.min((Date.now() - startTime) / DURATION_MS, 1);
-      setWords(t);
-      if (t < 1) {
-        setTimeout(tick, 16);
-      } else {
-        phase = 'released';
-        document.documentElement.style.overflow = '';
-        document.body.style.overflow = '';
-        arrow.style.opacity = '0';
-        arrow.style.pointerEvents = 'none';
+    function apply() {
+      var progress = offset / REVEAL_DISTANCE;
+      setWords(progress);
+      arrow.style.opacity = progress >= 1 ? '0' : '';
+      arrow.style.pointerEvents = progress >= 1 ? 'none' : '';
+      if (progress >= 1 && !done) {
+        done = true;
+        document.removeEventListener('wheel', onWheelOrTouch);
+        document.removeEventListener('touchstart', onTouchStart);
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('keydown', onKeydown);
       }
     }
 
-    function beginAnimating() {
-      if (phase !== 'idle') return;
-      phase = 'animating';
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-      startTime = Date.now();
-      tick();
+    function consume(e, deltaY) {
+      if (done) return;
+      if (deltaY > 0 && offset < REVEAL_DISTANCE) {
+        e.preventDefault();
+        offset = Math.min(REVEAL_DISTANCE, offset + deltaY);
+        apply();
+      } else if (deltaY < 0 && offset > 0) {
+        e.preventDefault();
+        offset = Math.max(0, offset + deltaY);
+        apply();
+      }
     }
 
-    // wheel/touchmove/keydown are the primary trigger + lock: intercepted
-    // and prevented *before* any actual scrolling happens, so there's no
-    // jump when the sequence begins. The 'scroll' listener is a safety net
-    // for input this doesn't catch (e.g. dragging the scrollbar directly).
     function onWheelOrTouch(e) {
-      if (phase === 'idle') {
-        e.preventDefault();
-        beginAnimating();
-      } else if (phase === 'animating') {
-        e.preventDefault();
-      }
+      consume(e, e.deltaY);
+    }
+
+    var lastTouchY = null;
+    function onTouchStart(e) {
+      lastTouchY = e.touches[0].clientY;
+    }
+    function onTouchMove(e) {
+      if (lastTouchY === null) return;
+      var currentY = e.touches[0].clientY;
+      consume(e, lastTouchY - currentY);
+      lastTouchY = currentY;
     }
 
     var SCROLL_KEYS = ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'End', 'Home'];
     function onKeydown(e) {
       if (SCROLL_KEYS.indexOf(e.key) === -1) return;
-      onWheelOrTouch(e);
+      var forward = e.key !== 'ArrowUp' && e.key !== 'PageUp';
+      consume(e, forward ? 100 : -100);
     }
 
+    apply();
+    document.addEventListener('wheel', onWheelOrTouch, { passive: false });
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('keydown', onKeydown, { passive: false });
+  }
+
+  // About page: once the hero scroll-scrub has run its course and the
+  // visitor has scrolled far enough that Principles reaches the top of
+  // the viewport, going back up past that point -- re-entering the hero
+  // -- is blocked for the rest of the visit. A one-time intro, not a
+  // repeatable scene: reloading the page is the only way to see the hero
+  // scrub again. The boundary is exactly the scrollY where Principles
+  // first reaches top:0 (the same condition setupAboutSubNav uses to pin
+  // the sub-nav), captured once the first time that happens.
+  function setupPrinciplesOneWayGate() {
+    var principlesSection = document.getElementById('principles');
+    if (!principlesSection) return;
+
+    var locked = false;
+    var lockScrollY = null;
+
+    // Safety net that catches anything the wheel/touch blocking below
+    // misses -- keyboard Home/PageUp and scrollbar-dragging don't fire
+    // wheel/touch events, but they do fire 'scroll'. Correcting within
+    // the same scroll event that caused it means the browser never gets
+    // a chance to paint the disallowed position first.
     function onScroll() {
-      if (phase === 'released') return;
-      if (window.scrollY !== 0) {
-        window.scrollTo(0, 0);
-        if (phase === 'idle') beginAnimating();
+      if (!locked) {
+        if (principlesSection.getBoundingClientRect().top <= 0) {
+          locked = true;
+          lockScrollY = window.scrollY;
+        }
+        return;
+      }
+      if (window.scrollY < lockScrollY) {
+        window.scrollTo(0, lockScrollY);
       }
     }
+    window.addEventListener('scroll', onScroll, { passive: true });
 
-    document.addEventListener('wheel', onWheelOrTouch, { passive: false });
-    document.addEventListener('touchmove', onWheelOrTouch, { passive: false });
-    document.addEventListener('keydown', onKeydown, { passive: false });
-    document.addEventListener('scroll', onScroll, { passive: true });
+    // Blocks the common case (wheel/trackpad/touch) before the page ever
+    // moves, so pushing up against the gate feels like hitting a wall
+    // rather than bouncing back after a visible jump.
+    function blocksUpward(deltaY) {
+      return locked && deltaY < 0 && window.scrollY <= lockScrollY;
+    }
+    document.addEventListener(
+      'wheel',
+      function (e) {
+        if (blocksUpward(e.deltaY)) e.preventDefault();
+      },
+      { passive: false }
+    );
+    var lastTouchY = null;
+    document.addEventListener(
+      'touchstart',
+      function (e) {
+        lastTouchY = e.touches[0].clientY;
+      },
+      { passive: true }
+    );
+    document.addEventListener(
+      'touchmove',
+      function (e) {
+        if (lastTouchY === null) return;
+        var currentY = e.touches[0].clientY;
+        // Matches setupHeroScrollScrub's convention: finger moving up
+        // (currentY < lastTouchY) is a positive/"forward" delta, finger
+        // moving down is negative/"backward" (toward the hero).
+        if (blocksUpward(lastTouchY - currentY)) e.preventDefault();
+        lastTouchY = currentY;
+      },
+      { passive: false }
+    );
   }
 
   // Homepage stacking cards (sticky-nav.css) are clamped to exactly one
@@ -1755,7 +2047,11 @@
         '.demcon-home-page [data-framer-name="Agenda"], ' +
         '.demcon-home-page [data-framer-name="Speakers - Section"], ' +
         '.demcon-home-page [data-framer-name="Participation"], ' +
-        '.demcon-home-page [data-framer-name="JOIN US"]'
+        '.demcon-home-page [data-framer-name="JOIN US"], ' +
+        '.demcon-about-page .framer-tuaoj3, ' +
+        '.demcon-about-page .demcon-principles-section, ' +
+        '.demcon-about-page .framer-1rbxc9t, ' +
+        '.demcon-about-page .framer-13wosc3'
       )
     );
     if (!sections.length) return;
@@ -1771,12 +2067,65 @@
     window.addEventListener('resize', adjust, { passive: true });
     window.addEventListener('load', adjust);
 
+    // About page only: every card in this stack sits inside a Framer
+    // `display:contents` variant-switching wrapper, which means the
+    // browser resolves each one's position:sticky "containing block" as
+    // the *entire* surrounding flex container rather than just its own
+    // box. Native sticky release never actually happens as a result --
+    // releasing only the last (highest z-index) card just exposes the
+    // same bug one layer down (the second-to-last card, still stuck
+    // forever, shows through in its place instead of the footer). All of
+    // them need to release at once, at the moment the whole stack ends
+    // and the footer should take over -- re-pinning all of them if
+    // scrolled back up. Scoped to the about page only -- the homepage's
+    // stack doesn't get this treatment.
+    if (document.body.classList.contains('demcon-about-page')) {
+      var footer = document.querySelector('footer');
+      var footerNaturalTop = null;
+      var stackReleased = null;
+
+      function updateStackRelease() {
+        if (!footer) return;
+        var vh = window.innerHeight;
+        if (footerNaturalTop == null) {
+          footerNaturalTop = footer.getBoundingClientRect().top + window.scrollY;
+        }
+        var past = window.scrollY >= footerNaturalTop - vh;
+        if (stackReleased === past) return;
+        stackReleased = past;
+        sections.forEach(function (el) {
+          if (past) {
+            // z-index keeps applying to position:relative just as it did
+            // to sticky, so releasing the position alone still leaves
+            // these painting over the footer -- drop the z-index too.
+            el.style.position = 'relative';
+            el.style.top = '';
+            el.style.zIndex = 'auto';
+          } else {
+            el.style.position = '';
+            el.style.zIndex = '';
+            el.style.top = Math.min(0, vh - el.offsetHeight) + 'px';
+          }
+        });
+      }
+
+      updateStackRelease();
+      window.addEventListener('resize', function () {
+        footerNaturalTop = null;
+        stackReleased = null;
+        updateStackRelease();
+      }, { passive: true });
+      window.addEventListener('scroll', updateStackRelease, { passive: true });
+    }
+
     // The video's real rendered height (which Journey Section's own
     // height depends on, now that it's sized to match it) isn't known
     // until its metadata loads, which can happen after the above -- so
     // this one card also gets an extra recompute once that's ready.
     var video = document.querySelector('[data-framer-name="Journey Section"] .framer-17um2q1 video');
     if (video) video.addEventListener('loadedmetadata', adjust);
+
+    return adjust;
   }
 
   // This script is loaded with `defer`, which already guarantees the DOM is
@@ -1790,6 +2139,7 @@
   setupHeroFade();
   setupScrollReveal();
   setupMarquee();
+  setupAboutSubNav();
   setupAgendaHover();
   setupAgendaAccordion();
   setupCtaButtonHover();
@@ -1798,8 +2148,9 @@
   setupTallCardReveal();
   setupMovementReveal();
   setupContactCtaReveal();
-  setupStackedSectionOffsets();
-  setupPrinciplesToggle();
-  setupPrinciplesTabs();
+  var adjustStackedSections = setupStackedSectionOffsets();
+  setupPrinciplesToggle(adjustStackedSections);
+  setupPrinciplesTabs(adjustStackedSections);
   setupUDHRSequence();
+  setupPrinciplesOneWayGate();
 })();

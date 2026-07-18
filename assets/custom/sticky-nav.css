@@ -423,12 +423,42 @@
    each element is revealed, so no shared selector-based rule is needed
    here. */
 
-/* Text Ticker marquee -- setupMarquee() in sticky-nav.js duplicates the
-   track once (two identical, back-to-back copies of the repeating text),
-   so animating exactly halfway across loops seamlessly regardless of the
-   text's actual width. */
+/* Text Ticker / about-page sub-nav marquee -- setupMarquee() (sticky-
+   nav.js) rebuilds this section's contents from scratch: a full-bleed
+   viewport div (100vw, so it always spans edge to edge regardless of any
+   ancestor's padding/width) containing a track filled with enough
+   repeated copies of the 3 links to exceed twice the viewport width,
+   then doubled once more so animating exactly halfway across loops
+   seamlessly no matter the screen size. */
+.demcon-marquee-viewport {
+  position: relative;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  overflow: hidden;
+  background-color: rgb(255, 153, 255);
+  color: rgb(3, 5, 9);
+  padding: 19px 0;
+}
+
 .demcon-marquee-track {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 400;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  font-size: 24px;
+  text-transform: uppercase;
   animation: demcon-marquee 90s linear infinite;
+}
+
+.demcon-marquee-group {
+  display: flex;
+  flex: none;
+  white-space: nowrap;
 }
 
 @keyframes demcon-marquee {
@@ -1108,9 +1138,12 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 .demcon-principles-container {
   max-width: 1100px;
   margin: 0 auto;
-  background: rgba(250, 249, 245, 0.86);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  /* Bumped from 0.86 to 0.97 opacity (and a stronger blur) -- the UDHR
+     text running behind this card was showing through prominently
+     enough to compete with the card's own text, hurting legibility. */
+  background: rgba(250, 249, 245, 0.97);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 80px;
   border-radius: 8px;
   position: relative;
@@ -1374,10 +1407,6 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   order: 2 !important;
 }
 
-.demcon-about-page .framer-ok10fm {
-  order: 3 !important;
-}
-
 .demcon-about-page .framer-1rbxc9t {
   order: 4 !important;
 }
@@ -1398,6 +1427,92 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
    mid-scroll use of this same section is untouched. */
 .demcon-about-page .framer-tuaoj3 {
   min-height: 100vh !important;
+}
+
+/* Same scroll-stacking cards effect as the homepage: each section pins
+   to the top of the viewport and holds there while the next one slides
+   up to cover it (z-index following page order), driven by the same
+   setupStackedSectionOffsets (sticky-nav.js) top-offset technique. Height
+   is left auto (not clamped to exactly 100vh) so a section taller than
+   one viewport -- Principles easily is, once its list/tabs/UDHR
+   background are all accounted for -- scrolls through naturally instead
+   of getting clipped by place-content:center the way Agenda originally
+   did on the homepage. The marquee (framer-ok10fm) is NOT part of this
+   stack -- see further down, it's now a slim sticky sub-nav instead of
+   its own full-viewport slide. */
+.demcon-about-page .framer-tuaoj3,
+.demcon-about-page .demcon-principles-section,
+.demcon-about-page .framer-1rbxc9t,
+.demcon-about-page .framer-13wosc3 {
+  position: sticky;
+  top: 0;
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+  box-shadow: 0 -40px 60px -20px rgba(3, 5, 9, 0.45);
+}
+
+.demcon-about-page .framer-tuaoj3 { z-index: 1; }
+.demcon-about-page .demcon-principles-section { z-index: 2; }
+.demcon-about-page .framer-1rbxc9t { z-index: 3; }
+.demcon-about-page .framer-13wosc3 { z-index: 4; }
+
+/* The old repeating "DEMCON 2027 / FOR THE GLOBAL LEFT / ..." marquee
+   text is now 3 clickable section links (Principles, Bruxelles Calling,
+   Join Us) instead -- same pink band, same scrolling-marquee motion
+   (setupMarquee still duplicates the content for a seamless loop), but
+   it acts as a mini sub-nav for the 3 stacked cards below it instead of
+   being its own full-viewport slide.
+   Plain position:sticky doesn't work here: sitting between Hero and
+   Principles in document flow, a sticky version would already be pinned
+   (and visible) the moment Hero scrolls away -- before "What we stand
+   for" has even started -- and nesting it *inside* Principles instead so
+   its natural position lined up with that section's own top would trap
+   it in Principles' stacking context, so Bruxelles/Join Us (higher
+   z-index as *siblings* of Principles) would cover it once they slid up,
+   regardless of any z-index set on it internally. Instead
+   setupAboutSubNav (sticky-nav.js) toggles this class via plain
+   position:fixed once scroll actually reaches the top of the Principles
+   section, and removes it again if scrolled back above that -- fixed
+   positioning always paints above normal in-flow content regardless of
+   any ancestor's stacking context, so it stays visibly on top through
+   Bruxelles and Join Us both. Hidden (display:none) the rest of the
+   time, so it doesn't occupy space or show up early. */
+.demcon-about-page .framer-ok10fm.demcon-marquee-section {
+  display: none;
+  /* setupMarquee() rebuilds this section's contents itself (see
+     sticky-nav.js) -- reset whatever box model Framer baked onto the
+     section element so none of it can reintroduce a padding/width gap
+     around the full-bleed viewport div inside. */
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+.demcon-about-page .framer-ok10fm.demcon-marquee-section.demcon-subnav-pinned {
+  display: block;
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 500;
+}
+
+.demcon-subnav-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.demcon-subnav-link.is-active {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Pausing on hover matters more here than a purely decorative marquee
+   would -- these are real links now, and text still sliding out from
+   under the cursor mid-click is a bad time. */
+.demcon-marquee-section:hover .demcon-marquee-track {
+  animation-play-state: paused;
 }
 
 /* Homepage stacking-cards scroll: each main section pins to the top of
