@@ -707,6 +707,15 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   justify-content: space-between;
 }
 
+/* Same [hidden] specificity fix as .demcon-modal-form/.demcon-propose-
+   modal-success elsewhere in this file -- the Register modal hides this
+   panel (along with its own heading) on submit so only the Thank You
+   message remains, and the explicit display:flex above would otherwise
+   silently defeat that. */
+.demcon-modal-panel-dark[hidden] {
+  display: none;
+}
+
 .demcon-modal-mark {
   margin: 0;
   font-family: 'League Spartan', 'League Spartan Placeholder', sans-serif;
@@ -772,6 +781,14 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   gap: 16px;
 }
 
+/* Without this, form.hidden = true (used on submit to swap in the success
+   message) has no visual effect -- the [hidden] attribute's default
+   display:none carries the same specificity as .demcon-modal-form's own
+   display:flex above, and this rule wins by coming later in the sheet. */
+.demcon-modal-form[hidden] {
+  display: none;
+}
+
 .demcon-modal-form label {
   display: flex;
   flex-direction: column;
@@ -790,18 +807,143 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   opacity: 0.5;
 }
 
-.demcon-modal-form input {
+.demcon-modal-form input,
+.demcon-modal-form textarea {
   padding: 12px 14px;
   border: 1.5px solid rgba(3, 5, 9, 0.3);
   border-radius: 8px;
   font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
   font-size: 15px;
   color: #030509;
+  background: #fff;
 }
 
-.demcon-modal-form input:focus {
+.demcon-modal-form textarea {
+  resize: vertical;
+  min-height: 44px;
+  font-family: inherit;
+}
+
+.demcon-modal-form input:focus,
+.demcon-modal-form textarea:focus {
   outline: none;
   border-color: #030509;
+}
+
+/* Custom "Salon Topic / Vertical" dropdown -- a native <select>'s open
+   popup is drawn by the browser/OS itself (on macOS Chrome, a native-
+   themed gray/blue listbox) and doesn't reliably take CSS styling on its
+   options across engines, so a real select couldn't be made to actually
+   look black/white/pink once opened. This is a hand-built combobox
+   instead: a styled trigger button plus an absolutely-positioned list,
+   with a hidden input carrying the chosen value for the form. */
+.demcon-select {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.demcon-select-label {
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #030509;
+}
+
+/* Qualified with .demcon-modal-form (see the same note on
+   .demcon-propose-links-add/-remove above) so this ties, and wins over,
+   the shared .demcon-modal-form button pink-pill rule -- otherwise that
+   rule's extra type selector (button) outranks a single bare class. */
+.demcon-modal-form .demcon-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin-top: 0;
+  padding: 12px 14px;
+  border: 1.5px solid rgba(3, 5, 9, 0.3);
+  border-radius: 8px;
+  background: #030509;
+  color: #fff;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  text-align: left;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.demcon-modal-form .demcon-select-trigger:focus {
+  outline: none;
+  border-color: #030509;
+  box-shadow: 0 0 0 2px #ff0074;
+}
+
+.demcon-select.is-invalid .demcon-select-trigger {
+  border-color: #ff0074;
+  box-shadow: 0 0 0 2px rgba(255, 0, 116, 0.3);
+}
+
+.demcon-select-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.demcon-select-trigger[data-placeholder] .demcon-select-value {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.demcon-select-arrow {
+  flex: none;
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.demcon-select.is-open .demcon-select-arrow {
+  transform: rotate(180deg);
+}
+
+.demcon-select-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border: 1.5px solid #030509;
+  border-radius: 8px;
+  background: #030509;
+  box-shadow: 4px 4px 0 #030509;
+}
+
+.demcon-select-list[hidden] {
+  display: none;
+}
+
+.demcon-select-list li {
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 15px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.demcon-select-list li:hover,
+.demcon-select-list li.is-active {
+  background: #ff0074;
+}
+
+.demcon-select-list li[aria-selected="true"] {
+  font-weight: 700;
 }
 
 .demcon-modal-form button {
@@ -2098,4 +2240,615 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   .demcon-contact-cta-card {
     padding: 32px 24px;
   }
+}
+
+/* Salons section (index.html): "Our Hosts" mini-bios, sitting between the
+   description and the divider/Propose-a-Salon button. Extra margin-top
+   pushes this and everything after it (divider, Propose a Salon) further
+   down the card -- there was a lot of unclaimed vertical space between
+   the button and the bottom strip otherwise. */
+.demcon-hosts {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.demcon-hosts-label {
+  margin: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: rgb(35, 31, 32);
+}
+
+.demcon-hosts-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+}
+
+/* Fixed 88x88 footprint matching just the photo -- both the photo and the
+   reveal panel are positioned absolutely within it (below), so the
+   reveal's hover-expansion never changes this element's own box size.
+   Without that, the expanding reveal was part of normal flex flow,
+   growing this button's width and pushing the next host onto a new line
+   every time you hovered the first one. */
+.demcon-host {
+  position: relative;
+  display: block;
+  width: 112px;
+  height: 112px;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.demcon-host-photo-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  overflow: hidden;
+  /* Solid fill behind the photo -- the source PNGs' circular crop doesn't
+     quite reach the edges of their own transparent canvas, so without
+     this the gap between the photo and the ring showed whatever was
+     behind it (the page background) instead of reading as one seamless
+     black circle. */
+  background: #030509;
+  box-shadow: 0 0 0 3px #030509;
+}
+
+/* The two source photos (1080x1440 canvas) both have the exact same
+   circular subject crop within them: a 1049x1049 circle at x:[14,1063],
+   y:[221,1270] -- checked directly against the actual pixel content
+   (bbox of the non-transparent area), not guessed. object-fit:cover
+   can't target an arbitrary crop rectangle like that (only alignment via
+   object-position), so instead this sizes/positions the raw <img> by
+   hand: scale by 88/1049 so the circle itself becomes exactly 88px, then
+   offset so the circle's own center (not the canvas's center, which sits
+   noticeably higher) lands in the middle of this 112px frame. Fills the
+   circle edge to edge with no leftover margin and nothing cropped off. */
+.demcon-host-photo {
+  display: block;
+  position: absolute;
+  width: 115.33px;
+  height: 153.71px;
+  left: -1.49px;
+  top: -23.58px;
+  max-width: none;
+}
+
+/* Hidden by default, sitting absolutely behind the photo (see .demcon-host
+   above for why) -- hovering (or focusing, for keyboard users) slides it
+   out from behind the circular photo into a wider black pill, revealing
+   name + title. Clicking opens the full bio modal regardless of hover
+   state. Because it's positioned absolutely, expanding it only ever
+   overlaps whatever's to its right -- it never pushes that content
+   around -- and the next host's photo (z-index:2, above this panel's
+   z-index:1) stays visible on top if the two overlap. */
+.demcon-host-reveal {
+  position: absolute;
+  top: 0;
+  left: 56px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 112px;
+  max-width: 0;
+  padding-left: 68px;
+  padding-right: 0;
+  border-radius: 0 56px 56px 0;
+  background: #030509;
+  color: #fff;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition: max-width 0.35s ease, opacity 0.3s ease, padding-right 0.35s ease;
+}
+
+.demcon-host:hover .demcon-host-reveal,
+.demcon-host:focus-visible .demcon-host-reveal {
+  max-width: 280px;
+  padding-right: 24px;
+  opacity: 1;
+}
+
+/* Since the reveal panel overlaps whatever's next in the row instead of
+   pushing it aside (it's position:absolute -- see above), later hosts
+   need to visually slide out of its way themselves for the "make room"
+   effect to still read. transform is layout-agnostic -- it repaints the
+   element in a new spot without changing the box it occupies, so this
+   shift (unlike the old max-width-driven growth) can never force
+   .demcon-hosts-row to wrap or grow, and so never ripples out to resize
+   the Container flex row or shove the decorative graphic beside it. */
+.demcon-host:hover ~ .demcon-host,
+.demcon-host:focus-visible ~ .demcon-host {
+  transform: translateX(220px);
+  transition: transform 0.35s ease;
+}
+
+.demcon-host-name {
+  font-family: 'League Spartan', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.demcon-host-title {
+  font-family: 'League Spartan', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  opacity: 0.8;
+}
+
+/* Yellow "next salon" notification strip -- a fixed bottom bar (like a
+   cookie-consent or promo popup) that slides up from off-screen once the
+   DemocracySalons card has fully caught up and covers the viewport (see
+   setupSalonPopup in sticky-nav.js), rather than sitting pinned inside
+   the section from the start. translateY(100%) -> translateY(0) is the
+   same slide-up technique as a typical bottom-sheet notification;
+   padding-top on the wrap leaves room for the tab (below) to poke up
+   above the bar without being clipped by overflow:hidden. */
+.demcon-salon-strip-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 500;
+  padding-top: 42px;
+  overflow: hidden;
+  transform: translateY(100%);
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.demcon-salon-strip-wrap.visible {
+  transform: translateY(0);
+}
+
+/* Three-column grid rather than a flex row -- the middle column is
+   sized to the date's own content and the two 1fr side columns absorb
+   the rest equally, so the date lands exactly centered on the bar as a
+   whole while the title and button naturally settle toward the left and
+   right respectively (not centered as one grouped cluster). */
+.demcon-salon-strip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* space-between (rather than a grid with a fixed-width centered column)
+     splits whatever room is left over into the two gaps on either side of
+     the date evenly, so the date sits exactly midway between the title
+     and the button regardless of how wide either of those is. */
+  justify-content: space-between;
+  padding: 16px 160px;
+  background: #fff500;
+  border-top: 2.5px solid #030509;
+  /* Softer than a typical elevated-card shadow -- this bar already reads
+     as "on top" from the slide-up entrance and the tab poking above it,
+     so a heavy shadow underneath it was more than it needed. */
+  box-shadow: 0 -4px 28px rgba(3, 5, 9, 0.15);
+}
+
+/* Small flag poking up above the bar's top edge, same idea as a promo
+   ribbon on a bottom-sheet notification -- uses the exact blue sampled
+   from the Democracy Salons logo graphic elsewhere in this section
+   (rgb(0,179,255)), not an approximation. Bordered on top/left/right
+   (not bottom) so the bar's own border-top reads as a continuation of
+   the same line around the tab, one unmistakably continuous outline
+   instead of the tab looking like a separate floating chip. */
+.demcon-salon-strip-tab {
+  position: absolute;
+  top: -38px;
+  left: 88px;
+  padding: 10px 22px;
+  border: 2.5px solid #030509;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: #00b3ff;
+  color: #fff;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  /* Flat, hard-edged offset (no blur) instead of a soft rgba shadow --
+     matches the pop-art drop shadow behind the white "SALONS" text in the
+     Democracy Salons logo graphic. */
+  text-shadow: 2px 2px 0 #030509;
+  white-space: nowrap;
+}
+
+.demcon-salon-strip-title {
+  /* Clears the tab poking up above the bar's left edge -- without this
+     the title's default start position (right at the bar's own left
+     padding) sits partly underneath the tab instead of after it. */
+  margin: 0 0 0 90px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #030509;
+  white-space: nowrap;
+}
+
+.demcon-salon-strip-date {
+  margin: 0;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 20px;
+  font-weight: 300;
+  color: #3a3a3a;
+  white-space: nowrap;
+}
+
+.demcon-salon-strip-cta {
+  flex: none;
+  padding: 16px 40px;
+  border: 2px solid #030509;
+  border-radius: 999px;
+  background: #ff0074;
+  color: #fff;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.demcon-salon-strip-cta:hover {
+  background: #030509;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 767.98px) {
+  .demcon-salon-strip {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px 24px;
+  }
+
+  .demcon-salon-strip-title {
+    margin-left: 0;
+  }
+}
+
+/* Plain spacer sitting in normal document flow between DemocracySalons
+   and Journey Section -- invisible itself, but its height pushes Journey
+   Section's own natural document position further down, which is what
+   actually delays when its rect.top crosses into the viewport (the thing
+   setupSalonPopup watches to know when to hide the strip, and the thing
+   that visually paints over DemocracySalons via z-index once it does).
+   DemocracySalons's own sticky pin is untouched by this -- it isn't
+   released by scrolling past whatever comes after it, only ever covered
+   once something else's box shares the same screen space -- so for the
+   whole height of this spacer, DemocracySalons (and the strip) just sit
+   still on screen exactly as before, instead of Journey's content
+   already peeking up from the bottom edge immediately after. */
+.demcon-salon-pause-spacer {
+  height: 500px;
+}
+
+/* Host bio modal -- reuses the shared .demcon-modal/.demcon-modal-dialog
+   shell (see the Join Us modal above) for the overlay/backdrop/close
+   button, with its own single-column body layout. */
+.demcon-host-modal-dialog {
+  flex-direction: column;
+  max-width: 480px;
+  padding: 48px 36px;
+}
+
+.demcon-host-modal-photo-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  overflow: hidden;
+  /* Same seamless-fill fix as the card circles (see .demcon-host-photo-
+     wrap) -- solid black behind the photo in case any sliver of the
+     source PNG's transparent margin is still visible. */
+  background: #030509;
+  box-shadow: 0 0 0 3px #030509;
+}
+
+/* Same exact-crop technique as the small card photos (see
+   .demcon-host-photo), recalculated for this 120px circle: scale by
+   120/1049 so the same known 1049x1049 circular subject crop fills this
+   frame edge to edge, offset so its actual center (not the canvas's)
+   lands in the middle. */
+.demcon-host-modal-photo {
+  display: block;
+  position: absolute;
+  width: 123.55px;
+  height: 164.73px;
+  left: -1.6px;
+  top: -25.28px;
+  max-width: none;
+}
+
+.demcon-host-modal-body {
+  text-align: center;
+}
+
+.demcon-host-modal-name {
+  margin: 0 0 4px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.demcon-host-modal-title {
+  margin: 0 0 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  color: #ff0074;
+}
+
+.demcon-host-modal-socials {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0 0 20px;
+}
+
+.demcon-host-modal-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: #030509;
+  opacity: 0.75;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.demcon-host-modal-social:hover,
+.demcon-host-modal-social:focus-visible {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.demcon-host-modal-social svg {
+  width: 100%;
+  height: 100%;
+}
+
+.demcon-host-modal-bio {
+  margin: 0 0 24px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.5em;
+  color: #3a3a3a;
+}
+
+.demcon-host-modal-link {
+  display: inline-block;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #030509;
+  text-decoration: underline;
+}
+
+/* Salon event modal -- opened from the yellow strip's "Join Here" button.
+   Reuses the shared .demcon-modal shell and .demcon-modal-form's
+   input/button styling (see the Join Us modal above), just single-column
+   with its own heading/date/blurb on top. */
+.demcon-salon-modal-dialog {
+  flex-direction: column;
+  max-width: 460px;
+  padding: 48px 36px;
+}
+
+.demcon-salon-modal-label {
+  margin: 0 0 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #ff0074;
+}
+
+.demcon-salon-modal-heading {
+  margin: 0 0 8px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.demcon-salon-modal-when {
+  margin: 0 0 20px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  color: #3a3a3a;
+}
+
+.demcon-salon-modal-bio {
+  margin: 0 0 24px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.5em;
+  color: #3a3a3a;
+}
+
+.demcon-salon-modal-success {
+  margin: 0;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #030509;
+}
+
+/* Propose a Salon modal -- opened from the "Propose a Salon" link under
+   the hosts. Reuses the shared .demcon-modal shell and .demcon-modal-form
+   styling (see the Join Us modal above), single-column like the salon
+   event modal but wider to comfortably fit the longer pitch fields. */
+.demcon-propose-modal-dialog {
+  flex-direction: column;
+  max-width: 560px;
+  padding: 48px 36px;
+}
+
+.demcon-propose-modal-label {
+  margin: 0 0 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #ff0074;
+}
+
+.demcon-propose-modal-heading {
+  margin: 0 0 8px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.demcon-propose-modal-intro {
+  margin: 0 0 24px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.5em;
+  color: #3a3a3a;
+}
+
+.demcon-propose-modal-success {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Author styles beat the UA stylesheet's [hidden] default at equal
+   specificity regardless of source order, so the explicit display:flex
+   above would otherwise leave this visible even while .hidden -- same
+   fix as .demcon-modal-form[hidden] elsewhere in this file. */
+.demcon-propose-modal-success[hidden] {
+  display: none;
+}
+
+/* Same stylized blue treatment as "JOIN US" in the Join Us modal's own
+   heading (.demcon-modal-panel-light h2 span) -- reused here so both
+   modals' "you're in" moments read as the same visual language. */
+.demcon-propose-modal-success-heading {
+  margin: 0;
+  font-family: 'Hidalgo Regular', 'Hidalgo Regular Placeholder', sans-serif;
+  font-size: 40px;
+  color: #00b3ff;
+  -webkit-text-stroke: 1px #030509;
+}
+
+.demcon-propose-modal-success-body {
+  margin: 0;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #030509;
+}
+
+/* Relevant Links field -- a single-line input per link (not a free-text
+   textarea) with a "+ Add another link" control that appends more rows,
+   so each link is its own value rather than one blob of pasted text. */
+.demcon-propose-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.demcon-propose-links-label {
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #030509;
+}
+
+.demcon-propose-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.demcon-propose-links-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.demcon-propose-links-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Qualified with .demcon-modal-form (rather than left bare) so these two
+   specificity-tie with, and override, the shared .demcon-modal-form
+   button pink-pill rule above -- otherwise that rule's extra type
+   selector (button) outranks a single bare class here and both of these
+   render as pink pills instead of their own plain styles. */
+.demcon-modal-form .demcon-propose-links-remove {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin-top: 0;
+  padding: 0;
+  border: 1.5px solid rgba(3, 5, 9, 0.3);
+  border-radius: 50%;
+  background: #fff;
+  color: #030509;
+  font-size: 16px;
+  font-weight: 400;
+  text-transform: none;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.demcon-modal-form .demcon-propose-links-remove:hover {
+  border-color: #030509;
+}
+
+.demcon-modal-form .demcon-propose-links-add {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: none;
+  color: #ff0074;
+  cursor: pointer;
+}
+
+.demcon-modal-form .demcon-propose-links-add:hover {
+  background: none;
+  text-decoration: underline;
 }

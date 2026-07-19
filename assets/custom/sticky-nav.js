@@ -446,6 +446,509 @@
     });
   }
 
+  // Simple, single-path glyphs (viewBox 0 0 24 24) for each social platform
+  // -- rendered as icons instead of text labels in the host bio modal, with
+  // the platform name kept as an aria-label/title for accessibility since
+  // the visible text goes away.
+  var SOCIAL_ICONS = {
+    Instagram:
+      '<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.332.014 7.052.072 2.694.272.273 2.69.073 7.052.014 8.332 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.332 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>',
+    TikTok:
+      '<path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>',
+    Facebook:
+      '<path d="M22.675 0h-21.35C.6 0 0 .6 0 1.325v21.351C0 23.4.6 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.098 2.795.142v3.24h-1.918c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116C23.4 24 24 23.4 24 22.676V1.325C24 .6 23.4 0 22.675 0z"/>',
+    LinkedIn:
+      '<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667h-3.554V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.124 2.062 2.062 0 0 1 0 4.124zM7.114 20.452H3.56V9h3.554v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/>'
+  };
+
+  // Salons section (index.html) "Our Hosts" bios -- clicking either host's
+  // photo opens a shared modal populated with their name/title/bio/link.
+  // Mirrors initJoinUsModal's open/close/focus-trap pattern above, minus
+  // the header-hide/contrast-rewarm steps that modal needs specifically
+  // because it's triggered *from* the header itself.
+  var HOST_DATA = {
+    lindsey: {
+      name: 'Lindsey Brock Morales',
+      title: 'Editor-in-Chief, The Parlor Magazine',
+      titleColor: '#ff0074',
+      photo: '/assets/images/hosts/lindsey-brock-morales.png',
+      bio:
+        'Lindsey Brock Morales is the Editor-in-Chief of The Parlor Magazine, an independent, globally minded magazine built on the belief that the people most affected by power are the most qualified to describe it — nonprofit, independent, and accountable to no advertiser, no algorithm, and no imperial center.',
+      link: 'https://theparlormagazine.com',
+      socials: [
+        { label: 'Instagram', href: 'https://www.instagram.com/the_parlor_magazine?igsh=amsyOW1oM2pnMDRn&utm_source=qr' },
+        { label: 'TikTok', href: 'https://www.tiktok.com/@the_parlor_magazine?_r=1&_t=ZT-98925DA2kTV' },
+        { label: 'Facebook', href: 'https://www.facebook.com/share/1DYmoVELv8/?mibextid=wwXIfr' },
+        { label: 'LinkedIn', href: 'https://www.linkedin.com/company/the-parlor-mag/' }
+      ]
+    },
+    hunter: {
+      name: 'Hunter Christopher',
+      title: 'Host, roterotecast',
+      // Matches his photo's own background blue (sampled directly from the
+      // source image) rather than the site's default hot-pink title color.
+      titleColor: '#02b5fe',
+      photo: '/assets/images/hosts/hunter-christopher.png',
+      bio:
+        'Hunter Christopher is the host of roterotecast, a leftie politics show focusing on European politics, democracy, and fighting the far right.',
+      link: 'https://www.roterotemedia.com',
+      socials: [
+        { label: 'Instagram', href: 'https://www.instagram.com/roterotemedia?igsh=MXQzNTE5cjJ0MDJheQ==' },
+        { label: 'TikTok', href: 'https://www.tiktok.com/@roterotemedia?_r=1&_t=ZT-9892Ko3zn14' }
+      ]
+    }
+  };
+
+  function initHostBioModal() {
+    var modal = document.getElementById('demcon-host-modal');
+    var hostButtons = document.querySelectorAll('.demcon-host');
+    if (!modal || !hostButtons.length) return;
+
+    var dialog = modal.querySelector('.demcon-modal-dialog');
+    var photo = modal.querySelector('.demcon-host-modal-photo');
+    var name = modal.querySelector('.demcon-host-modal-name');
+    var title = modal.querySelector('.demcon-host-modal-title');
+    var socials = modal.querySelector('.demcon-host-modal-socials');
+    var bio = modal.querySelector('.demcon-host-modal-bio');
+    var link = modal.querySelector('.demcon-host-modal-link');
+    var focusableSelector = 'button, [href], [tabindex]:not([tabindex="-1"])';
+    var lastFocused = null;
+
+    function isOpen() {
+      return !modal.hidden;
+    }
+
+    function open(hostId) {
+      var data = HOST_DATA[hostId];
+      if (!data) return;
+      photo.src = data.photo;
+      photo.alt = data.name;
+      name.textContent = data.name;
+      title.textContent = data.title;
+      title.style.color = data.titleColor || '';
+      link.href = data.link;
+
+      socials.innerHTML = '';
+      (data.socials || []).forEach(function (s) {
+        var a = document.createElement('a');
+        a.className = 'demcon-host-modal-social';
+        a.href = s.href;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.setAttribute('aria-label', s.label);
+        a.title = s.label;
+        var iconPath = SOCIAL_ICONS[s.label];
+        if (iconPath) {
+          a.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + iconPath + '</svg>';
+        } else {
+          a.textContent = s.label;
+        }
+        socials.appendChild(a);
+      });
+
+      // Bio is set after the socials row via textContent, same as before --
+      // both are independent DOM writes, order here doesn't matter, but
+      // keeping the bio assignment textual (not innerHTML) still matters
+      // so nothing in it is ever parsed as markup.
+      bio.textContent = data.bio;
+
+      lastFocused = document.activeElement;
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      modal.querySelector('.demcon-modal-close').focus();
+    }
+
+    function close() {
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      if (lastFocused && lastFocused.focus) lastFocused.focus();
+    }
+
+    hostButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        open(button.getAttribute('data-host'));
+      });
+    });
+
+    modal.querySelectorAll('[data-modal-dismiss]').forEach(function (el) {
+      el.addEventListener('click', close);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (!isOpen()) return;
+      if (e.key === 'Escape') {
+        close();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var focusable = Array.prototype.slice.call(dialog.querySelectorAll(focusableSelector));
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
+  // Salons section "Join Here" button (the yellow strip) -- opens a modal
+  // with event details and an email capture instead of linking out. Event
+  // info is a placeholder until there's a real page to send people to; the
+  // form itself has nowhere real to submit yet either, so it just swaps in
+  // a thank-you message rather than posting anywhere.
+  function initSalonModal() {
+    var modal = document.getElementById('demcon-salon-modal');
+    var trigger = document.querySelector('[data-salon-modal-trigger]');
+    if (!modal || !trigger) return;
+
+    var dialog = modal.querySelector('.demcon-modal-dialog');
+    var form = modal.querySelector('[data-salon-form]');
+    var success = modal.querySelector('.demcon-salon-modal-success');
+    var firstField = modal.querySelector('input');
+    var focusableSelector = 'input, button, [href], [tabindex]:not([tabindex="-1"])';
+    var lastFocused = null;
+
+    function isOpen() {
+      return !modal.hidden;
+    }
+
+    function open() {
+      lastFocused = document.activeElement;
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      if (firstField) firstField.focus();
+    }
+
+    function close() {
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      if (lastFocused && lastFocused.focus) lastFocused.focus();
+    }
+
+    trigger.addEventListener('click', open);
+
+    modal.querySelectorAll('[data-modal-dismiss]').forEach(function (el) {
+      el.addEventListener('click', close);
+    });
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        form.hidden = true;
+        if (success) success.hidden = false;
+      });
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (!isOpen()) return;
+      if (e.key === 'Escape') {
+        close();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var focusable = Array.prototype.slice.call(dialog.querySelectorAll(focusableSelector));
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
+  // Participate section "Register to Attend" button -- mirrors the Join
+  // Us modal's own two-panel layout/copy (same DEMCON mark, when/where,
+  // and form fields), just reworded around registering interest ahead of
+  // tickets going on sale rather than a newsletter signup. Unlike the Join
+  // Us modal, this trigger isn't in the header, so there's no header-hide/
+  // contrast-rewarm step needed around opening it.
+  function initRegisterModal() {
+    var modal = document.getElementById('demcon-register-modal');
+    var trigger = document.querySelector('[data-register-modal-trigger]');
+    if (!modal || !trigger) return;
+
+    var dialog = modal.querySelector('.demcon-modal-dialog');
+    var darkPanel = modal.querySelector('.demcon-modal-panel-dark');
+    var heading = modal.querySelector('h2');
+    var form = modal.querySelector('[data-register-form]');
+    var success = modal.querySelector('.demcon-propose-modal-success');
+    var firstField = modal.querySelector('input');
+    var focusableSelector = 'input, button, [href], [tabindex]:not([tabindex="-1"])';
+    var lastFocused = null;
+
+    function isOpen() {
+      return !modal.hidden;
+    }
+
+    function open() {
+      lastFocused = document.activeElement;
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      if (firstField) firstField.focus();
+    }
+
+    function close() {
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      if (lastFocused && lastFocused.focus) lastFocused.focus();
+    }
+
+    trigger.addEventListener('click', open);
+
+    modal.querySelectorAll('[data-modal-dismiss]').forEach(function (el) {
+      el.addEventListener('click', close);
+    });
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (darkPanel) darkPanel.hidden = true;
+        if (heading) heading.hidden = true;
+        form.hidden = true;
+        if (success) {
+          success.hidden = false;
+          var successHeading = success.querySelector('[id]');
+          if (successHeading) dialog.setAttribute('aria-labelledby', successHeading.id);
+        }
+      });
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (!isOpen()) return;
+      if (e.key === 'Escape') {
+        close();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var focusable = Array.prototype.slice.call(dialog.querySelectorAll(focusableSelector));
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
+  // Salons section "Propose a Salon" link -- opens a modal collecting a
+  // full speaker pitch (name, email, org, topic vertical, pitch, why-you,
+  // and links) instead of linking out. The trigger is one of Framer's
+  // built-in animated button components (a styled div, not a real
+  // <button>/<a>), so clicks and Enter/Space both need to be wired up by
+  // hand for it to be operable via keyboard. Nowhere real to submit to
+  // yet, so it just swaps in a thank-you message rather than posting
+  // anywhere, same as the salon event modal above.
+  // Shared by both the "Propose a Salon" and "Apply to Speak" modals --
+  // same fields, same custom-dropdown/dynamic-links/success-swap behavior,
+  // just different copy and a couple of scoping selectors, so this is
+  // parameterized rather than duplicated wholesale between the two.
+  function initPitchModal(modalId, triggerSelector, introSelector, formSelector) {
+    var modal = document.getElementById(modalId);
+    var trigger = document.querySelector(triggerSelector);
+    if (!modal || !trigger) return;
+
+    var dialog = modal.querySelector('.demcon-modal-dialog');
+    var introGroup = modal.querySelector(introSelector);
+    var form = modal.querySelector(formSelector);
+    var success = modal.querySelector('.demcon-propose-modal-success');
+    var firstField = modal.querySelector('input');
+    var focusableSelector = 'input, select, textarea, button, [href], [tabindex]:not([tabindex="-1"])';
+    var lastFocused = null;
+
+    // Custom "Salon Topic / Vertical" combobox -- see the CSS comment on
+    // .demcon-select for why this isn't a real <select>. Keeps a hidden
+    // input in sync for the form data, and does its own required-check on
+    // submit since hidden inputs are barred from native constraint
+    // validation (a required attribute on one is simply ignored).
+    var selectRoot = modal.querySelector('[data-select]');
+    var selectTrigger = modal.querySelector('[data-select-trigger]');
+    var selectValue = modal.querySelector('[data-select-value]');
+    var selectList = modal.querySelector('[data-select-list]');
+    var selectInput = modal.querySelector('[data-select-input]');
+    var selectOptions = selectList ? Array.prototype.slice.call(selectList.querySelectorAll('li')) : [];
+    var selectPlaceholder = selectValue ? selectValue.textContent : '';
+
+    function closeSelect() {
+      if (!selectRoot) return;
+      selectRoot.classList.remove('is-open');
+      selectList.hidden = true;
+      selectTrigger.setAttribute('aria-expanded', 'false');
+    }
+
+    function openSelect() {
+      if (!selectRoot) return;
+      selectRoot.classList.add('is-open');
+      selectList.hidden = false;
+      selectTrigger.setAttribute('aria-expanded', 'true');
+      var active = selectOptions.filter(function (li) {
+        return li.getAttribute('aria-selected') === 'true';
+      })[0] || selectOptions[0];
+      if (active) active.focus();
+    }
+
+    function chooseOption(li) {
+      selectOptions.forEach(function (opt) {
+        opt.removeAttribute('aria-selected');
+      });
+      li.setAttribute('aria-selected', 'true');
+      selectValue.textContent = li.textContent;
+      selectValue.removeAttribute('data-placeholder');
+      selectTrigger.removeAttribute('data-placeholder');
+      selectInput.value = li.getAttribute('data-value');
+      selectRoot.classList.remove('is-invalid');
+      closeSelect();
+      selectTrigger.focus();
+    }
+
+    if (selectRoot && selectTrigger && selectList && selectInput) {
+      selectTrigger.setAttribute('data-placeholder', '');
+
+      selectTrigger.addEventListener('click', function () {
+        if (selectList.hidden) {
+          openSelect();
+        } else {
+          closeSelect();
+        }
+      });
+
+      selectOptions.forEach(function (li) {
+        li.addEventListener('click', function () {
+          chooseOption(li);
+        });
+        li.addEventListener('keydown', function (e) {
+          var index = selectOptions.indexOf(li);
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            (selectOptions[index + 1] || selectOptions[0]).focus();
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            (selectOptions[index - 1] || selectOptions[selectOptions.length - 1]).focus();
+          } else if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            chooseOption(li);
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            closeSelect();
+            selectTrigger.focus();
+          }
+        });
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!selectRoot.contains(e.target)) closeSelect();
+      });
+    }
+
+    // Relevant Links -- one URL per input rather than a single free-text
+    // textarea. The first row has no remove button (there's always at
+    // least one); each row appended after it gets one.
+    var linksList = modal.querySelector('[data-links-list]');
+    var addLinkButton = modal.querySelector('[data-links-add]');
+
+    function addLinkRow() {
+      var row = document.createElement('div');
+      row.className = 'demcon-propose-links-row';
+
+      var input = document.createElement('input');
+      input.type = 'url';
+      input.name = 'Links[]';
+      input.placeholder = 'https://your-link.com';
+      row.appendChild(input);
+
+      var remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'demcon-propose-links-remove';
+      remove.setAttribute('aria-label', 'Remove link');
+      remove.innerHTML = '&times;';
+      remove.addEventListener('click', function () {
+        row.remove();
+      });
+      row.appendChild(remove);
+
+      linksList.appendChild(row);
+      input.focus();
+    }
+
+    if (addLinkButton && linksList) {
+      addLinkButton.addEventListener('click', addLinkRow);
+    }
+
+    function isOpen() {
+      return !modal.hidden;
+    }
+
+    function open() {
+      lastFocused = document.activeElement;
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      if (firstField) firstField.focus();
+    }
+
+    function close() {
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      if (lastFocused && lastFocused.focus) lastFocused.focus();
+    }
+
+    trigger.addEventListener('click', open);
+    trigger.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        open();
+      }
+    });
+
+    modal.querySelectorAll('[data-modal-dismiss]').forEach(function (el) {
+      el.addEventListener('click', close);
+    });
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (selectInput && !selectInput.value) {
+          selectRoot.classList.add('is-invalid');
+          selectTrigger.focus();
+          return;
+        }
+        if (introGroup) introGroup.hidden = true;
+        form.hidden = true;
+        if (success) success.hidden = false;
+      });
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (!isOpen()) return;
+      if (e.key === 'Escape') {
+        close();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var focusable = Array.prototype.slice.call(dialog.querySelectorAll(focusableSelector));
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
   function init() {
     var header = document.querySelector(HEADER_SELECTOR);
     if (!header) return;
@@ -2025,6 +2528,60 @@
     window.addEventListener('resize', update, { passive: true });
   }
 
+  // Yellow "next salon" bottom bar (index.html) -- slides up from
+  // off-screen once the DemocracySalons card has fully caught up and is
+  // covering the whole viewport, and slides back down once the next card
+  // (Journey Section) has, in turn, caught up and covers DemocracySalons
+  // in its place. Unlike every other entrance reveal in this file, this
+  // one is deliberately *not* one-shot: it belongs to this one card, not
+  // to "has the user scrolled this far yet", so it needs to disappear
+  // again once that card is no longer what's on screen -- otherwise it
+  // sits there, permanently fixed to the viewport, over every section
+  // for the rest of the page. setupStackedSectionOffsets gives each of
+  // these (tall) sections a negative "stuck" top -- see that function --
+  // equal to vh minus its own height, so comparing live rect.top against
+  // that per-section value (rather than a flat 0, which only matches
+  // sections exactly one viewport tall) is what "has caught up and fully
+  // covers the viewport" means for each of them.
+  function setupSalonPopup() {
+    var section = document.querySelector('.demcon-home-page [data-framer-name="DemocracySalons"]');
+    var nextSection = document.querySelector('.demcon-home-page [data-framer-name="Journey Section"]');
+    var wrap = document.getElementById('demcon-salon-strip-wrap');
+    if (!section || !wrap) return;
+
+    function hasCaughtUp(el) {
+      if (!el) return false;
+      var stuckTop = parseFloat(el.style.top);
+      if (isNaN(stuckTop)) return false;
+      // +2px tolerance for sub-pixel scroll rounding, same reasoning as
+      // setupContactCtaReveal above.
+      return el.getBoundingClientRect().top <= stuckTop + 2;
+    }
+
+    // Hides the instant the next card's leading edge so much as enters
+    // the viewport -- it should never be on screen at the same time as
+    // any sliver of the next section peeking up from the bottom edge.
+    // On its own this used to give a dead-narrow visible window (these
+    // stacked cards sit back to back in the underlying document, so the
+    // next one started entering within ~20-50px of scroll after this one
+    // first caught), but .demcon-salon-pause-spacer now holds Journey
+    // Section's own natural position back by its own height first, so
+    // there's a real, comfortably long stretch of "just this card, fully
+    // settled" before that happens.
+    function hasStartedSurfacing(el) {
+      return !!el && el.getBoundingClientRect().top < window.innerHeight;
+    }
+
+    function update() {
+      var visible = hasCaughtUp(section) && !hasStartedSurfacing(nextSection);
+      wrap.classList.toggle('visible', visible);
+    }
+
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+  }
+
   // Plain position:sticky with top:0 pins a section the instant it reaches
   // the viewport top, freezing whatever slice is visible right then -- for
   // a section taller than one viewport (Journey Section, sized to its
@@ -2149,8 +2706,15 @@
   setupMovementReveal();
   setupContactCtaReveal();
   var adjustStackedSections = setupStackedSectionOffsets();
+  setupSalonPopup();
   setupPrinciplesToggle(adjustStackedSections);
   setupPrinciplesTabs(adjustStackedSections);
   setupUDHRSequence();
   setupPrinciplesOneWayGate();
+  initHostBioModal();
+  initSalonModal();
+  initPitchModal('demcon-propose-modal', '[data-propose-modal-trigger]', '[data-propose-intro]', '[data-propose-form]');
+  initPitchModal('demcon-apply-modal', '[data-apply-modal-trigger]', '[data-apply-intro]', '[data-apply-form]');
+  initPitchModal('demcon-partner-modal', '[data-partner-modal-trigger]', '[data-partner-intro]', '[data-partner-form]');
+  initRegisterModal();
 })();
