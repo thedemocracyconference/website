@@ -1599,6 +1599,22 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 .demcon-about-page .framer-1rbxc9t { z-index: 3; }
 .demcon-about-page .framer-13wosc3 { z-index: 4; }
 
+/* Join Us's own "Dots" decorative background (Framer-baked, data-framer-
+   name="Dots") sits at top:-63px relative to its section -- fine on the
+   original homepage where the section clips its own overflow, but this
+   section now has overflow:visible (required above, for the box-shadow
+   that sells the stacked-card effect), which let that 63px of excess
+   quietly poke out above the section's own top edge. Since this section
+   has a higher z-index than Bruxelles Calling (the card behind/above it
+   in the stack), that sliver of dots pattern was painting straight over
+   Bruxelles Calling instead of stopping at the boundary between them.
+   Resetting top to 0 removes the excess at the source rather than
+   clipping it, so it doesn't just relocate the same overflow to the
+   section's bottom edge instead. */
+.demcon-about-page .framer-13wosc3 .framer-1tdr2s1 {
+  top: 0 !important;
+}
+
 /* The old repeating "DEMCON 2027 / FOR THE GLOBAL LEFT / ..." marquee
    text is now 3 clickable section links (Principles, Bruxelles Calling,
    Join Us) instead -- same pink band, same scrolling-marquee motion
