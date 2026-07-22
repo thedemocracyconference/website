@@ -1613,12 +1613,30 @@
     // the hero instead of the section it actually pointed to (confirmed
     // live -- every About-page nav link just landed on the plain
     // homepage instead of jumping to its section). No lock, no reset, no
-    // wheel/touch interception this load. measure()'s centering math only
-    // means anything once the hero is genuinely close to the viewport,
-    // not measured from wherever the hash landed instead -- so settle it
-    // (instantly, no animation) the first time scrolling actually brings
-    // it back near the top, rather than right now from far away.
+    // wheel/touch interception this load.
     if (window.location.hash) {
+      // overlay (position:fixed, z-index:500, wrapping hero/sparkles) is
+      // what the intro's own fade normally hides by animating its opacity
+      // to 0 as heroProgress finishes -- skipping straight to that end
+      // state immediately, rather than waiting on the scroll-proximity
+      // check below, is what actually keeps her hidden regardless of how
+      // far down the target section is: without this, landing anywhere
+      // more than one viewport down (Agenda, Participate, Contact, etc.)
+      // left the deferred settle below never firing at all, so she stayed
+      // fully visible, fixed in place, floating on top of every section
+      // for the entire visit (confirmed live -- reported as "the lady"
+      // sitting over the page content after jumping straight to Agenda).
+      overlay.style.opacity = '0';
+      overlay.style.pointerEvents = 'none';
+
+      // measure()'s own centering math only means anything once the hero
+      // is genuinely close to the viewport, not measured from wherever
+      // the hash landed instead -- content/sparkles stay in their baked
+      // starting position until scrolling actually brings the hero back
+      // near the top, at which point this settles them (instantly, no
+      // animation) into the correct, fully-arrived layout. Redundant with
+      // the overlay hide above (applyFrame(1) sets that same opacity:0
+      // again), but still needed for content/sparkles' own positioning.
       var settled = false;
       var settleIfNear = function () {
         if (settled || window.scrollY > window.innerHeight) return;
@@ -1674,6 +1692,18 @@
       // setupMovementReveal's sequence -- and for the arrow specifically,
       // that inView check was already confirmed never to pass at all (see
       // the CSS comment), leaving it permanently invisible either way.
+      // demcon-hero-intro-overlay (setupHeroIntro's own wrapper around
+      // hero/sparkles) gets the exact same conflict a fourth time: landing
+      // on a hash-linked section sets its inline opacity to 0 to keep the
+      // hero hidden while jumping straight to a section (see that
+      // function's own comment), which this generic matcher can't tell
+      // apart from a baked-hidden placeholder either -- without this
+      // exclusion it "revealed" (opacity back to 1) the exact thing that
+      // fix had just hidden, an instant after setupHeroIntro set it,
+      // leaving the hero fully visible and floating over every section
+      // regardless of the fix above (confirmed live and by tracing the
+      // actual opacity writes -- setupHeroIntro's own value was correctly
+      // 0 right up until this function's reveal pass ran next).
       if (
         el.classList.contains('framer-1mmgwc5') ||
         el.classList.contains('framer-1sl0blg') ||
@@ -1682,6 +1712,7 @@
         el.classList.contains('framer-3ui96g') ||
         el.classList.contains('framer-hvsa7k') ||
         el.classList.contains('framer-e571rj') ||
+        el.classList.contains('demcon-hero-intro-overlay') ||
         el.classList.contains('framer-fobxvj')
       ) {
         return false;
