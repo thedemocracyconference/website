@@ -1602,11 +1602,40 @@
       }
     }
 
+    window.addEventListener('resize', measure, { passive: true });
+
+    // Landing here via a cross-page nav link (About's "Salons"/"Agenda"/
+    // etc, all pointing at ../index.html#section) means the hero was
+    // never meant to be the first thing seen this visit -- but onScroll's
+    // reset-to-0 safety net below doesn't know that: it was silently
+    // cancelling the browser's own native scroll-to-hash-target the
+    // instant it fired, stranding every one of those nav links back at
+    // the hero instead of the section it actually pointed to (confirmed
+    // live -- every About-page nav link just landed on the plain
+    // homepage instead of jumping to its section). No lock, no reset, no
+    // wheel/touch interception this load. measure()'s centering math only
+    // means anything once the hero is genuinely close to the viewport,
+    // not measured from wherever the hash landed instead -- so settle it
+    // (instantly, no animation) the first time scrolling actually brings
+    // it back near the top, rather than right now from far away.
+    if (window.location.hash) {
+      var settled = false;
+      var settleIfNear = function () {
+        if (settled || window.scrollY > window.innerHeight) return;
+        settled = true;
+        measure();
+        applyFrame(1);
+        document.removeEventListener('scroll', settleIfNear);
+      };
+      document.addEventListener('scroll', settleIfNear, { passive: true });
+      settleIfNear();
+      return;
+    }
+
     document.addEventListener('wheel', onWheelOrTouch, { passive: false });
     document.addEventListener('touchmove', onWheelOrTouch, { passive: false });
     document.addEventListener('keydown', onKeydown, { passive: false });
     document.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', measure, { passive: true });
     measure();
     applyFrame(0);
   }
