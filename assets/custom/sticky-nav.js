@@ -1253,6 +1253,44 @@
       '<span class="demcon-hero-scroll-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#030509" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M6 14l6 6 6-6"/></svg></span>';
     overlay.appendChild(arrow);
 
+    // Mobile only (display:none/block in sticky-nav.css controls that, not
+    // a window.innerWidth check here -- this runs once, synchronously, as
+    // part of this deferred script's very first execution, and a one-time
+    // JS width check right at that exact moment is exactly the kind of
+    // read that's proven unreliable earlier in this file's own history;
+    // a CSS media query has no load-timing dependency at all). A real,
+    // reported-on-device bug (confirmed present in both Safari and Chrome
+    // for iOS -- i.e. WebKit generally, not a Safari-only quirk) shows
+    // Hero Section's own yellow giving out partway down the screen once
+    // "content" is pinned fixed, exposing the page's plain gray canvas
+    // (body's own baked background-color) behind the "Welcome to DEMCON"
+    // text instead. Multiple targeted fixes for specific suspected causes
+    // (a dvh/vh viewport mismatch, a WebKit position:fixed + overflow:
+    // hidden interaction) didn't resolve it on the reporter's actual
+    // phone, and it doesn't reproduce at all in this project's own
+    // (Chromium-based) test tooling, so the exact mechanism is still
+    // unconfirmed. Rather than keep guessing at root causes neither of us
+    // can directly inspect, this pins a plain solid backdrop of Hero's own
+    // yellow across the full viewport, permanently underneath content/
+    // mapBg/sparkles -- so whatever is (or isn't) going on with Hero
+    // Section's own box, this specific gray-showing-through failure mode
+    // is no longer visible regardless of its cause. z-index intentionally
+    // omitted (auto, like content/mapBg) and inserted as document's very
+    // first element, so any tie resolves in every other layer's favor --
+    // it only ever shows through where *nothing* else is painted, same as
+    // Hero Section's own background would. Salons' explicit z-index:1
+    // (sticky-nav.css) covers it the same way it already covers content/
+    // mapBg once it catches up, so it never needs to be explicitly hidden
+    // or removed later.
+    var heroSection = document.querySelector('.demcon-home-page [data-framer-name="Hero Section"]');
+    var backdrop = document.createElement('div');
+    backdrop.className = 'demcon-hero-yellow-backdrop';
+    backdrop.style.position = 'fixed';
+    backdrop.style.inset = '0';
+    backdrop.style.background = heroSection ? getComputedStyle(heroSection).backgroundColor : '#fff500';
+    backdrop.style.pointerEvents = 'none';
+    document.body.insertBefore(backdrop, document.body.firstChild);
+
     content.style.willChange = 'opacity, transform';
 
     // Same relative pacing as the old scroll-distance version (hero
@@ -1289,6 +1327,26 @@
       });
       var top = Math.min.apply(null, tops);
       var bottom = Math.max.apply(null, bottoms);
+      // Mobile only in effect: her (now much bigger there -- see the
+      // .framer-1mmgwc5 mobile rule above) illustration's own flow-spacer
+      // sits between title and form, and is tall enough on a narrow phone
+      // that title-to-form together exceed one whole viewport height.
+      // Centering that entire span the way desktop always could pushed
+      // title's own top above the viewport and shoved form off the
+      // bottom entirely -- unreachable, since this block goes on to
+      // render position:fixed once pinned, so scrolling further never
+      // brings it into view. Center on just the title/date group instead
+      // whenever the full span doesn't fit, so it's reliably on-screen.
+      // Gated on that actual overflow, not a width check, so desktop
+      // (where it always fits) is never affected by this branch at all.
+      var vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      if (vh && bottom - top > vh) {
+        var titleEl = content.querySelector('.framer-ai4nw9');
+        if (titleEl) {
+          var tr = titleEl.getBoundingClientRect();
+          return { top: tr.top, height: tr.height };
+        }
+      }
       return { top: top, height: bottom - top };
     }
 
@@ -1392,6 +1450,36 @@
         renderSparkle(s);
       });
 
+      // Mobile only: pin the map at whatever position it's already
+      // rendered at, same technique as content/sparkles just above --
+      // it's a reliable freeze rather than a mid-reveal guess specifically
+      // because visibility:hidden (see the CSS) kept it fully laid out
+      // the whole time it was invisible, unlike display:none. Without
+      // this, the map was the one thing left still moving underneath the
+      // now-pinned text as the visitor kept scrolling further, reading as
+      // disconnected from everything pinned around it. Desktop's own
+      // independent parallax drift (parallax(), below) is intentional and
+      // untouched by this.
+      if (mapBg && window.innerWidth <= 767.98) {
+        var mapRect = mapBg.getBoundingClientRect();
+        mapBg.style.position = 'fixed';
+        mapBg.style.margin = '0';
+        mapBg.style.top = mapRect.top + 'px';
+        mapBg.style.left = mapRect.left + 'px';
+        mapBg.style.right = 'auto';
+        mapBg.style.bottom = 'auto';
+        mapBg.style.width = mapRect.width + 'px';
+        mapBg.style.height = mapRect.height + 'px';
+        // Framer's own baked rule for this element centers it with
+        // left:52% + transform:translateX(-50%) -- getBoundingClientRect
+        // above already reflects that transform's effect (it measures the
+        // real rendered box), so re-applying the *same* transform on top
+        // of this now-absolute left double-shifts it another 50% of its
+        // own width further left, landing well off-center. Clearing it
+        // (same as content's own transform:'none' just above) is what
+        // actually keeps the frozen position centered instead of drifting.
+        mapBg.style.transform = 'none';
+      }
     }
 
     // Once released, ordinary scrolling resumes and drives the map's
@@ -1405,7 +1493,16 @@
     // first and leaving Salons to arrive over an already-empty section.
     function parallax() {
       var scrollY = window.scrollY;
-      if (mapBg) mapBg.style.transform = 'translateY(' + scrollY * 0.3 + 'px)';
+      // Mobile only: skip the map's own parallax lag entirely. She (and
+      // the map behind her) are already small/cropped at phone widths, so
+      // the usual 0.3x-slower vertical drift read as the map sliding
+      // sideways out of place rather than a subtle depth effect -- it
+      // just scrolls at the same 1:1 rate as everything else now, like a
+      // normal background, straight into the next section. Desktop keeps
+      // the original parallax untouched.
+      if (mapBg && window.innerWidth > 767.98) {
+        mapBg.style.transform = 'translateY(' + scrollY * 0.3 + 'px)';
+      }
       sparkles.forEach(function (s) {
         s.baseTransform = 'translateY(' + scrollY * -0.12 + 'px)';
         renderSparkle(s);
@@ -1433,11 +1530,44 @@
       if (phase !== 'idle') return;
       phase = 'animating';
       measure();
+      // Mobile only in effect (see the .demcon-map-revealed CSS rule) --
+      // the map background is hidden at rest there so it doesn't bleed
+      // behind her during the opening frame, but it's still meant to
+      // show once the intro releases into the map's own parallax (same
+      // as desktop, which never hides it at all -- this class is simply
+      // a no-op there). Fired here, right as the sequence begins (not
+      // partway through applyFrame), so it's the very first thing to
+      // start fading in -- CSS's own transition (see that rule) finishes
+      // well before TEXT_START_FRAC, so the map visibly settles first and
+      // the "Welcome to DEMCON" text arrives after, not simultaneously.
+      // Switching the CSS from display:none to visibility:hidden (rather
+      // than swapping *which* property hides it here in JS) is what
+      // actually fixes the map image loading late and settling into a
+      // different spot than it renders at rest -- display:none takes the
+      // element out of layout entirely until this class flips it back,
+      // forcing a fresh, late layout+image-fetch at that exact moment;
+      // visibility:hidden keeps it fully laid out (and its image loading)
+      // the whole time, just invisible, so revealing it is instant.
+      document.body.classList.add('demcon-map-revealed');
       // Locks scrolling for the whole sequence -- without this, a fast
       // wheel flick or trackpad swipe scrubs straight past the fade
-      // instead of the visitor ever seeing it pause and complete.
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
+      // instead of the visitor ever seeing it pause and complete. Desktop
+      // only: WebKit (confirmed on both Safari and Chrome for iOS, so this
+      // is the shared engine, not a Safari-only quirk) has a long-standing
+      // bug where position:fixed elements can misalign/paint incorrectly
+      // while html/body have overflow:hidden set -- exactly what content,
+      // the map, and the sparkles all become once pin() runs below. Mobile
+      // scrolling is already fully blocked without this: onWheelOrTouch
+      // preventDefault's every touchmove while animating, and onScroll's
+      // own scrollTo(0,0) safety net catches anything that somehow still
+      // slips through -- neither depends on overflow:hidden at all. The
+      // "fast wheel flick or trackpad swipe" concern above is inherently a
+      // desktop input (mouse wheel/trackpad), so scoping this there loses
+      // nothing on mobile while avoiding the WebKit bug entirely.
+      if (window.innerWidth > 767.98) {
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+      }
       startTime = Date.now();
       tick();
     }
@@ -1761,6 +1891,46 @@
     updateActiveFromScroll();
     window.addEventListener('scroll', updateActiveFromScroll, { passive: true });
     window.addEventListener('resize', updateActiveFromScroll, { passive: true });
+  }
+
+  // Mobile only: on Bruxelles Calling, the "BRUXELLES CALLING //" label sits
+  // several flex containers deep (.framer-fn74nn > .framer-1jkp891 >
+  // .framer-1lofnyi > .framer-18jxntj), nested alongside the "THREE DAYS.
+  // ONE CITY." heading and, at a level above both of them, alongside the
+  // section's own photo -- CSS `order` only reorders siblings within the
+  // SAME flex container, so it can't pull the label out from three levels
+  // of nesting to sit above the photo, which is a real sibling of the
+  // whole text block instead. Moved via plain DOM insertBefore instead:
+  // finds the label specifically by its own text (not just its
+  // .hidden-pe22md class, which the heading right next to it also carries,
+  // see the comment on that class in sticky-nav.css) and reinserts it as
+  // the first child of .framer-fn74nn, ahead of the photo. The heading,
+  // intro, and venue details all stay exactly where they were, still
+  // below the photo. Mobile-only via a plain width check at setup time
+  // (same pattern used elsewhere in this file), not reactive to resize.
+  //
+  // The sticky-nav.css rule that un-hides this element (search
+  // ".framer-1rbxc9t .framer-18jxntj .hidden-pe22md") is scoped to
+  // descendants of .framer-18jxntj specifically -- confirmed live that
+  // once this move detaches the label from that wrapper, it's no longer
+  // a descendant of it at all, so that rule stops matching and the
+  // label silently reverts to Framer's own baked display:none (rendered
+  // at zero size, invisible, even though nothing here looked wrong at a
+  // glance). Setting display:contents directly, right here, means this
+  // element's visibility no longer depends on which wrapper happens to
+  // contain it after the move.
+  function setupBruxellesLabelAbovePhoto() {
+    if (window.innerWidth > 767.98) return;
+    var wrapper = document.querySelector('.framer-1rbxc9t .framer-fn74nn');
+    if (!wrapper) return;
+    var label = null;
+    Array.prototype.forEach.call(wrapper.querySelectorAll('.ssr-variant.hidden-pe22md'), function (el) {
+      if (!label && el.textContent.indexOf('BRUXELLES CALLING') > -1) label = el;
+    });
+    if (!label) return;
+    label.style.setProperty('display', 'contents', 'important');
+    if (label === wrapper.firstChild) return;
+    wrapper.insertBefore(label, wrapper.firstChild);
   }
 
   // Agenda list rows cycle through 4 hover-highlight colors (cyan, green,
@@ -2112,8 +2282,15 @@
     // rather than the paragraph's position in the viewport. Detected
     // once, up front, via the section's own natural position before any
     // scrolling.
+    //
+    // Threshold is 100, not a tight ~0, because this section's own
+    // sticky top is 84px on the about page (clears the fixed nav -- see
+    // its rule in sticky-nav.css), so its rect.top at scrollY 0 is ~84,
+    // not ~0. window.scrollY === 0 is the real "nothing scrolled yet"
+    // signal here; rect.top just confirms this section is the one
+    // sitting flush at the top rather than one further down the page.
     var sectionEl = paragraph.closest('section');
-    var isHero = !!sectionEl && sectionEl.getBoundingClientRect().top < 10 && window.scrollY === 0;
+    var isHero = !!sectionEl && sectionEl.getBoundingClientRect().top < 100 && window.scrollY === 0;
 
     if (isHero) {
       setupHeroScrollScrub(sectionEl, setWords);
@@ -2160,10 +2337,24 @@
 
     setWords(0);
 
+    // preventDefault() on wheel/touchmove below only stops the
+    // finger/wheel-driven part of a scroll gesture -- it does NOT stop
+    // real iOS Safari's native momentum/inertia scrolling that continues
+    // running on its own after the finger lifts (no further touchmove
+    // events fire during that deceleration, so there's nothing left for
+    // preventDefault to intercept). A CSS-level overflow:hidden while
+    // this is active is a hard stop instead: there's no scrollable
+    // distance left for any native momentum to consume, regardless of
+    // how the touch/wheel side of the gesture is handled. (The section
+    // peeking through mid-reveal that this was first added to chase
+    // turned out to be a separate bug -- see framer-tuaoj3's own rule in
+    // sticky-nav.css -- but this lock is a real hardening against genuine
+    // momentum-scroll bypass either way, so it stays.)
+    document.documentElement.classList.add('demcon-hero-scroll-lock');
+
     var arrow = document.createElement('div');
     arrow.className = 'demcon-hero-scroll-arrow demcon-hero-scroll-arrow-on-dark';
     arrow.innerHTML =
-      '<span class="demcon-hero-scroll-label">Scroll</span>' +
       '<span class="demcon-hero-scroll-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#030509" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M6 14l6 6 6-6"/></svg></span>';
     if (getComputedStyle(sectionEl).position === 'static') sectionEl.style.position = 'relative';
     sectionEl.appendChild(arrow);
@@ -2175,6 +2366,7 @@
       arrow.style.pointerEvents = progress >= 1 ? 'none' : '';
       if (progress >= 1 && !done) {
         done = true;
+        document.documentElement.classList.remove('demcon-hero-scroll-lock');
         document.removeEventListener('wheel', onWheelOrTouch);
         document.removeEventListener('touchstart', onTouchStart);
         document.removeEventListener('touchmove', onTouchMove);
@@ -2316,7 +2508,13 @@
       // none of them are clamped to one viewport now (sticky-nav.css), so
       // each one's own full, uncropped height just scrolls past natively
       // before the next card can cover it (setupStackedSectionOffsets),
-      // no JS panning/reveal needed.
+      // no JS panning/reveal needed. Principles (about/index.html) was
+      // briefly in this list too, clamped to one viewport with its label/
+      // heading panned separately from the rest of its content so they'd
+      // stay fixed in place -- reverted (back to plain auto-height/
+      // natural-scroll, same treatment as the other three) at the user's
+      // request after a real-device-only white-gap issue that couldn't be
+      // reproduced or confirmed fixed from this environment.
     ];
 
     var cards = configs
@@ -2448,27 +2646,144 @@
 
     card.classList.add('demcon-movement-card');
 
-    function checkReveal() {
-      // Journey Section scrolls through normally (auto height, no clamp)
-      // before locking into its final pinned position -- checking the
-      // card's own "is it anywhere near the viewport" rect fired while
-      // the section was still scrolling into place, well before the
-      // visitor had actually arrived at it. Wait for the section itself
-      // to reach its settled/stuck position instead (same math
-      // setupStackedSectionOffsets uses: top = min(0, vh - height)),
-      // same fix already applied to the Contact CTA reveal.
-      var expectedStuckTop = Math.min(0, window.innerHeight - section.offsetHeight);
-      var rect = section.getBoundingClientRect();
-      var nearlyStuck = Math.abs(rect.top - expectedStuckTop) < 150;
-      if (!nearlyStuck) return;
-      card.classList.add('demcon-movement-revealed');
-      window.removeEventListener('scroll', checkReveal);
-      window.removeEventListener('resize', checkReveal);
+    // Mobile only (display:none/block in sticky-nav.css controls that, not
+    // a width check here). The video's actual source file is broken --
+    // confirmed a decode failure, the file at that path is literally an
+    // HTML document, not a video -- so it never plays and instead shows
+    // the browser's own "failed" paused-icon overlay on a black frame.
+    // Its poster image is a real, valid file, so this plain <img> using
+    // that same URL substitutes for it. Created unconditionally (cheap,
+    // harmless if never shown) rather than gated behind a one-time
+    // width check -- this file's own history already has a case where
+    // that specific kind of check read stale at this exact point in a
+    // deferred script's first synchronous pass.
+    var video = section.querySelector('.framer-17um2q1 video');
+    var poster = null;
+    if (video) {
+      poster = document.createElement('img');
+      poster.className = 'demcon-movement-poster';
+      poster.src = video.poster;
+      poster.alt = '';
+      video.parentNode.insertBefore(poster, video.nextSibling);
     }
 
-    checkReveal();
-    window.addEventListener('scroll', checkReveal, { passive: true });
-    window.addEventListener('resize', checkReveal, { passive: true });
+    // How far the section has scrolled through its own entrance, 0 (just
+    // touching the viewport's bottom edge) to 1 (fully settled/stuck).
+    // stuckTop is where rect.top actually lands once caught -- 0 on
+    // desktop (setupStackedSectionOffsets' own natural min(0, vh-height)
+    // computation, unmodified there), but 84 on mobile, where a
+    // sticky-nav.css rule overrides the section's own inline `top` to
+    // 84px so it settles directly under the fixed nav instead of flush
+    // against the very top of the viewport (see that rule's own comment
+    // for why). Dividing by (vh - stuckTop) instead of a flat vh keeps
+    // progress reaching exactly 1 right as the section actually catches,
+    // whichever of those two stuckTop values is in effect, rather than
+    // asymptoting just short of 1 on mobile now that catching no longer
+    // happens at rect.top:0 there. Shared by both the poster wipe and
+    // (on mobile) the card's own reveal trigger below, so they stay in
+    // sync off one number instead of two independently-tuned checks.
+    function getEntranceProgress() {
+      var rect = section.getBoundingClientRect();
+      var vh = window.innerHeight;
+      var stuckTop = window.innerWidth <= 767.98 ? 84 : 0;
+      return Math.max(0, Math.min(1, (vh - rect.top) / (vh - stuckTop)));
+    }
+
+    // Mobile only -- the poster <img> is hidden outright on desktop now
+    // (sticky-nav.css, base .demcon-movement-poster rule -- the broken
+    // video it's a fallback for is already out of scope there), so
+    // clip-path here would just be scrubbing an invisible element.
+    // Wipes top-to-bottom as the section scrolls into place, tied
+    // directly to scroll position (not a timed fade) -- inset()'s own
+    // bottom offset starts at 100% (nothing shown) and shrinks to 0%
+    // (fully shown) as getEntranceProgress climbs 0 to 1, so the
+    // visible slice grows downward from the top edge in step with the
+    // scroll, rather than the whole image fading in uniformly at once.
+    //
+    // Explicitly clears the inline clip-path (rather than just skipping
+    // the update) once past the breakpoint -- unlike a class-based
+    // toggle, an inline style isn't scoped by the media query, so a
+    // value set while narrow (e.g. mid-wipe) would otherwise keep
+    // clipping the image if the window is later resized wider
+    // (confirmed live: resizing across the breakpoint mid-wipe left it
+    // stuck at that same partial clip on desktop width -- harmless now
+    // that display:none also hides it there, but cleared anyway so this
+    // element's own inline state doesn't silently drift from reality).
+    // This condition fires on the resize listener too, not just scroll,
+    // so it's caught the moment the resize itself crosses back over.
+    function updatePosterWipe() {
+      if (!poster) return;
+      if (window.innerWidth > 767.98) {
+        poster.style.clipPath = '';
+        return;
+      }
+      var progress = getEntranceProgress();
+      poster.style.clipPath = 'inset(0 0 ' + (100 - progress * 100) + '% 0)';
+      if (progress >= 1) {
+        window.removeEventListener('scroll', updatePosterWipe);
+        window.removeEventListener('resize', updatePosterWipe);
+      }
+    }
+
+    function checkCardReveal() {
+      var reachedStuck;
+      if (window.innerWidth <= 767.98) {
+        // Mobile: the card covers the dog lower in the photo (see
+        // sticky-nav.css, .framer-lnr63p top:225px) but the banner text
+        // ("CAMPAIGN AGAINST RACISM & FASCISM") sits higher up, in the
+        // portion of the image the top-down wipe above uncovers first --
+        // confirmed via canvas pixel analysis of the source photo that
+        // this text spans roughly the top 7.5%-42% of the image's
+        // height, i.e. entrance progress 0-0.42 given the wipe tracks
+        // progress 1:1 with revealed image height. Firing the card's
+        // fade-in once progress passes that point means it appears right
+        // as the words finish becoming readable, instead of waiting for
+        // the whole section (a further 0.58 of this same scroll range)
+        // to finish settling into its pinned position.
+        reachedStuck = getEntranceProgress() >= 0.42;
+      } else {
+        // Desktop: unchanged from before -- wait for the section itself
+        // to reach its settled/stuck position (same math as above).
+        // Journey Section scrolls through normally (auto height, no
+        // clamp) before locking into its final pinned position --
+        // checking the card's own "is it anywhere near the viewport"
+        // rect fired while the section was still scrolling into place,
+        // well before the visitor had actually arrived at it. A wide
+        // +-150px "nearly there" window (an earlier version of this
+        // check) still fired well before the section actually finished
+        // settling -- confirmed live: on a phone where the section is
+        // clamped to exactly one viewport tall, rect.top was still
+        // 135px+ away from its stuck value the moment this fired, so the
+        // card's own opacity fade-in played out WHILE the section (and
+        // the card riding along inside it) was still visibly sliding the
+        // rest of the way into place, reading as the card "shifting"
+        // mid-fade instead of fading in place. Switched to a one-sided
+        // "has it reached (or passed) stuck yet" check instead of "is it
+        // within X of stuck" -- besides firing only once truly settled,
+        // this is also more resilient to fast/flicked scrolling than a
+        // small symmetric tolerance would be: a single scroll event can
+        // jump rect.top clean past the target between two checks, and an
+        // arrived-or-passed comparison still catches that, where a tight
+        // +-Npx window could miss it entirely and never reveal the card.
+        // Small positive buffer for sub-pixel scroll rounding, same
+        // reasoning as the Contact CTA reveal's 0.98 (not a strict 1)
+        // threshold.
+        var expectedStuckTop = Math.min(0, window.innerHeight - section.offsetHeight);
+        var rect = section.getBoundingClientRect();
+        reachedStuck = rect.top <= expectedStuckTop + 4;
+      }
+      if (!reachedStuck) return;
+      card.classList.add('demcon-movement-revealed');
+      window.removeEventListener('scroll', checkCardReveal);
+      window.removeEventListener('resize', checkCardReveal);
+    }
+
+    updatePosterWipe();
+    checkCardReveal();
+    window.addEventListener('scroll', updatePosterWipe, { passive: true });
+    window.addEventListener('resize', updatePosterWipe, { passive: true });
+    window.addEventListener('scroll', checkCardReveal, { passive: true });
+    window.addEventListener('resize', checkCardReveal, { passive: true });
   }
 
   // Contact CTA section (index.html): the background "paints in" as a
@@ -2614,7 +2929,19 @@
     if (!sections.length) return;
 
     function adjust() {
-      var vh = window.innerHeight;
+      // window.innerHeight reflects the *layout* viewport, which on real
+      // iOS Safari doesn't always shrink to match the address bar's
+      // current on-screen state -- window.visualViewport.height is the
+      // one that tracks what's actually visible right now. This function
+      // is already wired to re-run on visualViewport's own resize/scroll
+      // events specifically to catch the address bar collapsing/
+      // expanding (see that listener setup below), but was still reading
+      // window.innerHeight every time regardless -- correctly timed
+      // recalculation off the wrong number. Preferring visualViewport.height
+      // when it exists (falling back to innerHeight on engines without
+      // the API) is what that recalculation was supposed to be tracking
+      // all along.
+      var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
       sections.forEach(function (el) {
         el.style.top = Math.min(0, vh - el.offsetHeight) + 'px';
       });
@@ -2623,6 +2950,25 @@
     adjust();
     window.addEventListener('resize', adjust, { passive: true });
     window.addEventListener('load', adjust);
+    // Mobile Safari (and Chrome on Android, to a lesser extent) resizes the
+    // *visual* viewport as its address bar/toolbar collapses and expands
+    // during scroll -- window.innerHeight changes right along with it, but
+    // window doesn't reliably fire 'resize' for that (only for actual
+    // layout viewport changes like rotation). Without this, every stacked
+    // section's top offset stayed frozen at whatever vh happened to be at
+    // page load, so the moment the toolbar collapsed mid-scroll on a real
+    // phone, that offset was wrong for the rest of the session: gaps opened
+    // up between cards (one released early, exposing blank space) or a
+    // card's cover was incomplete (the next one peeking through too soon,
+    // reading as though it had vanished). Recomputing on plain scroll and on
+    // visualViewport's own resize/scroll events (feature-detected -- not
+    // every engine has this API) keeps every offset tracking the real,
+    // current viewport height instead of a stale one from initial load.
+    window.addEventListener('scroll', adjust, { passive: true });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', adjust, { passive: true });
+      window.visualViewport.addEventListener('scroll', adjust, { passive: true });
+    }
 
     // About page only: every card in this stack sits inside a Framer
     // `display:contents` variant-switching wrapper, which means the
@@ -2697,6 +3043,7 @@
   setupScrollReveal();
   setupMarquee();
   setupAboutSubNav();
+  setupBruxellesLabelAbovePhoto();
   setupAgendaHover();
   setupAgendaAccordion();
   setupCtaButtonHover();

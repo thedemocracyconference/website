@@ -342,6 +342,24 @@
   background: transparent;
 }
 
+/* Mobile-only backdrop (setupHeroIntro, sticky-nav.js) that masks a
+   gray-showing-through bug on real phones -- see that file for the full
+   explanation. Created unconditionally in JS (no window.innerWidth check
+   there at all), gated to mobile purely by this media query instead --
+   it's the single most reliable way to scope it, since a media query is
+   evaluated live against the real, current viewport with no dependency on
+   exactly when it happens to run, unlike a one-time JS width check made
+   during this deferred script's very first synchronous execution. */
+.demcon-hero-yellow-backdrop {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+  .demcon-hero-yellow-backdrop {
+    display: block;
+  }
+}
+
 /* Repositioned next to her head (this element is now a child of the
    illustration itself, not the viewport-wide overlay -- see setupHeroIntro
    in sticky-nav.js -- so these percentages are relative to *her*, not the
@@ -361,6 +379,214 @@
   height: auto !important;
 }
 
+/* Mobile only: the desktop bubble above is a fixed 420px wide -- against
+   the illustration's much narrower box at phone widths (~280px), the
+   -38% right offset no longer clears her at all, so the (still 420px,
+   wider than the whole screen) bubble ended up dead center over her
+   face instead of beside her head. Confirmed on a real phone, not just
+   a resized viewport. Shrunk and repositioned above/right of her head
+   here -- her face is fully clear underneath it -- and hides the map
+   background image (.framer-1yprofd) behind her, which was also
+   requested to go on mobile only. Desktop's rule above is untouched.
+   Only hidden for the *opening* intro frame, though -- it needs to come
+   back once the intro releases into the "Welcome to DEMCON" content
+   (setupHeroIntro in sticky-nav.js), which pins that content (and, on
+   mobile, the map itself -- see pin() there) in place. Without the map
+   there, that whole section reads as a huge blank gap. body's own
+   .demcon-map-revealed class (added by setupHeroIntro right as the
+   sequence begins) flips it back on -- two classes beats this rule's
+   one, !important or not.
+   visibility (not display) is what actually hides it -- confirmed on a
+   real phone that display:none was the cause of two separate problems:
+   it takes the element out of layout *and* defers its background image's
+   own network fetch until the instant this class flips it back to
+   display:block, so the image visibly loaded in late, after the "Welcome
+   to DEMCON" text next to it already had. visibility:hidden keeps it
+   fully laid out (image loading and all) the entire time it's invisible,
+   so revealing it here is just an instant, already-loaded opacity fade
+   with no fresh layout/fetch surprise -- which was also why it sometimes
+   rendered in a visibly different spot than where it settles at rest. */
+@media (max-width: 767.98px) {
+  /* Mobile only: same scroll runway as the unscoped 60vh rule above, but
+     in dvh (dynamic viewport height) -- iOS Safari's address bar hides as
+     you scroll past this point, growing the real visible viewport, and a
+     plain vh value doesn't reliably grow to match on every iOS version,
+     leaving this section's own painted yellow background short of the
+     actual screen. The gap that opened up below it exposed body's own
+     background (light gray) instead -- reading as a stray white/gray
+     card bleeding in from behind. dvh tracks the toolbar's real, current
+     state, so this keeps pace with it instead. Plain-vh browsers ignore
+     this line outright (unsupported property value), so they simply keep
+     the unscoped rule's value -- this is additive, not a replacement. */
+  .framer-L1F0F .framer-10ecca0 {
+    padding-bottom: 60dvh;
+  }
+
+  .framer-1yprofd {
+    visibility: hidden;
+    /* !important on opacity here (and in the reveal rule below) because
+       Framer's own baked rule for this element (.framer-L1F0F
+       .framer-1yprofd, two classes) outranks this bare one-class
+       selector on specificity alone -- without it, its baked opacity:.8
+       would win outright and never actually go to 0 while hidden. */
+    opacity: 0 !important;
+  }
+
+  body.demcon-map-revealed .framer-1yprofd {
+    visibility: visible;
+    opacity: 0.8 !important;
+    transition: opacity 0.4s ease;
+  }
+
+  /* Mobile only: the signup form (.framer-1b6jkmt, a sibling of the
+     title/date group inside "Container" -- see setupHeroIntro,
+     sticky-nav.js) carries a Framer-baked solid white background that
+     was never meant to show. Confirmed present at every width, but only
+     actually visible on mobile -- harmless on desktop, so removed here
+     rather than left as an implicit no-op there. */
+  .framer-1b6jkmt {
+    background: transparent !important;
+  }
+
+  /* Mobile only: the form's own background above is removed, but the
+     text input itself still needs a solid background to read as a field
+     against the yellow behind it -- its own baked background is
+     transparent (confirmed), which is fine once the form had a white
+     card behind it, but leaves it invisible now that the form itself is
+     transparent too. */
+  .framer-1b6jkmt .framer-form-text-input {
+    background: #fff !important;
+  }
+
+  /* Mobile only: THE actual source of the "white/gray card bleeding
+     behind the hero text" bug, AND of the signup form being pushed
+     completely off-screen underneath it -- confirmed live via Safari's
+     own Web Inspector (Responsive Design Mode, real WebKit -- this
+     repo's own Chromium-based test tooling never reproduces it) on the
+     reporter's own device. setupHeroIntro (sticky-nav.js) inserts a
+     ".demcon-hero-intro-spacer" sized to match her illustration's own
+     natural height, meant to hold that space open in whatever this
+     element's *original* parent was before the illustration gets moved
+     into the fade-out overlay -- turns out that original parent is
+     nested *inside* "Container" itself (a Framer structural detail, not
+     something this rewrite created), not a plain sibling of it, so this
+     spacer was landing inside Container's own flex column, stacked right
+     between the title/date group and the signup form. At this element's
+     mobile size (her illustration is forced to a much taller 546px here
+     -- see .framer-1mmgwc5 below), that's enough invisible height to
+     push the form ~550-700px further down than the title, off the
+     bottom of the viewport entirely, while simultaneously stretching
+     "Container"'s own box tall enough to expose a huge span of the page
+     background (fixed above, but this is what was actually behind it)
+     underneath/around the text. Zeroed here via CSS rather than a
+     one-time width check in JS -- this file's own history already
+     includes a case where a single load-time window.innerWidth read
+     went stale before this exact script's synchronous setup code ran a
+     media query has no such timing dependency at all. Desktop still
+     gets the spacer's full height, completely untouched -- this is
+     mobile-only both because the illustration's own inflated 546px only
+     applies there, and because desktop's own version of this same
+     layout was already confirmed correct as-is. */
+  .demcon-hero-intro-spacer {
+    height: 0 !important;
+  }
+
+  /* Mobile only: the "Welcome to DEMCON" text block (title, tagline,
+     date/location, signup form) was tall enough that the form only came
+     into view after scrolling a little, rather than sitting fully
+     visible within the initial viewport alongside everything else.
+     Trimmed font sizes and the two gaps between title-group rows (not
+     touching layout/position, just visual density) to bring the whole
+     block comfortably inside a typical phone viewport. Desktop keeps its
+     original sizing -- these are all scoped inside this same mobile
+     media query. */
+  .framer-ai4nw9 {
+    row-gap: 24px !important;
+  }
+
+  .framer-1wm52dr {
+    row-gap: 14px !important;
+  }
+
+  .framer-vc8yb8 h1 {
+    font-size: 50px !important;
+  }
+
+  .framer-1mzcc26 h1 {
+    font-size: 32px !important;
+  }
+
+  .framer-ai4nw9 p.text-type {
+    font-size: 17px !important;
+  }
+
+  .framer-ai4nw9 [data-framer-name="Description"] p {
+    font-size: 15px !important;
+  }
+
+  .framer-6c79b6 {
+    row-gap: 20px !important;
+  }
+
+  /* Ellipse badge ("A Global Left Summit") is a separate absolutely-
+     positioned decorative shape (width baked as a fixed 262px at this
+     breakpoint) behind the text, not sized to its text content -- wider
+     than the gap between the two flanking star icons, so it visually
+     overlapped/extended past them. Width is the only thing that needs
+     touching: it's centered via a translate(-50%, -50%) transform (not
+     shown here, already baked), which recalculates against whatever the
+     element's current width is on its own, with no need to also touch
+     left/position. Confirmed live: 235px sits it comfortably between the
+     stars' inner edges. */
+  .framer-BJaSS.framer-h4e17i {
+    width: 235px !important;
+  }
+
+  /* Bigger than Framer's own baked mobile width (75%) -- she reads as too
+     small/distant on a phone screen otherwise. Width is capped at 100%
+     (full-bleed, no side cropping); pushing it further to close the gap
+     above her would start cropping her shoulders off the sides instead
+     (confirmed -- tried 119%, looked broken). Height is scaled to match
+     100%'s ratio (75%/410px -> 100%/546px) so she isn't stretched. Flush
+     against the bottom of the viewport via the overlay's own
+     align-items:flex-end -- an earlier version added a translateY to
+     pull her up further/closer to the header, but that left a gap of
+     bare yellow below her feet instead, which read worse than the gap
+     above her had. */
+  .framer-1mmgwc5 {
+    width: 100% !important;
+    height: 546px !important;
+  }
+
+  /* Bubble stays the same fixed 210px (per request) -- since it's
+     already positioned as a child of the illustration via top/right
+     percentages (not an independent fixed position), it rides along
+     with her automatically as she grows/moves above; only the
+     percentages themselves needed retuning for her new box size, same
+     as when they were first calibrated for the old, smaller box.
+     Bumped up again to 270px (per request, larger + nudged left) --
+     -8%'s right edge had also drifted past the viewport's own right
+     edge once she grew to a full 100% width hero box (same percentage,
+     bigger box to measure it against); -2% both clears that and reads
+     as the requested leftward nudge. */
+  .demcon-hero-intro-overlay .framer-1sl0blg {
+    top: -10% !important;
+    right: -2% !important;
+    width: 270px !important;
+  }
+}
+
+/* Hard scroll lock for setupHeroScrollScrub (sticky-nav.js) -- see that
+   function's own comment for why preventDefault() on wheel/touchmove
+   alone isn't enough on a real phone (native momentum/inertia scrolling
+   after the finger lifts isn't stoppable that way). overflow:hidden on
+   both html and body since different engines treat either as "the"
+   scrolling element. */
+html.demcon-hero-scroll-lock,
+html.demcon-hero-scroll-lock body {
+  overflow: hidden !important;
+}
+
 /* Bottom-right rather than bottom-center -- centered under her, this sat
    right on top of her own artwork (skirt/legs) at most viewport heights
    and was easy to lose against it. */
@@ -368,10 +594,72 @@
   position: absolute;
   right: 40px;
   bottom: 40px;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
+}
+
+/* Mobile only: bottom-right (like desktop) put it right at her shoulder
+   now that she's bigger and full-width -- centered instead reads
+   cleaner and doesn't compete with her own artwork for that corner. Now
+   that she's flush to the bottom edge too, this sits squarely over her
+   own artwork geometrically -- z-index:2 above (her illustration is
+   z-index:1) keeps it actually visible on top instead of painting
+   underneath her, which is what a bare z-index:auto sibling does next to
+   a z-index:1 one regardless of DOM/paint order. */
+@media (max-width: 767.98px) {
+  .demcon-hero-scroll-arrow {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Soft white halo behind the label+circle so they read clearly against
+     whatever busy part of her artwork they land on, now that she's big
+     enough to fill the space behind them completely (solid yellow
+     background never shows through there anymore). A radial gradient
+     (not a hard-edged circle) so it fades into her artwork instead of
+     looking like a sticker. z-index:-1 keeps it *behind* the label/circle
+     (both painted in normal flow) while still inside this element's own
+     stacking context, which -- because the element itself is already
+     z-index:2 -- stays above her (z-index:1) rather than dropping below
+     it entirely. */
+  .demcon-hero-scroll-arrow::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.55) 45%, rgba(255, 255, 255, 0) 75%);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* -on-dark only (the About page's text-reveal hero, setupHeroTextRevealLock
+     -- see the comment on that class further down) -- NOT the plain
+     .demcon-hero-scroll-arrow shared with the homepage's own Hero, which
+     wasn't part of what was asked and reads fine as-is. That page's hero
+     text is a single tall paragraph rather than the homepage's fixed
+     illustration, so the same bottom:40px this arrow inherits from the
+     base (unscoped) rule above sat close enough to the bottom of the
+     text that its own 180px halo visibly overlapped the last line
+     (confirmed live: the halo's white glow bled directly over "us.").
+     Shrinking the halo and nudging the whole arrow further down (smaller
+     bottom offset) both widen that gap -- smaller halo needs less
+     clearance to begin with, and moving down adds clearance on top of
+     that. */
+  .demcon-hero-scroll-arrow-on-dark {
+    bottom: 44px;
+  }
+
+  .demcon-hero-scroll-arrow-on-dark::before {
+    width: 80px;
+    height: 80px;
+  }
 }
 
 .demcon-hero-scroll-label {
@@ -459,6 +747,27 @@
   display: flex;
   flex: none;
   white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+  /* This marquee only exists on the About page (built entirely by
+     setupMarquee(), sticky-nav.js -- .demcon-marquee-viewport/-track
+     aren't used anywhere else), so no page-scoping needed here beyond
+     the breakpoint itself. 19px vertical padding + a 24px font was
+     tuned for desktop, where it's a comfortably slim sub-nav under a
+     much bigger logo -- on a phone the logo is smaller but this bar
+     wasn't, so it read as visually louder than the header above it
+     instead of a quiet secondary nav. Both cut down together (thinner
+     bar, smaller type) rather than just the font alone, so the bar's
+     own height shrinks to match instead of leaving now-oversized
+     padding around smaller text. */
+  .demcon-marquee-viewport {
+    padding: 8px 0;
+  }
+
+  .demcon-marquee-track {
+    font-size: 14px;
+  }
 }
 
 @keyframes demcon-marquee {
@@ -1072,6 +1381,14 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 
   .framer-1kfysrm-container.demcon-mobile-menu-open .framer-qf0vfz .framer-fp7wp4-container {
     padding-top: 0;
+    /* This is the last of the two stacked fixed-position panels (links
+       list above, this "JOIN US" panel below it) that make up the open
+       mobile menu overlay -- neither had a bottom/height, so their box
+       heights just tracked their own content, leaving a gap between the
+       end of "JOIN US" and the true bottom of the screen where the page
+       underneath (still there, just visually behind) showed through.
+       bottom:0 stretches this trailing panel the rest of the way down. */
+    bottom: 0;
   }
 
   /* Match the mobile dropdown's look to the reference site's old mobile
@@ -1098,6 +1415,29 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
     border: none !important;
   }
 
+  /* JOIN US reads as "just another link" in this stacked mobile menu (see
+     the comment above removing its border), but was still carrying its
+     desktop nav-button tap treatment underneath -- solid red fill,
+     shrinking/whitening label (.framer-NoclU's own :hover rules, tuned
+     for the bordered button it is everywhere else) -- instead of the
+     plain translateY-and-pink-text pop every other item in this same
+     list gets on tap (.framer-YmthU's :hover rule). Overriding both of
+     its rules here, scoped to this open-mobile-menu context only, so it
+     matches the rest of the stack instead of the button styling. */
+  .framer-1kfysrm-container.demcon-mobile-menu-open .framer-qf0vfz .framer-fp7wp4-container .framer-NoclU:hover {
+    background-color: transparent !important;
+  }
+
+  .framer-1kfysrm-container.demcon-mobile-menu-open .framer-qf0vfz .framer-fp7wp4-container .framer-NoclU p {
+    transition: transform 0.15s ease, color 0.15s ease !important;
+  }
+
+  .framer-1kfysrm-container.demcon-mobile-menu-open .framer-qf0vfz .framer-fp7wp4-container .framer-NoclU:hover p.framer-text {
+    transform: translateY(-3px) scale(1.15);
+    color: #ff0074 !important;
+    font-size: 28px !important;
+  }
+
   /* The toggle turns into a yellow "X" close button while the menu is open
      (icon itself is swapped in sticky-nav.js). */
   .framer-1kfysrm-container.demcon-mobile-menu-open .demcon-mobile-menu-toggle {
@@ -1107,6 +1447,17 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
     z-index: 1;
     background: #fff500;
     border-color: #030509;
+  }
+
+  /* On a dark nav (About page), .demcon-nav-black's own svg rule inverts
+     every icon to white so the plain hamburger lines show up against the
+     near-black header -- but once open, this same icon becomes the X
+     inside a solid yellow circle, and that same white-invert filter
+     leaves it nearly invisible against the yellow instead. The X's own
+     inline stroke (sticky-nav.js) is already dark; just needs the
+     inherited invert filter switched back off here for it to show. */
+  .framer-1kfysrm-container.demcon-nav-black.demcon-mobile-menu-open .demcon-mobile-menu-toggle svg {
+    filter: none !important;
   }
 
   /* Oversized display headings: Framer baked one fixed desktop font-size
@@ -1272,7 +1623,7 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 
 @media (max-width: 767.98px) {
   .demcon-udhr-stage {
-    padding: 0 24px;
+    padding: 24px 24px 0;
     column-count: 1;
   }
 }
@@ -1295,6 +1646,15 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 @media (max-width: 767.98px) {
   .demcon-principles-container {
     padding: 48px 28px;
+    /* Bleed out to the full viewport width -- the parent section's own
+       24px horizontal padding (see .demcon-principles-section above)
+       otherwise leaves this card inset with yellow gutters on both
+       sides. Negative margin matching that padding pulls it back out
+       to the edges; border-radius dropped since a rounded card flush
+       against the viewport edge no longer reads as a "card". */
+    margin-left: -24px;
+    margin-right: -24px;
+    border-radius: 0;
   }
 }
 
@@ -1519,8 +1879,31 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 }
 
 @media (max-width: 767.98px) {
+  /* Top/bottom bumped up from 90px -- this section's total height is
+     what setupStackedSectionOffsets (sticky-nav.js) measures to decide
+     how long it stays pinned/stuck while scrolling (top = vh - own
+     height), and until now that height was almost entirely down to
+     .demcon-principles-container's own (in-flow) height, since the UDHR
+     animation behind it (.demcon-udhr-bg) is position:absolute and
+     contributes nothing to layout height on its own. That meant the pin
+     was effectively sized around the white card, with the animation just
+     along for whatever ride that gave it -- easy to scroll past before
+     it's actually done. Padding is real in-flow space on this section
+     itself, so growing it directly grows the section's own height (and
+     with it, the pin) independent of the card -- the animation now gets
+     a dedicated scroll runway of its own.
+
+     Pulled back from 400px to 200px -- this is unrelated to (and doesn't
+     fix) the hero-peeking-through-early bug reported separately: the UDHR
+     background (.demcon-udhr-bg) is inset:0 on this section, so it's
+     already visible starting at this section's own top edge regardless
+     of how much padding sits above the white card -- that peek is
+     entirely about the hero section above falling short of the real
+     viewport, not about this padding "reaching back" into it. 400px just
+     read as more dead space than intended once the hero-height bug made
+     a sliver of it visible prematurely. */
   .demcon-principles-section {
-    padding: 90px 24px;
+    padding: 200px 24px;
   }
 
   .demcon-principles-grid {
@@ -1566,9 +1949,76 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
    to -- min-height:100vh overrides the baked height:min-content. Content
    stays centered via the baked place-content:center/align-items:center on
    this same class. Scoped to .demcon-about-page so the homepage's own,
-   mid-scroll use of this same section is untouched. */
+   mid-scroll use of this same section is untouched.
+
+   100vh alone left a white strip along the bottom edge on a real phone
+   (confirmed live, reported after the padding/justify-content changes
+   above -- unrelated to those, this reproduces independent of them):
+   vh is a fixed pixel value based on the LARGEST possible viewport
+   (address bar collapsed), but mobile Safari often still has the
+   address bar showing right after a fresh page load, and if it later
+   auto-collapses without vh being recalculated in step, this section's
+   height can end up shorter than the now-larger *current* viewport,
+   exposing the plain page background (light gray, confirmed live)
+   below it. dvh tracks the real, current visible viewport instead --
+   plain declaration order handles the fallback, since engines that
+   don't recognize dvh simply skip it and keep the vh value above. Same
+   fix as this section's own sticky-positioning rule further down (and
+   every other stacking section on both pages), just missing here. */
 .demcon-about-page .framer-tuaoj3 {
   min-height: 100vh !important;
+  min-height: 100dvh !important;
+}
+
+@media (max-width: 767.98px) {
+  /* Framer bakes 110px/112px top/bottom padding on this section for this
+     breakpoint, and its own justify-content:center vertically centers
+     the single "Because another politics is possible..." text block
+     within that padded box (this section is flex-direction:column, so
+     justify-content -- not align-items, which governs the cross/
+     horizontal axis here instead -- is the one controlling vertical
+     position; confirmed live after align-items:flex-start alone made
+     no visible difference at all) -- together these left a large empty
+     gap above the text (confirmed live: ~176px from the section's own
+     top edge to where the text starts) before anything appeared,
+     reading as too much dead space on a phone. Cutting padding-top
+     alone barely moved it (confirmed live: dropping it to 24px only
+     closed the gap to ~133px) -- centering means roughly HALF of
+     whatever vertical room padding-top gives back gets redistributed
+     below the text instead of just closing the gap above it. Switched
+     to flex-start instead so padding-top directly and predictably sets
+     this gap on its own, with no redistribution -- the leftover space
+     that used to split evenly above/below now just becomes extra room
+     below the text instead (unproblematic: nothing else sits below it
+     on this section, and it's the About page's own hero, so there's no
+     dwell-timing concern the way there was on the homepage's Journey
+     Section).
+
+     100px, not 24px -- with justify-content now flex-start, padding-top
+     IS the gap directly (no more centering redistribution to lean on),
+     so it needs to actually clear the fixed nav (84px tall) itself: 24px
+     left the first line of text rendering straight underneath/behind
+     the nav (confirmed live). 100px comfortably clears it with a little
+     room to spare.
+
+     A top:84px sticky-offset override (tried, then reverted) seemed like
+     the more "correct" fix at first -- settle the section's own box below
+     the nav, not just its text -- but position:sticky's `top` only
+     affects where the element gets visually clamped once scrolled; it
+     does NOT add to the element's own contribution to document flow.
+     That mismatch (box rendered 84px lower than where the flow model
+     thinks it sits) meant the NEXT section in the stack (Principles)
+     still started its own natural flow position 84px too early --
+     confirmed live as the UDHR/yellow section visibly painting over the
+     hero's own bottom edge (it has the higher z-index of the two),
+     covering the scroll arrow, well before it should have been reachable.
+     Plain padding-top has no such side effect -- it's real, in-flow space
+     that the element's own height already accounts for, so nothing about
+     where the next section starts needs to change to accommodate it. */
+  .demcon-about-page .framer-tuaoj3 {
+    justify-content: flex-start !important;
+    padding-top: 100px !important;
+  }
 }
 
 /* Same scroll-stacking cards effect as the homepage: each section pins
@@ -1589,7 +2039,12 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   position: sticky;
   top: 0;
   height: auto;
+  /* dvh added alongside the plain vh already here -- same white-strip-
+     at-the-bottom issue (see the comment on framer-tuaoj3's own
+     min-height rule above) applies to all four of these, not just that
+     one, since none of them had the dynamic fallback. */
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: visible;
   box-shadow: 0 -40px 60px -20px rgba(3, 5, 9, 0.45);
 }
@@ -1655,6 +2110,52 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   z-index: 500;
 }
 
+@media (max-width: 767.98px) {
+  /* Removed outright on mobile rather than kept-but-shrunk (an earlier
+     version of this just reduced its padding/font-size) -- the label +
+     "What we stand for" heading underneath it scrolls out of view for
+     good once this section settles into its pinned position (this
+     section's own content is much taller than one viewport; see
+     .demcon-principles-intro's history in this file for the full
+     investigation into why that can't be fixed with simple spacing
+     tricks short of either an ugly gap or turning this marquee into a
+     second sticky header) -- given that, keeping this bar around just
+     to link to a heading that's already gone wasn't earning its keep on
+     a phone. setupAboutSubNav (sticky-nav.js) still toggles
+     .demcon-subnav-pinned the same as before; this only overrides the
+     rule above that makes the pinned state visible, same specificity
+     but later in source order so it wins the tie. Desktop keeps the
+     marquee/sub-nav exactly as it was. */
+  .demcon-about-page .framer-ok10fm.demcon-marquee-section.demcon-subnav-pinned {
+    display: none;
+  }
+
+  /* Removing the marquee above turned out to have a side effect specific
+     to THIS section (Bruxelles Calling): confirmed live that its own
+     native "BRUXELLES CALLING //" label and "THREE DAYS. ONE CITY."
+     heading are baked by Framer itself with display:none at this exact
+     breakpoint (the .hidden-pe22md class Framer generates for its own
+     responsive variant system -- pe22md is this site's hash for
+     max-width:767.98px), with no alternate mobile-specific variant
+     provided in its place -- confirmed live, the only other sibling
+     inside this same wrapper is a decorative rotated icon graphic, not
+     replacement text. Unlike Principles' label/heading (hand-built, own
+     custom classes, always visible, just eventually scrolls out of view
+     -- a separate, already-investigated issue), this section apparently
+     relied on the marquee/sub-nav to be the only thing ever announcing
+     its name on a phone. Restoring these Framer-hidden variants directly
+     (matching desktop's own display:contents for this same element,
+     confirmed live) rather than leaving the section headerless now that
+     the marquee's gone. Scoped narrowly to .framer-18jxntj specifically
+     (the shared wrapper around just these two variants) rather than the
+     bare .hidden-pe22md class, which Framer reuses site-wide for
+     unrelated legitimately-mobile-hidden content -- overriding that
+     directly would have unhidden things far outside this section. */
+  .demcon-about-page .framer-1rbxc9t .framer-18jxntj .hidden-pe22md {
+    display: contents !important;
+  }
+}
+
 .demcon-subnav-link {
   color: inherit;
   text-decoration: none;
@@ -1704,6 +2205,13 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   position: sticky;
   top: 0;
   height: 100vh;
+  /* dvh tracks the *actual visible* viewport, shrinking/growing live as a
+     mobile browser's address bar collapses or expands on scroll -- vh
+     alone stays fixed at whichever height happened to be current on page
+     load. Plain declaration order handles the fallback: engines that
+     don't recognize dvh simply skip it and keep the vh value above;
+     engines that do let this one win since it comes second. */
+  height: 100dvh;
   overflow: hidden;
   box-shadow: 0 -40px 60px -20px rgba(3, 5, 9, 0.45);
   /* Forces its own isolated compositing layer -- without this, the
@@ -1713,9 +2221,52 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
      up to cover another, instead of respecting the z-index stacking that
      should make the covering card fully opaque on top. */
   isolation: isolate;
+  /* isolation:isolate fixes the stacking-context *logic* (which layer is
+     allowed to show through which), but on a real phone that's separate
+     from whether the browser's compositor actually keeps each of these
+     sections pre-painted on its own stable GPU layer moment to moment --
+     reported live as the Journey/Agenda handoff occasionally "bleeding"
+     into each other, intermittently and worse on a fast flick-scroll
+     (never reproduced on a slow/controlled scroll), which is the
+     signature of a compositing/paint timing issue rather than a CSS
+     correctness one. will-change hints the browser to promote each
+     section to its own layer ahead of time instead of deciding
+     mid-scroll, which is the standard mitigation for exactly this
+     "correct at rest, glitches under fast scroll" symptom. */
+  will-change: transform;
 }
 
 .demcon-home-page [data-framer-name="DemocracySalons"] { z-index: 1; }
+
+/* Mobile only: DemocracySalons' content (hosts row, Propose a Salon
+   button) comfortably fits one viewport on desktop, so it never needed
+   the auto-height treatment the other tall cards below get -- but at
+   phone widths the same content wraps across far more lines and no
+   longer fits, and the shared height:100vh/dvh + overflow:hidden rule
+   above was silently clipping the overflow off the bottom of the card
+   with no way to scroll to it (confirmed: scrollHeight exceeded
+   clientHeight at 375px wide). Scoped to mobile only, and following the
+   exact same auto-height/setupStackedSectionOffsets pattern as Agenda
+   just below, so desktop's already-correct layout is untouched.
+   overflow stays hidden, unlike Agenda/Participation below -- height:auto
+   already grows the box to fully contain Salons' own real content (its
+   own "Container" child rect fits comfortably inside with room to spare,
+   confirmed live), so nothing here actually needs overflow:visible to
+   avoid clipping. Framer bakes several full-bleed decorative children
+   sized on the assumption their overhang gets clipped by the section's
+   own overflow (the same pattern fixed for Agenda's dotted background
+   and the about page's "Dots" layer, elsewhere in this file) -- visible
+   let whichever of those live inside Salons bleed out past the card's
+   own edges instead, reading as a stray white/cream rectangle floating
+   free of it. Kept hidden here closes that off at the source. */
+@media (max-width: 767.98px) {
+  .demcon-home-page [data-framer-name="DemocracySalons"] {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+}
 .demcon-home-page [data-framer-name="Journey Section"] { z-index: 2; }
 .demcon-home-page [data-framer-name="Agenda"] { z-index: 3; }
 /* Agenda's own baked layout centers its content (place-content:center)
@@ -1733,6 +2284,7 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 .demcon-home-page [data-framer-name="Agenda"] {
   height: auto;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: visible;
 }
 
@@ -1770,6 +2322,7 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   z-index: 4;
   height: auto;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: visible;
 }
 .demcon-home-page [data-framer-name="JOIN US"] { z-index: 5; }
@@ -1781,6 +2334,7 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 .demcon-home-page [data-framer-name="JOIN US"] {
   height: auto;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: visible;
 }
 
@@ -1812,6 +2366,7 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
      background underneath while "stuck", not a compositing artifact.
      min-height is a floor against that, independent of the video. */
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: visible;
   display: block;
   /* min-height above stretches the SECTION's own box, but the video
@@ -2034,6 +2589,297 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   transform: translateY(0);
 }
 
+/* setupMovementReveal (sticky-nav.js) inserts this poster <img> as a
+   fallback for the section's broken video, unconditionally on every
+   screen size, but its own sizing/cropping rules all live inside the
+   mobile media query below -- so on desktop it was rendering completely
+   unstyled, at its native 3707x2780px intrinsic size (confirmed live:
+   massively overflowing the layout). Desktop already has the (equally
+   broken, but out-of-scope) video in that same spot, so the fix is just
+   to hide this fallback there rather than give it its own desktop
+   sizing -- the mobile media query's own display:block below overrides
+   this back on for the breakpoint that actually needs it. */
+.demcon-movement-poster {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+  /* THE actual source of "Read More" rendering far below the visible
+     card, seemingly under the footer -- confirmed live (getBoundingClientRect
+     on the paragraph's own <p> vs its .framer-fobxvj wrapper): Framer bakes
+     a fixed height:182px on this wrapper for this breakpoint, sized for
+     however many lines the paragraph took on whatever viewport that
+     baking assumed. At this card's actual mobile width the same text
+     wraps across far more lines (459px tall, confirmed), overflowing the
+     fixed-height wrapper -- the text itself still renders fine
+     (overflow:visible, not clipped), but "Read More" (this wrapper's
+     *other* flex child, right after the paragraph) lays out based on the
+     paragraph's true 459px, past the wrapper's own (wrong, too-short)
+     182px box -- which is also the card's own only source of height, so
+     the whole card ends far shorter than its actual content, and
+     "Read More" reads as escaped into whatever comes after it on the
+     page. auto lets it size to its real content instead. */
+  .demcon-home-page [data-framer-name="Journey Section"] .framer-fobxvj {
+    height: auto !important;
+  }
+
+  /* Same fixed-height bug as .framer-fobxvj above, but on the heading's
+     own wrapper: .framer-wcxrxy's single child is .ssr-variant
+     (display:contents, passes through invisibly), whose own single real
+     child -- .framer-hvsa7k -- is the one actually carrying a baked
+     height:206px (confirmed via grep: three responsive height rules ship
+     for this class, tuned for wider breakpoints). On a phone the 2-line
+     heading only needs ~56px, so the extra ~150px rendered as a large
+     dead gap between the heading and the paragraph below it. */
+  .demcon-home-page [data-framer-name="Journey Section"] .framer-hvsa7k {
+    height: auto !important;
+  }
+
+  /* Framer also bakes this same text a permanent inline opacity:0 (a
+     scroll-reveal animation state that nothing here ever triggers --
+     setupMovementReveal clears the equivalent baked state on the
+     heading/arrow/paragraph but never targeted this element), so the
+     "THE MOVEMENT // 01" label rendered invisible-but-space-reserved on
+     every viewport. Confirmed this predates all of today's mobile work
+     (reproduces on desktop too), so left as an out-of-scope pre-existing
+     bug there, same as the broken video below -- overridden with
+     !important here only, scoped to mobile. */
+  .demcon-home-page [data-framer-name="Journey Section"] .framer-7orsv7 {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Highlight's gap (heading/label/paragraph stack) trimmed down to match
+     the smaller card below -- 32px read as excessive once the card's own
+     padding and font sizes were reduced to fit one phone viewport. */
+  .demcon-home-page [data-framer-name="Journey Section"] .framer-1ibrk5w {
+    gap: 14px !important;
+  }
+
+  .demcon-home-page [data-framer-name="Journey Section"] .framer-wcxrxy h4 {
+    font-size: 26px !important;
+  }
+
+  .demcon-home-page [data-framer-name="Journey Section"] .framer-fobxvj p {
+    font-size: 15px !important;
+  }
+
+  /* Same restructuring as the Contact CTA section (search
+     ".demcon-contact-cta-card" for that one) applied here for the same
+     reason: this card used to float absolutely over the lower portion of
+     the image (translucent, blurred, inset with side margins) -- on this
+     375px-wide phone that read as messy for the same underlying cause,
+     a busy photo smeared by backdrop-blur behind text instead of a crisp
+     image. Restructured into the same two-block pattern -- image as a
+     plain, full-strength hero band up top, this card as an ordinary
+     opaque, full-width, square-cornered block flowing directly below it
+     -- rather than overlapping.
+
+     Switched off position:absolute (the desktop base rule's left:50%/
+     bottom:110px/transform:translateX(-50%) all go with it, hence
+     resetting each individually below) back to a normal flow child --
+     .framer-17um2q1 (the image) is a real sibling element here, not a
+     background layer like Contact's ::before, so once the card is back
+     in normal flow it already lands directly after the image with no
+     extra margin-top needed to clear it, unlike Contact's card.
+
+     Also drops the "move the card up to cover the dog" positioning from
+     the previous version of this rule -- that only mattered when the
+     card overlapped the image; now that it sits below instead, the full
+     photo (dog included) shows in the hero band same as the rest of it. */
+  .demcon-home-page [data-framer-name="Journey Section"] > .framer-lnr63p {
+    position: static;
+    left: auto;
+    top: auto;
+    bottom: auto;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    background: #faf9f5;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-radius: 0;
+    padding: 32px 20px;
+    /* Putting the card in normal flow (above) means its own height now
+       adds to the section's total, but Agenda (the next stacking
+       section, higher z-index) starts covering things the instant its
+       own natural document position reaches the visible viewport --
+       which, confirmed live on a real phone, was happening while the
+       card's paragraph was barely a line in, cutting off "Read More"
+       and most of the copy almost immediately after the section
+       settled. The section's own extra height beyond one viewport is
+       what delays that (same mechanism that gives Agenda/Participation/
+       etc. their own much longer dwell before whatever follows THEM
+       covers anything) -- this card's own natural content was barely
+       exceeding one viewport at all, leaving almost no such buffer.
+       margin-bottom, not padding, so the extra space is a gap AFTER the
+       card rather than inside it -- confirmed live it doesn't reintroduce
+       a visible black gap either (it only ever exists below the fold at
+       the moment of catching, and gets seamlessly covered by Agenda's
+       own incoming opaque background as it climbs, not shown as a bare
+       gap first). */
+    margin-bottom: 420px;
+  }
+
+  /* The arrow graphic is baked at a fixed 460x125px (pre-rotation) --
+     wider than this entire card on a phone (~295px), so it's hidden
+     there already (confirmed: display:none, a Framer responsive
+     default) -- but the paragraph's own -73px margin-top and the arrow
+     wrapper's -36px were both tuned to compensate for that arrow's
+     *presence* (pulling the heading/paragraph up to overlap the space it
+     would otherwise leave). With the arrow already gone here, those
+     same pulls just overlapped the heading with the paragraph instead.
+     Zeroed out now that height:auto above means the wrapper genuinely
+     sizes to its content and doesn't need this compensation. */
+  .demcon-home-page [data-framer-name="Journey Section"] .framer-1m75x1d > .framer-e571rj {
+    margin-top: 0 !important;
+  }
+
+  /* This flex column's own baked inline gap (48px, tuned for the desktop
+     layout with the arrow graphic taking up a row between heading and
+     paragraph) still applied here even with the arrow hidden, reading as
+     a big dead gap between "Another world is on her way..." and the
+     paragraph below it -- confirmed live via getBoundingClientRect on
+     both (48px gap even with this margin-top zeroed), not something
+     margin-top alone could close. Overridden down to 8px so the
+     paragraph sits right up against the heading. */
+  .demcon-home-page [data-framer-name="Journey Section"] .framer-1m75x1d {
+    gap: 8px !important;
+  }
+
+  .demcon-home-page [data-framer-name="Journey Section"] .framer-1m75x1d > .framer-fobxvj {
+    margin-top: 0 !important;
+  }
+
+  /* The background video's actual source file is broken (confirmed live:
+     a DEMUXER_ERROR_COULD_NOT_OPEN decode failure -- the file at that
+     path is literally an HTML document, not a video at all), so it never
+     plays and instead shows the browser's own "video failed" paused-icon
+     overlay on a black frame. The <video> tag's own poster image is a
+     real, valid JPEG (confirmed), so a plain <img> using that same file
+     (inserted by setupMovementReveal, sticky-nav.js) replaces it here --
+     sized/cropped by this same media query's rules below and wiped in
+     via clip-path (updatePosterWipe, sticky-nav.js). Explicitly hidden
+     on desktop instead (base .demcon-movement-poster rule, above this
+     media query) -- desktop keeps the (equally broken, but unreported/
+     out of scope here) video untouched -- not part of what was asked. */
+  .demcon-home-page [data-framer-name="Journey Section"] > .framer-17um2q1 video {
+    display: none !important;
+  }
+
+  /* This wrapper (Framer's own "Gallery" flex container) was being
+     vertically CENTERED within the section's full 812px height by
+     Framer's own baked flex-centering (still wins here despite this
+     stylesheet's own display:block on the section itself -- confirmed
+     empirically, not fully explained by the cascade). Centering left
+     ~265px of solid black dead space above AND below the image band
+     (whose own height is fixed by its aspect ratio), and -- worse --
+     put the banner photo's own protest-banner text entirely behind the
+     translucent card below, which starts well above where the centered
+     image began. Flipped to top-alignment instead (kept IN-FLOW,
+     deliberately not pulled out via position:absolute -- an earlier
+     version of this fix did that and, even though every check here came
+     back clean, it's needless structural change for what's really just
+     a vertical-alignment fix, and this stacking-cards page leans on
+     several scripts reading each section's own natural offsetHeight
+     elsewhere, so least-footprint wins). */
+  .demcon-home-page [data-framer-name="Journey Section"] {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    /* Framer bakes a 10px flex gap here, leaving a visible sliver of the
+       section's own black background between the hero image and the
+       card below it (confirmed live) instead of the two sitting flush
+       -- zeroed to match the Contact CTA section's own flush hero-to-
+       card transition. */
+    gap: 0 !important;
+    /* setupStackedSectionOffsets (sticky-nav.js) computes this section's
+       own sticky `top` inline as min(0, vh - height) -- 0 on a phone
+       (this section's own content fits close to one viewport), meaning
+       it settles flush against the very top of the viewport, directly
+       under the fixed nav (84px tall). Overridden to 84px here instead
+       -- external !important beats that plain (non-important) inline
+       style -- so the section settles with its own top edge exactly at
+       the nav's bottom edge instead. Paired with removing the wrapper's
+       old margin-top:90px compensation below: previously the image was
+       pushed down by a flat margin THE ENTIRE TIME the section was even
+       partially on screen (including while still scrolling into place,
+       reading as a big dead black gap above the image -- confirmed
+       live); now the section itself simply settles 84px lower, so the
+       image (flush at the wrapper's own top, no margin) lands exactly
+       below the nav only once actually caught, with no gap needed
+       before or after that point.
+
+       getEntranceProgress (setupMovementReveal, sticky-nav.js) is aware
+       of this same 84px on mobile -- it divides by (vh - stuckTop)
+       instead of a flat vh, so "fully caught" still correctly reads as
+       progress 1 instead of asymptoting just short of it. */
+    top: 84px !important;
+  }
+
+  /* flex-start alone lands this flush at y:0, clear of any Framer-baked
+     centering (see comment above), but that's still section-LOCAL y:0 --
+     with the section's own sticky top offset also 0 (its natural, JS-
+     computed value -- see setupStackedSectionOffsets), that meant the
+     fixed nav (84px tall) covered the image's own top ~84px once the
+     section actually caught/settled, eating into the banner text's own
+     visible range (which starts at just 7.5% of the image's height).
+     An earlier version of this fix compensated with a flat 90px
+     margin-top on this wrapper -- correct once settled, but that same
+     90px shows up as a solid, empty black gap for the ENTIRE time the
+     section is still scrolling into place beforehand too (confirmed
+     live), since the margin is baked into the wrapper regardless of
+     scroll position, not something that only matters once stuck.
+
+     Removed in favor of moving the compensation onto the SECTION's own
+     sticky offset instead (see the mobile-only `top: 84px` override on
+     the section itself, a few rules up) -- the section now settles with
+     its own top edge exactly at the nav's bottom edge instead of at the
+     very top of the viewport, so the image (now flush at this wrapper's
+     own y:0, no margin) lands exactly below the nav once caught, with
+     no dead space needed at any point along the way. */
+  .demcon-home-page [data-framer-name="Journey Section"] > .framer-17um2q1 {
+    height: 300px !important;
+  }
+
+  /* Enlarged from its natural ~281px (100%-width, aspect-fit) height to
+     300px and cropped via object-fit:cover -- object-position pinned to
+     the right so the ~9% trimmed off comes entirely from the LEFT edge
+     of the frame (blank banner fabric there, confirmed via pixel
+     analysis: the banner's actual text spans only 19%-83% of the
+     image's width), leaving the readable "CAMPAIGN AGAINST RACISM &
+     FASCISM" text fully intact with margin to spare on both sides. Text
+     also confirmed (same pixel analysis, scanning for bright/white
+     rows) to span roughly the TOP 8%-42% of the image's height -- at
+     90px top + 300px height that lands the text between y=90 and
+     y~216, comfortably within the hero band, well clear of the
+     (now full-width, non-overlapping) card below it. */
+  /* clip-path starts fully closed (bottom inset 100% = nothing shown) --
+     updatePosterWipe (sticky-nav.js) scrubs this bottom inset down to 0%
+     in step with scroll, wiping the image in top-to-bottom rather than
+     fading it in as a whole. No transition here deliberately: the wipe
+     is meant to track scroll position directly, not lag behind it. */
+  .demcon-movement-poster {
+    display: block;
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    object-position: 100% center;
+    clip-path: inset(0 0 100% 0);
+  }
+
+  /* The card/heading/paragraph delays used to be pushed later here (by
+     the poster's own 0.5s fade duration) back when setupMovementReveal
+     triggered the poster and the card at the exact same instant -- that
+     coordination no longer applies now that the poster wipes in
+     progressively as the section scrolls into place (updatePosterWipe,
+     sticky-nav.js) while the card waits for that wipe to specifically
+     clear the banner text (checkCardReveal's 0.42 progress threshold);
+     by the time the card's own reveal fires the wipe has already passed
+     that point, so nothing here needs to wait on it further -- the base
+     (desktop) delays above this media query apply unmodified here too. */
+}
+
 /* Homepage's JOIN US section, replaced with a hand-built contact form
    (matching contact/index.html's own field set: Name, Email, Phone,
    Message) over the same background illustration contact/index.html's
@@ -2253,8 +3099,187 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
     flex-direction: column;
   }
 
+  /* Previously a floating rounded, translucent/blurred card centered over
+     the (also previously full-height) background image -- on the narrow
+     375x1892 mobile box that combination read as genuinely messy rather
+     than the intended "frosted glass over a photo" look: the card's own
+     blur smeared the small, already-tightly-cropped hero band behind it
+     into a washed-out haze instead of a crisp photo. Restructured as two
+     stacked, non-overlapping blocks instead -- a plain hero image band up
+     top (this same ::before, now full-strength instead of something to
+     blur), then this card as an ordinary opaque, full-width, square-
+     cornered block sitting below it, more like a normal page section
+     than a floating card. Squared off (no border-radius) and shadow
+     removed to match that flush, edge-to-edge look; solid instead of
+     translucent since there's no image directly behind it to blend with
+     anymore. */
   .demcon-contact-cta-card {
+    margin-top: 320px;
     padding: 32px 24px;
+    background: #faf9f5;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* Companion to the card change above: this section used to center its
+     (image + floating card) block within its own considerable height
+     (1892px tall at a 375-wide phone, confirmed live -- the card's own
+     content plus the footer merged into the same scroll-through) via
+     justify-content:center. With the card now meant to sit directly
+     below a fixed-height hero band instead of floating mid-section,
+     centering no longer makes sense -- switched to flex-start so
+     everything stacks from the top instead, and the side/top padding
+     (previously 80px 30px 0, shared with desktop) dropped to 0 so the
+     hero image and the now-full-width card can both reach the true
+     screen edges. Top padding is handled via the card's own 320px
+     margin-top above instead, matching the hero band's own height (see
+     the ::before rule below) so the card starts exactly where the image
+     ends rather than needing a second hardcoded number to stay in sync. */
+  .demcon-contact-cta-section {
+    padding: 0;
+    justify-content: flex-start;
+  }
+
+  /* Mobile only: the stacking-cards row (see setupStackedSectionOffsets,
+     sticky-nav.js) is a flex column driven by a per-section `order` Framer
+     bakes into its own mobile CSS (DemocracySalons:1, Journey:3, Agenda:5,
+     Speakers:7, Participation:8) -- but this section is hand-built (see
+     comment above .demcon-contact-cta-section), so it has no Framer-baked
+     order at all and defaults to 0. On desktop every section defaults to
+     order:0 alike, so ties just fall back to DOM order, which already
+     happens to be correct there -- nothing to fix. On mobile, order:0 put
+     this section in flex position right after the Hero, ahead of every
+     other card, so its z-index:5 painted over DemocracySalons instead of
+     appearing after Participation like it should. */
+  .demcon-contact-cta-section {
+    order: 9;
+  }
+
+  /* Base rule above sizes this ::before with inset:0, covering the
+     section's own full height -- fine on desktop (that section is
+     roughly as tall as it is wide), but on mobile this section is
+     extremely tall relative to its width (its card's content plus the
+     footer merged into the same scroll-through, per the comment on
+     .framer-1yncser-container above -- confirmed live: 375x1892 at a
+     375px-wide phone). background-size:cover against that aspect ratio
+     has to scale the 1536x1024 source image up ~1.85x just to satisfy
+     the height, cropping away all but a ~13%-wide center sliver of its
+     width -- which happens to land on flat yellow sky, hiding both the
+     desert scenery and the "Democracy Salons" road-sign entirely
+     (confirmed live: that sliver is blank yellow start to finish).
+     Constrained to a fixed band pinned to the section's top instead of
+     stretching the full height -- sized so cover's height-driven scale
+     drops to ~0.31x (vs. ~1.85x before), keeping most of the image's
+     width on screen -- and repositioned to frame the sign specifically,
+     since this band is exactly the part actually visible before the
+     card fades in over it (the reveal sequencing itself -- diagonal
+     wipe, then card -- is unchanged, this only fixes what that wipe
+     reveals). The rest of the section's own great height falls back to
+     the plain cream background-color already set on the section. */
+  .demcon-contact-cta-section::before {
+    inset: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 320px;
+    background-position: 65% 32%;
+  }
+
+  /* No footer-specific full-bleed override needed here (there used to be
+     one) -- now that .demcon-contact-cta-section's own left/right
+     padding is 0 on mobile (see that rule above), the footer's existing
+     site-wide mobile fix (search ".framer-wxmzE.framer-f91918" further
+     up this file -- sets width:100% !important to recover a mobile
+     layout Framer's export never wired up) already resolves to the full
+     375px viewport width on its own, same as it does on the About/
+     Contact pages. Confirmed live: removing the extra override changed
+     nothing, the footer stayed flush. */
+}
+
+/* Mobile only: DemocracySalons' description/hosts/divider/propose-a-salon
+   block (framer-6yy4j6 and its children) sits noticeably left-aligned
+   with a big gap under the logo graphic on mobile -- reducing the gap
+   (Left Content's own 72px row-gap, between the logo and this text
+   block) and centering the pieces that were still left-aligned within
+   their own (already horizontally-centered-as-a-box) containers. Scoped
+   to mobile only; desktop's own layout here is untouched and was already
+   correct. */
+@media (max-width: 767.98px) {
+  .framer-sfxkli {
+    row-gap: 10px !important;
+  }
+
+  .demcon-hosts {
+    margin-top: 16px !important;
+  }
+
+  .framer-1atslb2 {
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .framer-1atslb2 p {
+    text-align: center !important;
+  }
+
+  .demcon-hosts {
+    align-items: center !important;
+  }
+
+  .demcon-hosts-label {
+    text-align: center !important;
+  }
+
+  .demcon-hosts-row {
+    justify-content: center !important;
+  }
+
+  /* Section Header's own row-gap (24px, Framer-baked) applies uniformly
+     to all four of its children's spacing (description-hosts, hosts-
+     divider, divider-propose) -- pulling just "Propose a Salon" closer
+     to the divider above it needs a negative margin on it specifically,
+     not a smaller shared gap (which would also tighten the other two). */
+  .framer-1ilqax {
+    margin-top: -12px !important;
+  }
+
+  /* Disables the hover-triggered name/title reveal (see .demcon-host-
+     reveal and its :hover rules above) -- on a touch device, tapping a
+     host photo can leave it "stuck" in a hover-like state (no real mouse
+     to move away and clear it) rather than the deliberate mouse-in/
+     mouse-out interaction this was designed for, reading as a random
+     photo-expands-and-won't-close glitch. Tapping still opens the full
+     bio modal regardless (that's a separate click handler, untouched) --
+     this only cancels the extra hover animation, not the modal itself. */
+  .demcon-host:hover .demcon-host-reveal {
+    max-width: 0 !important;
+    padding-right: 0 !important;
+    opacity: 0 !important;
+  }
+
+  .demcon-host:hover ~ .demcon-host {
+    transform: none !important;
+  }
+
+  /* Mobile only: this whole content block (logo, description, hosts,
+     divider, propose-a-salon) was vertically centered within the
+     section (Container's own baked justify-content:center) rather than
+     anchored to its top -- combined with the section's own baked 95px
+     padding-top, that pushed a big empty gap above the logo and, since
+     centering divides the section's leftover height evenly above and
+     below, squeezed "Propose a Salon" down far enough to sit under the
+     "Next Salon" notification strip that slides up over this card (see
+     setupSalonPopup, sticky-nav.js) once it's caught up. Anchoring to
+     the top instead and shrinking the section's own padding moves
+     everything up, clearing the strip. */
+  .framer-86nu57 {
+    justify-content: flex-start !important;
+  }
+
+  [data-framer-name="DemocracySalons"] {
+    padding-top: 30px !important;
   }
 }
 
@@ -2530,14 +3555,69 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 }
 
 @media (max-width: 767.98px) {
+  /* Title + button share the top row (button right-aligned next to the
+     title instead of stacked below the date), date drops to its own row
+     spanning the full width underneath. Grid (not flex) so the button
+     can sit in the title's row without needing them wrapped in a shared
+     container of their own. */
   .demcon-salon-strip {
-    flex-direction: column;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: 'title cta' 'date date';
+    align-items: center;
+    row-gap: 6px;
+    column-gap: 12px;
     padding: 20px 24px;
   }
 
   .demcon-salon-strip-title {
+    grid-area: title;
     margin-left: 0;
+    padding-left: 10px;
+    font-size: 18px;
+    white-space: normal;
+  }
+
+  .demcon-salon-strip-date {
+    grid-area: date;
+    padding-left: 10px;
+    font-size: 13px;
+    /* Baked #3a3a3a (a mid-gray meant for a white background elsewhere)
+       doesn't have enough contrast against this bar's bright yellow --
+       matching the near-black (#030509) used for the title/tab/border
+       right on this same bar instead. */
+    color: #030509;
+  }
+
+  .demcon-salon-strip-cta {
+    grid-area: cta;
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  /* Tab sits close to the bar's left padding instead of Framer's own
+     88px-in desktop position, which left an oddly wide bare stretch of
+     border to its left on a narrow phone screen. Shrunk (padding and
+     font-size both) and pulled its poke-up height in to match (top) --
+     at the original desktop size, it reached up far enough to overlap
+     "Propose a Salon" (part of the DemocracySalons card scrolled behind
+     this fixed bar, visible through the transparent space the wrap's own
+     padding-top holds open above the bar itself) instead of just poking
+     above the bar's own edge like it does on desktop. */
+  .demcon-salon-strip-tab {
+    left: 20px;
+    padding: 6px 14px;
+    font-size: 11px;
+    top: -26px;
+  }
+
+  /* Matches the tab's own shrink above -- was reserving enough transparent
+     space for the *original* 38px-tall tab to poke up into; taller than
+     the new smaller tab actually needs, which was extra transparent space
+     for whatever's scrolled behind the bar (see .demcon-salon-strip-tab
+     comment) to show through. */
+  .demcon-salon-strip-wrap {
+    padding-top: 26px;
   }
 }
 
@@ -2555,6 +3635,29 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
    already peeking up from the bottom edge immediately after. */
 .demcon-salon-pause-spacer {
   height: 500px;
+}
+
+/* Mobile only: this spacer's shared flex parent (with DemocracySalons,
+   Journey Section, etc. -- see setupStackedSectionOffsets, sticky-nav.js)
+   uses a per-section `order` Framer bakes in at this breakpoint
+   (DemocracySalons:1, Journey Section:3, ...) to sequence the stack --
+   exact same mechanism, and exact same bug, already fixed once this
+   session for the hand-built JOIN US section. This spacer is also
+   hand-built (not a Framer-authored component), so it has no baked
+   order either and defaults to 0, tying it with Hero Section and
+   landing it in flex order *before* DemocracySalons instead of after --
+   its own transparent 500px then opened up a real gap between Hero and
+   Salons, exposing the page's plain background there (read as a stray
+   white/gray "bleed" arriving before the Salons card, sliding in behind
+   the still-pinned Hero text). order:2 sits it correctly between
+   DemocracySalons (1) and Journey Section (3), matching its actual
+   purpose and DOM position. Desktop never bakes order at all (every
+   section defaults to 0 there, so plain DOM order already puts this
+   spacer in the right place) -- confirmed unaffected. */
+@media (max-width: 767.98px) {
+  .demcon-salon-pause-spacer {
+    order: 2;
+  }
 }
 
 /* Host bio modal -- reuses the shared .demcon-modal/.demcon-modal-dialog
