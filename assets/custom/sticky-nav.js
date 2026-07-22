@@ -291,7 +291,58 @@
       if (!s) return;
       e.preventDefault();
       setActive(id);
-      var top = s.el.getBoundingClientRect().top + window.pageYOffset - getHeaderHeight() - 8;
+      // Every one of these sections is position:sticky -- once you've
+      // already scrolled past one (it's "caught" and stuck at its own CSS
+      // top, covered by later, higher z-index sections sliding over it),
+      // its getBoundingClientRect().top no longer reflects its true
+      // document position at all; it just reports its stuck offset (e.g.
+      // 0 or 84) forever, regardless of how far down the page you
+      // actually are. That broke this handler's own rect-based math --
+      // confirmed live as clicking an earlier nav item (About) while
+      // already scrolled down to a later one (Contact) not moving the
+      // page at all. Switching to the browser's own scrollIntoView()
+      // didn't help either -- confirmed live it lands on the same wrong,
+      // stuck-relative position, since it's reading the exact same
+      // corrupted rect internally. The only reliable fix is to not trust
+      // any *current* measurement of these elements at all: briefly
+      // forcing every stacked section to position:static -- flattening
+      // them back into plain, honest document flow -- for the single
+      // synchronous measurement below, then immediately restoring their
+      // real position before the browser ever paints a frame in between,
+      // so it's invisible to the visitor.
+      var stackedSections = Array.prototype.slice.call(
+        document.querySelectorAll(
+          '.demcon-home-page [data-framer-name="DemocracySalons"], ' +
+            '.demcon-home-page [data-framer-name="Journey Section"], ' +
+            '.demcon-home-page [data-framer-name="Agenda"], ' +
+            '.demcon-home-page [data-framer-name="Speakers - Section"], ' +
+            '.demcon-home-page [data-framer-name="Participation"], ' +
+            '.demcon-home-page [data-framer-name="JOIN US"]'
+        )
+      );
+      var prevPosition = stackedSections.map(function (el) {
+        return el.style.position;
+      });
+      stackedSections.forEach(function (el) {
+        el.style.position = 'static';
+      });
+      // No header-clearance subtraction here (unlike a plain-flow anchor
+      // target elsewhere on the site) -- these sections are already
+      // sticky at top:0 with their own internal padding/centering
+      // clearing the fixed nav on their own (confirmed live: this
+      // section's own first line of text sits ~470px below the section's
+      // top edge, nowhere near the 84px nav). Subtracting extra headroom
+      // here just meant the scroll stopped short of the point where the
+      // section actually catches and sticks, landing it still ~90px
+      // short of flush -- confirmed live as a small but consistent
+      // "doesn't quite arrive" gap, reported as overcompensating when
+      // navigating back to an earlier card. Targeting the section's true
+      // top directly lands it exactly flush, matching where it settles
+      // anyway once stuck.
+      var top = s.el.getBoundingClientRect().top + window.pageYOffset;
+      stackedSections.forEach(function (el, i) {
+        el.style.position = prevPosition[i];
+      });
       window.scrollTo({ top: top, behavior: 'smooth' });
       if (history.pushState) history.pushState(null, '', '#' + id);
     });
@@ -1637,13 +1688,34 @@
       // animation) into the correct, fully-arrived layout. Redundant with
       // the overlay hide above (applyFrame(1) sets that same opacity:0
       // again), but still needed for content/sparkles' own positioning.
+      //
+      // pin() + phase='released' + the same onScroll the normal flow
+      // uses post-intro are also needed here, not just the instant
+      // visual settle -- without them, landing via hash and later
+      // scrolling back up to the hero left the map/sparkle parallax
+      // completely inert for the rest of the visit (reported live: the
+      // background map and stars never move at all once you scroll back
+      // to the top after a nav-link jump elsewhere on the homepage).
+      // Skipping the lock/animation in hash-mode is correct -- there's
+      // nothing to play, the visitor didn't land here to watch it -- but
+      // that's a separate thing from parallax, which has no dependency
+      // on the intro ever having played and should keep working
+      // regardless. pin() converts content/sparkles/mapBg to their
+      // fixed-position "settled" state exactly like the normal flow's
+      // own tick() does once its animation completes; onScroll, with
+      // phase already 'released', only ever calls parallax() from here
+      // on -- its reset-to-0 branch is unreachable once phase is set.
       var settled = false;
       var settleIfNear = function () {
         if (settled || window.scrollY > window.innerHeight) return;
         settled = true;
         measure();
         applyFrame(1);
+        pin();
+        phase = 'released';
         document.removeEventListener('scroll', settleIfNear);
+        document.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
       };
       document.addEventListener('scroll', settleIfNear, { passive: true });
       settleIfNear();

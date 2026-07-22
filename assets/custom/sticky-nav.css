@@ -117,9 +117,25 @@
    and an element's own explicit cursor always wins over one inherited from
    an ancestor, so an ancestor-only rule leaves every such descendant
    uncovered. !important is needed to beat those baked declarations
-   regardless of their own specificity. */
+   regardless of their own specificity.
+
+   ::before/::after are ALSO needed, separately from `*` -- the universal
+   selector only ever matches real elements, never pseudo-elements, so it
+   can't reach them no matter how broadly it's written. Framer draws most
+   button/link borders (anything with data-border="true") via exactly
+   such a pseudo-element, which carries its own baked `cursor: pointer`
+   rather than just inheriting it from its host -- without these, that
+   pseudo-element kept showing the native pointer arrow the whole time
+   the (correctly cursor:none) real element underneath it was hovered,
+   reading as a second, smaller cursor showing through the custom one
+   (confirmed live: reported on both header nav links and buttons
+   elsewhere, everywhere this same data-border pattern is used). */
 .demcon-cursor-target:hover,
-.demcon-cursor-target:hover * {
+.demcon-cursor-target:hover *,
+.demcon-cursor-target:hover::before,
+.demcon-cursor-target:hover::after,
+.demcon-cursor-target:hover *::before,
+.demcon-cursor-target:hover *::after {
   cursor: none !important;
 }
 
@@ -3547,6 +3563,15 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   text-transform: uppercase;
   text-decoration: none;
   transition: background-color 0.2s ease, transform 0.2s ease;
+  /* This is a real <button>, not an <a> -- unlike Framer's own baked
+     links/buttons, a plain <button> here has no baked cursor:pointer of
+     its own, computing to the browser default ("default", a plain
+     arrow) instead. enhanceButtons (sticky-nav.js) only tags elements
+     that already compute to cursor:pointer as custom-cursor targets, so
+     without this, this one button was silently skipped -- it kept
+     showing the native arrow on hover instead of the custom cursor every
+     other clickable element on the site gets (confirmed live). */
+  cursor: pointer;
 }
 
 .demcon-salon-strip-cta:hover {
