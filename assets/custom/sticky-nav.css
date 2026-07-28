@@ -1335,11 +1335,16 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   height: 22px;
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 979.98px) {
   /* Framer's own nav-content rule hardcodes a 1200px desktop width with no
      mobile override (only the Desktop breakpoint variant was baked into
      this static export), which pushes the logo and hamburger off-screen at
-     narrow widths since the row centers itself around that phantom width. */
+     narrow widths since the row centers itself around that phantom width.
+     Extended up to 979.98px (not just the 767.98px phone cutoff) -- this
+     whole hamburger treatment is also the fix for the 768-979.98px tablet
+     range, where Framer's own un-redesigned desktop nav clips/hides link
+     text (the logo and JOIN US button keep their fixed desktop widths,
+     squeezing the middle link row below the space it needs). */
   .framer-1kfysrm-container .framer-k2S74.framer-1fjhuce {
     width: 100% !important;
   }
@@ -1475,7 +1480,9 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   .framer-1kfysrm-container.demcon-nav-black.demcon-mobile-menu-open .demcon-mobile-menu-toggle svg {
     filter: none !important;
   }
+}
 
+@media (max-width: 767.98px) {
   /* Oversized display headings: Framer baked one fixed desktop font-size
      per element with no mobile override, so each is scaled down here.
      Grouped by their shared current size/font rather than one rule per
@@ -1559,6 +1566,36 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
     justify-content: flex-start !important;
     gap: 12px 32px !important;
     width: 100% !important;
+  }
+}
+
+@media (min-width: 980px) and (max-width: 1199.98px) {
+  /* Upper half of the 768-1199.98px tablet gap: keeps the real desktop nav
+     row (no hamburger) but frees the logo and JOIN US button from their
+     fixed 317px/265px desktop widths -- sized to fit alongside a menu list
+     that had a full 1200px+ row to share them with -- so the middle link
+     row gets the room it actually needs and stops clipping. Confirmed via
+     live measurement: at this width freeing these two alone leaves far
+     more room than the link row needs, so nothing else here has to shrink. */
+  .framer-1kfysrm-container .framer-fiv2ey,
+  .framer-1kfysrm-container .framer-qf0vfz {
+    width: auto !important;
+    min-width: 0 !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  /* Hero tagline ("FEBRUARY 02-04, 2027 - Bruxelles, Belgium"): Framer
+     baked this row at a fixed 500px box with white-space:pre (never
+     wraps), sized for the ~1200px+ desktop hero where that box has room
+     to spare. Across the whole tablet range the box itself renders
+     narrower than the 24px single-line text needs (measured ~542px),
+     clipping both ends. The row already centers its text and sits in a
+     hero column with plenty of clear space either side, so instead of
+     fighting the fixed width, just let it overflow its own box -- text
+     stays centered and fully readable instead of getting cropped. */
+  .framer-19uexfm {
+    overflow: visible !important;
   }
 }
 
@@ -3682,6 +3719,28 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 @media (max-width: 767.98px) {
   .demcon-salon-pause-spacer {
     order: 2;
+  }
+}
+
+/* Same fix, same reason, for the 768-1199.98px tablet range: Framer's own
+   real (non-dead) tablet media query bakes the exact same per-section
+   `order` values as its mobile one (DemocracySalons:1, Journey:3, Agenda:5,
+   Speakers:7, Participation:8 -- confirmed by inspecting that CSS
+   directly), so both this hand-built spacer and .demcon-contact-cta-section
+   below default to order:0 there too, landing them in the same wrong flex
+   position (right after Hero, painting over every card between them and
+   the one they actually belong after) that the mobile-only rules above and
+   below already fix for phones. Confirmed live: at 900px wide, scrolling
+   showed the JOIN US card's contents covering the viewport from barely
+   past the hero all the way through where Participation should still be
+   visible, exactly this bug. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .demcon-salon-pause-spacer {
+    order: 2;
+  }
+
+  .demcon-contact-cta-section {
+    order: 9;
   }
 }
 

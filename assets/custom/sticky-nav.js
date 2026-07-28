@@ -1357,6 +1357,7 @@
     var phase = 'idle'; // 'idle' -> 'animating' -> 'released'
     var startTime = null;
     var contentShift = 0;
+    var contentSpacer = null;
 
     function visibleContentBounds() {
       // content itself has flex:1 0 0px -- it *stretches* to fill the
@@ -1475,8 +1476,10 @@
       // below would otherwise collapse the section straight down to just
       // its own padding, losing the extra scroll runway added for the
       // map's parallax. A same-height spacer in its place holds that room
-      // open, same trick as hero's own spacer above.
-      var contentSpacer = document.createElement('div');
+      // open, same trick as hero's own spacer above. Stored on the
+      // shared contentSpacer variable (not a local one) so unpin() below
+      // can find and remove this exact element again.
+      contentSpacer = document.createElement('div');
       contentSpacer.style.height = rect.height + 'px';
       content.parentNode.insertBefore(contentSpacer, content);
 
@@ -1530,6 +1533,36 @@
         // (same as content's own transform:'none' just above) is what
         // actually keeps the frozen position centered instead of drifting.
         mapBg.style.transform = 'none';
+      }
+    }
+
+    // Reverses pin() exactly, so it can be safely re-run after a resize --
+    // pin() freezes content/sparkles/mapBg at absolute pixel coordinates
+    // measured once, which is correct at that instant but never adjusts
+    // again on its own; resizing the window after the intro had already
+    // completed left everything stuck at its old, now-wrong position/size
+    // (confirmed live: no resize handling existed for this at all). This
+    // clears every inline override pin() set (restoring each element to
+    // plain in-flow layout) and removes the spacer it inserted, so the
+    // resize handler below can immediately re-measure and pin() again
+    // from scratch at the new viewport size.
+    function unpin() {
+      if (contentSpacer && contentSpacer.parentNode) {
+        contentSpacer.parentNode.removeChild(contentSpacer);
+      }
+      contentSpacer = null;
+      ['position', 'margin', 'top', 'left', 'width', 'transform'].forEach(function (prop) {
+        content.style.removeProperty(prop);
+      });
+      sparkles.forEach(function (s) {
+        ['position', 'margin', 'top', 'left', 'right', 'bottom', 'width', 'height'].forEach(function (prop) {
+          s.el.style.removeProperty(prop);
+        });
+      });
+      if (mapBg) {
+        ['position', 'margin', 'top', 'left', 'right', 'bottom', 'width', 'height', 'transform'].forEach(function (prop) {
+          mapBg.style.removeProperty(prop);
+        });
       }
     }
 
@@ -1653,7 +1686,40 @@
       }
     }
 
-    window.addEventListener('resize', measure, { passive: true });
+    // Once the intro has completed (phase 'released', either through the
+    // normal locked animation or the hash-landing settle below), content/
+    // sparkles/mapBg are all frozen at absolute pixel coordinates via
+    // pin() -- correct at that instant, but never adjusted again on their
+    // own, so resizing the window afterward left everything stuck at its
+    // old, now-wrong position and size until a full page reload
+    // (confirmed live: no resize handling existed for this at all).
+    // unpin() + measure() + applyFrame(1) + pin() redoes the exact same
+    // "settle into place" sequence from scratch at the new viewport size,
+    // reusing the already-correct centering math rather than trying to
+    // reverse-engineer a resize-specific correction.
+    // Debounced rather than running on every single resize tick: a real
+    // click-and-drag resize fires a burst of these events, and unpin()
+    // briefly drops content/sparkles/mapBg back into their normal (pinned
+    // content lives near the hero's own document position, well above
+    // wherever the page happens to be scrolled to) document-flow position
+    // before pin() re-fixes them -- so running that full cycle dozens of
+    // times a second flashed the hero content out of view and back again
+    // repeatedly for the whole drag, instead of a single clean settle once
+    // the user stops resizing.
+    var heroResizeTimer = null;
+    function handleHeroResize() {
+      if (heroResizeTimer) clearTimeout(heroResizeTimer);
+      heroResizeTimer = setTimeout(function () {
+        heroResizeTimer = null;
+        measure();
+        if (phase === 'released') {
+          unpin();
+          applyFrame(1);
+          pin();
+        }
+      }, 120);
+    }
+    window.addEventListener('resize', handleHeroResize, { passive: true });
 
     // Landing here via a cross-page nav link (About's "Salons"/"Agenda"/
     // etc, all pointing at ../index.html#section) means the hero was
@@ -2052,7 +2118,6 @@
   // element's visibility no longer depends on which wrapper happens to
   // contain it after the move.
   function setupBruxellesLabelAbovePhoto() {
-    if (window.innerWidth > 767.98) return;
     var wrapper = document.querySelector('.framer-1rbxc9t .framer-fn74nn');
     if (!wrapper) return;
     var label = null;
@@ -2060,9 +2125,43 @@
       if (!label && el.textContent.indexOf('BRUXELLES CALLING') > -1) label = el;
     });
     if (!label) return;
-    label.style.setProperty('display', 'contents', 'important');
-    if (label === wrapper.firstChild) return;
-    wrapper.insertBefore(label, wrapper.firstChild);
+
+    // Original parent + next-sibling captured once, before ever moving
+    // anything, so a later resize back out of mobile width can put it
+    // back exactly -- without this, resizing from mobile to desktop
+    // after this had already moved the label left it permanently
+    // detached (still first child of the mobile wrapper, still forced
+    // display:contents) even though this is a mobile-only
+    // rearrangement; nothing ever moved it back or dropped the override
+    // (confirmed live: no resize listener existed at all). Restoring
+    // must target the label's real original parent, not `wrapper` --
+    // originalNextSibling is never actually a child of wrapper (it lived
+    // three levels deeper, alongside the heading -- see the comment
+    // above), so wrapper.insertBefore(label, originalNextSibling) throws
+    // (reference node isn't wrapper's child), silently aborting the
+    // restore before it could ever run (confirmed live: caught this
+    // exact bug mid-fix -- the display override cleared correctly since
+    // that line runs first, but the label stayed stuck in the mobile
+    // wrapper since the throwing insertBefore call never completed).
+    var originalParent = label.parentNode;
+    var originalNextSibling = label.nextSibling;
+    var moved = false;
+
+    function apply() {
+      var mobile = window.innerWidth <= 767.98;
+      if (mobile && !moved) {
+        label.style.setProperty('display', 'contents', 'important');
+        if (label !== wrapper.firstChild) wrapper.insertBefore(label, wrapper.firstChild);
+        moved = true;
+      } else if (!mobile && moved) {
+        label.style.removeProperty('display');
+        originalParent.insertBefore(label, originalNextSibling);
+        moved = false;
+      }
+    }
+
+    apply();
+    window.addEventListener('resize', apply, { passive: true });
   }
 
   // Agenda list rows cycle through 4 hover-highlight colors (cyan, green,
