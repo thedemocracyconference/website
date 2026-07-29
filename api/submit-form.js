@@ -85,6 +85,7 @@ module.exports = async function handler(req, res) {
     '<table cellpadding="6" cellspacing="0">' + htmlRows + '</table>';
 
   var notified = false;
+  var notifyErrorDetail = null;
   try {
     var sendRes = await fetch(SENDER_API_BASE + '/message/send', {
       method: 'POST',
@@ -103,9 +104,11 @@ module.exports = async function handler(req, res) {
     });
     notified = sendRes.ok;
     if (!sendRes.ok) {
-      console.error('Sender transactional email failed', sendRes.status, await sendRes.text());
+      notifyErrorDetail = await sendRes.text();
+      console.error('Sender transactional email failed', sendRes.status, notifyErrorDetail);
     }
   } catch (err) {
+    notifyErrorDetail = String(err);
     console.error('Sender transactional email error', err);
   }
 
@@ -137,7 +140,14 @@ module.exports = async function handler(req, res) {
   }
 
   if (!notified) {
-    res.status(502).json({ ok: false, error: 'Could not send notification email' });
+    // ?debug=1 surfaces Sender's actual rejection reason in the response
+    // itself -- handy for diagnosing setup issues (DNS/DMARC alignment,
+    // bad key, etc.) via curl without digging through Vercel's log UI.
+    // Never enabled for real visitors; the client-side forms never add
+    // this query param.
+    var response = { ok: false, error: 'Could not send notification email' };
+    if (req.query && req.query.debug === '1') response.detail = notifyErrorDetail;
+    res.status(502).json(response);
     return;
   }
 
