@@ -434,12 +434,78 @@
     });
   }
 
+  // Shared plumbing for every form on the site that needs to actually go
+  // somewhere (see /api/submit-form.js): serializes the form's fields,
+  // POSTs them to that endpoint (which relays a notification email and a
+  // Sender.net subscriber signup), then hands control back via onSuccess
+  // -- each caller decides what "success" looks like for its own form,
+  // this just owns getting the data there and the shared error state.
+  // validate (optional) runs before anything is sent; returning false
+  // aborts the submission entirely, for forms with their own extra
+  // required-field checks (e.g. the pitch modals' custom select).
+  function wireBackendForm(form, formType, onSuccess, validate) {
+    if (!form) return;
+
+    var errorEl = document.createElement('p');
+    errorEl.className = 'demcon-form-error';
+    errorEl.hidden = true;
+    form.appendChild(errorEl);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      // Honeypot: a field real visitors never see or fill in (see the CSS
+      // hiding it), so a non-empty value here means a bot filled out every
+      // field it could find. Silently drop it -- no request, no error, no
+      // indication to the bot that anything happened.
+      var honeypot = form.querySelector('[data-honeypot]');
+      if (honeypot && honeypot.value) return;
+
+      if (validate && !validate()) return;
+
+      var submitBtn = form.querySelector('button[type="submit"]');
+      var fields = {};
+      new FormData(form).forEach(function (value, key) {
+        if (honeypot && key === honeypot.name) return;
+        if (key.slice(-2) === '[]') {
+          var base = key.slice(0, -2);
+          if (!fields[base]) fields[base] = [];
+          if (value) fields[base].push(value);
+        } else {
+          fields[key] = value;
+        }
+      });
+
+      if (submitBtn) submitBtn.disabled = true;
+      errorEl.hidden = true;
+
+      fetch('/api/submit-form', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ formType: formType, page: window.location.pathname, fields: fields })
+      })
+        .then(function (res) {
+          if (!res.ok) throw new Error('submit-form request failed');
+          return res.json();
+        })
+        .then(function () {
+          onSuccess();
+        })
+        .catch(function () {
+          if (submitBtn) submitBtn.disabled = false;
+          errorEl.textContent = "Something went wrong sending that -- please email us directly at info@thedemcon.org.";
+          errorEl.hidden = false;
+        });
+    });
+  }
+
   function initJoinUsModal(header, headerVisibility, headerContrast) {
     var modal = document.getElementById('demcon-joinus-modal');
     var trigger = header.querySelector('[data-framer-name="Navbar Button"]');
     if (!modal || !trigger) return;
 
     var dialog = modal.querySelector('.demcon-modal-dialog');
+    var form = modal.querySelector('.demcon-modal-form');
     var firstField = modal.querySelector('input');
     var focusableSelector = 'input, button, [href], [tabindex]:not([tabindex="-1"])';
     var lastFocused = null;
@@ -474,6 +540,15 @@
 
     modal.querySelectorAll('[data-modal-dismiss]').forEach(function (el) {
       el.addEventListener('click', close);
+    });
+
+    // No success-state markup exists for this one (unlike the pitch
+    // modals below, which were built with their own success panel from
+    // the start) -- swapping the form's own contents for a thank-you
+    // message is simplest rather than adding matching markup on every
+    // page this modal is duplicated onto (home, About, Contact).
+    wireBackendForm(form, 'joinus', function () {
+      form.innerHTML = '<p class="demcon-form-success">Thanks for signing up -- we\'ll keep you posted.</p>';
     });
 
     document.addEventListener('keydown', function (e) {
@@ -686,13 +761,10 @@
       el.addEventListener('click', close);
     });
 
-    if (form) {
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        form.hidden = true;
-        if (success) success.hidden = false;
-      });
-    }
+    wireBackendForm(form, 'salon', function () {
+      form.hidden = true;
+      if (success) success.hidden = false;
+    });
 
     document.addEventListener('keydown', function (e) {
       if (!isOpen()) return;
@@ -758,19 +830,16 @@
       el.addEventListener('click', close);
     });
 
-    if (form) {
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (darkPanel) darkPanel.hidden = true;
-        if (heading) heading.hidden = true;
-        form.hidden = true;
-        if (success) {
-          success.hidden = false;
-          var successHeading = success.querySelector('[id]');
-          if (successHeading) dialog.setAttribute('aria-labelledby', successHeading.id);
-        }
-      });
-    }
+    wireBackendForm(form, 'register', function () {
+      if (darkPanel) darkPanel.hidden = true;
+      if (heading) heading.hidden = true;
+      form.hidden = true;
+      if (success) {
+        success.hidden = false;
+        var successHeading = success.querySelector('[id]');
+        if (successHeading) dialog.setAttribute('aria-labelledby', successHeading.id);
+      }
+    });
 
     document.addEventListener('keydown', function (e) {
       if (!isOpen()) return;
@@ -805,7 +874,7 @@
   // same fields, same custom-dropdown/dynamic-links/success-swap behavior,
   // just different copy and a couple of scoping selectors, so this is
   // parameterized rather than duplicated wholesale between the two.
-  function initPitchModal(modalId, triggerSelector, introSelector, formSelector) {
+  function initPitchModal(modalId, triggerSelector, introSelector, formSelector, formType) {
     var modal = document.getElementById(modalId);
     var trigger = document.querySelector(triggerSelector);
     if (!modal || !trigger) return;
@@ -965,19 +1034,23 @@
       el.addEventListener('click', close);
     });
 
-    if (form) {
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (selectInput && !selectInput.value) {
-          selectRoot.classList.add('is-invalid');
-          selectTrigger.focus();
-          return;
-        }
+    wireBackendForm(
+      form,
+      formType,
+      function () {
         if (introGroup) introGroup.hidden = true;
         form.hidden = true;
         if (success) success.hidden = false;
-      });
-    }
+      },
+      function () {
+        if (selectInput && !selectInput.value) {
+          selectRoot.classList.add('is-invalid');
+          selectTrigger.focus();
+          return false;
+        }
+        return true;
+      }
+    );
 
     document.addEventListener('keydown', function (e) {
       if (!isOpen()) return;
@@ -1078,6 +1151,29 @@
         showBubble(button);
       });
       button.addEventListener('mouseleave', hideBubble);
+    });
+  }
+
+  // Hero (and About page's copy of the same) newsletter signup -- email
+  // only, no success markup of its own since it was never wired to
+  // anything real before now (action="#", no submit handler at all).
+  // Both instances share the same styling, so the same swapped-in
+  // message works for either.
+  function setupNewsletterForms() {
+    document.querySelectorAll('.framer-1b6jkmt, .framer-p500jw').forEach(function (form) {
+      wireBackendForm(form, 'newsletter', function () {
+        form.innerHTML = '<p class="demcon-form-success">Thanks for subscribing!</p>';
+      });
+    });
+  }
+
+  // Homepage "Send us a message" contact form (bottom of the JOIN US
+  // section) -- same situation as the newsletter form above, no success
+  // markup existed because this never actually sent anywhere before now.
+  function setupContactCtaForm() {
+    var form = document.querySelector('.demcon-contact-cta-form');
+    wireBackendForm(form, 'contact', function () {
+      form.innerHTML = '<p class="demcon-form-success">Thanks for reaching out -- we\'ll get back to you soon.</p>';
     });
   }
 
@@ -3267,6 +3363,8 @@
   init();
   addReadMoreLink();
   setupHeroSubscribeButton();
+  setupNewsletterForms();
+  setupContactCtaForm();
   enhanceButtons();
   setupCustomCursor();
   setupHeroIntro();
@@ -3291,8 +3389,8 @@
   setupPrinciplesOneWayGate();
   initHostBioModal();
   initSalonModal();
-  initPitchModal('demcon-propose-modal', '[data-propose-modal-trigger]', '[data-propose-intro]', '[data-propose-form]');
-  initPitchModal('demcon-apply-modal', '[data-apply-modal-trigger]', '[data-apply-intro]', '[data-apply-form]');
-  initPitchModal('demcon-partner-modal', '[data-partner-modal-trigger]', '[data-partner-intro]', '[data-partner-form]');
+  initPitchModal('demcon-propose-modal', '[data-propose-modal-trigger]', '[data-propose-intro]', '[data-propose-form]', 'propose');
+  initPitchModal('demcon-apply-modal', '[data-apply-modal-trigger]', '[data-apply-intro]', '[data-apply-form]', 'apply');
+  initPitchModal('demcon-partner-modal', '[data-partner-modal-trigger]', '[data-partner-intro]', '[data-partner-form]', 'partner');
   initRegisterModal();
 })();

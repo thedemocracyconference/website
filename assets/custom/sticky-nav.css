@@ -3976,6 +3976,42 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   color: #030509;
 }
 
+/* Shared across every form on the site (see wireBackendForm, sticky-nav.js):
+   .demcon-form-error is appended once per form and toggled visible on a
+   failed submission; .demcon-form-success replaces a form's own contents
+   on the ones that had no purpose-built success panel of their own
+   (newsletter signup, homepage contact form, Join Us modal). */
+.demcon-form-error {
+  margin: 12px 0 0;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff0074;
+}
+
+.demcon-form-success {
+  margin: 0;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #030509;
+}
+
+/* Honeypot field: present in the DOM and part of the tab order like any
+   other input would be, but positioned off-screen rather than
+   display:none/visibility:hidden -- some bots skip fields hidden that way,
+   fewer skip ones simply moved out of the visible page. Real visitors
+   never see or reach it (tabindex="-1" keeps it out of keyboard
+   navigation too), so any value in it on submit means a bot filled out
+   every field it could find. */
+.demcon-form-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 /* Relevant Links field -- a single-line input per link (not a free-text
    textarea) with a "+ Add another link" control that appends more rows,
    so each link is its own value rather than one blob of pasted text. */
