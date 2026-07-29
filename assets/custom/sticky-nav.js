@@ -1162,6 +1162,13 @@
   function setupNewsletterForms() {
     document.querySelectorAll('.framer-1b6jkmt, .framer-p500jw').forEach(function (form) {
       wireBackendForm(form, 'newsletter', function () {
+        // Replacing the form's contents below removes its submit button --
+        // the same one setupHeroSubscribeButton is still tracking a hover
+        // on, so its usual mouseleave-triggered hide never fires (the
+        // element it needs to leave is already gone). Hide it directly
+        // here instead of leaving that tooltip stuck open forever.
+        var bubble = document.querySelector('.demcon-subscribe-bubble');
+        if (bubble) bubble.classList.remove('demcon-subscribe-bubble-visible');
         form.innerHTML = '<p class="demcon-form-success">Thanks for subscribing!</p>';
       });
     });
