@@ -4091,3 +4091,40 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   background: none;
   text-decoration: underline;
 }
+
+/* Bruxelles Calling's "Top" block (about/index.html) -- drop the mobile
+   breakpoint's hard-coded height so the section grows to fit its own text.
+
+   Framer bakes `height:830px` onto .framer-fn74nn inside its
+   max-width:767.98px block (the base rule is height:min-content; only
+   the mobile variant pins it), together with place-content:center. Once
+   that block's content needs more than 830px -- which it does as soon as
+   "BRUXELLES CALLING //" / "THREE DAYS. ONE CITY." start wrapping on a
+   narrower viewport -- centering makes the excess overflow EQUALLY above
+   and below the box rather than just running off the bottom, so the
+   heading renders above the container's own top edge. Measured live at
+   692px: the heading sat 33px above .framer-1rbxc9t's top, i.e. outside
+   the section's own #faf9f5 background.
+
+   Nothing clips it back, because the scroll-stacking rule above sets
+   overflow:visible on all four stacking sections (required for the
+   box-shadow that sells the stacked-card effect). So the escaped heading
+   painted straight over the Principles card still pinned underneath --
+   reported live as "BRUXELLES CALLING //" colliding with the accordion
+   rows, and getting worse as the viewport narrowed and the text wrapped
+   further. Same failure mode as the Join Us "Dots" overflow noted above:
+   a Framer-baked fixed offset that only misbehaves once these sections
+   stopped clipping their own overflow.
+
+   height:min-content restores the base rule's own behaviour, so the block
+   sizes to its text, the section grows with it (measured 1012px -> 1341px
+   at 692px wide) and the white card ends up expanding *underneath* the
+   heading instead of the heading escaping above it. Scoped to
+   .demcon-about-page so the homepage's own use of this shared section is
+   untouched; .demcon-about-page .framer-fn74nn (0,2,0) outranks Framer's
+   own .framer-fn74nn (0,1,0) without needing !important. */
+@media (max-width: 767.98px) {
+  .demcon-about-page .framer-fn74nn {
+    height: min-content;
+  }
+}
