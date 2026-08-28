@@ -3367,6 +3367,129 @@
 
   // This script is loaded with `defer`, which already guarantees the DOM is
   // fully parsed by the time it runs.
+
+  /* Footer "Get Involved" column -- wire its four items to the things they
+     name. As shipped none of them worked: "Register" had no href at all (a
+     bare RichTextContainer div, so not clickable and not focusable), both
+     "Apply to Speak" and "Propose a Session" pointed at ./index.html
+     (reloading the homepage rather than opening anything), and
+     "Partnerships" was a mailto on the placeholder domain info@domain.com.
+     All four now open the modal they name; the markup's mailto is left in
+     place as the no-JS fallback (with the domain corrected), since this
+     upgrades the href rather than replacing the element.
+     Meanwhile the modals those labels name already existed and worked --
+     they were just only ever reachable from their single button in the
+     page body.
+
+     Wired here rather than in the markup for the same reason as the pitch
+     modals above: these are Framer RichTextContainer divs, not real
+     <button>/<a> elements, so click AND Enter/Space have to be attached by
+     hand -- and the baked HTML around them is minified past the point of
+     safe hand-editing.
+
+     The modals only exist on the homepage (confirmed live -- about/ has
+     none of the four), so anywhere else these become ordinary links to the
+     homepage carrying a hash, which openModalFromHash picks up on arrival.
+     The homepage path is read off the Explore column's own "About" link
+     rather than hardcoded, so this keeps working from any directory depth. */
+  var FOOTER_MODAL_LINKS = [
+    { label: 'Register',          hash: '#register', trigger: '[data-register-modal-trigger]' },
+    { label: 'Apply to Speak',    hash: '#apply',    trigger: '[data-apply-modal-trigger]' },
+    { label: 'Propose a Session', hash: '#propose',  trigger: '[data-propose-modal-trigger]' },
+    { label: 'Partnerships',      hash: '#partner',  trigger: '[data-partner-modal-trigger]' }
+  ];
+
+  function homepageHref(hash) {
+    var explore = document.querySelector('a[href$="#about"]');
+    var base = explore ? explore.getAttribute('href').split('#')[0] : '';
+    return base + hash;
+  }
+
+  /* Matched case-insensitively, and on collapsed whitespace, on purpose:
+     the footer heading is literally "Get INvolved" in the baked markup (a
+     typo the CSS's text-transform:uppercase hides), and an exact-match
+     lookup here silently no-opped the whole function. Not worth being
+     brittle about capitalisation for text we don't control. */
+  function findLeafByText(root, text) {
+    var want = text.toLowerCase().replace(/\s+/g, ' ');
+    var nodes = root.querySelectorAll('*');
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].children.length) continue;
+      var got = (nodes[i].textContent || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      if (got === want) return nodes[i];
+    }
+    return null;
+  }
+
+  function initFooterGetInvolved() {
+    var heading = findLeafByText(document.body, 'Get Involved');
+    if (!heading) return;
+    var root = heading;
+    for (var i = 0; i < 6 && root.parentElement; i++) root = root.parentElement;
+
+    FOOTER_MODAL_LINKS.forEach(function (item) {
+      var leaf = findLeafByText(root, item.label);
+      if (!leaf) return;
+      var el = leaf.closest('a') ||
+               leaf.closest('[data-framer-component-type="RichTextContainer"]') ||
+               leaf;
+      var trigger = document.querySelector(item.trigger);
+
+      if (trigger) {
+        // Homepage: open the modal in place, leaving the URL alone.
+        if (el.tagName === 'A') {
+          el.setAttribute('href', item.hash);
+        } else {
+          el.setAttribute('role', 'button');
+          if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+        }
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', function (e) {
+          e.preventDefault();
+          trigger.click();
+        });
+        el.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            trigger.click();
+          }
+        });
+        return;
+      }
+
+      // Any other page: hand off to the homepage with the hash attached.
+      var href = homepageHref(item.hash);
+      if (el.tagName === 'A') {
+        el.setAttribute('href', href);
+        return;
+      }
+      el.setAttribute('role', 'link');
+      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function () { window.location.href = href; });
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') window.location.href = href;
+      });
+    });
+  }
+
+  /* Opens the matching modal when the page is loaded (or re-hashed) with
+     one of the hashes above -- what the cross-page footer links rely on.
+     Clicking the modal's own canonical trigger reuses its existing open
+     path rather than duplicating the focus/aria handling here. The hash is
+     deliberately left in the URL: the intro sequence's existing
+     "landed with a hash" branch already skips the hero animation, which is
+     what we want with a modal about to open over it. */
+  function openModalFromHash() {
+    var sel = null;
+    FOOTER_MODAL_LINKS.forEach(function (item) {
+      if (item.hash === window.location.hash) sel = item.trigger;
+    });
+    if (!sel) return;
+    var trigger = document.querySelector(sel);
+    if (trigger) trigger.click();
+  }
+
   init();
   addReadMoreLink();
   setupHeroSubscribeButton();
@@ -3400,4 +3523,7 @@
   initPitchModal('demcon-apply-modal', '[data-apply-modal-trigger]', '[data-apply-intro]', '[data-apply-form]', 'apply');
   initPitchModal('demcon-partner-modal', '[data-partner-modal-trigger]', '[data-partner-intro]', '[data-partner-form]', 'partner');
   initRegisterModal();
+  initFooterGetInvolved();
+  openModalFromHash();
+  window.addEventListener('hashchange', openModalFromHash);
 })();
