@@ -1782,6 +1782,13 @@
 
     function onScroll() {
       if (phase === 'released') {
+        // A real resize that landed while the hero was off screen deferred
+        // its re-pin rather than freezing against an invisible rect (see
+        // handleHeroResize) -- now that the hero is back, do it for real.
+        if (heroRepinPending && heroContentInView()) {
+          heroRepinPending = false;
+          repinHero();
+        }
         parallax();
       } else if (window.scrollY !== 0) {
         window.scrollTo(0, 0);
@@ -1810,16 +1817,57 @@
     // repeatedly for the whole drag, instead of a single clean settle once
     // the user stops resizing.
     var heroResizeTimer = null;
+    var lastHeroViewportWidth = window.innerWidth;
+    var heroRepinPending = false;
+
+    // While pinned, `content` is position:fixed, so its own rect says
+    // nothing about where the hero actually is -- contentSpacer is the
+    // in-flow stand-in holding its slot open, so that's what to ask.
+    function heroContentInView() {
+      var probe = contentSpacer || content;
+      if (!probe) return true;
+      var r = probe.getBoundingClientRect();
+      return r.bottom > 0 && r.top < (window.innerHeight || 0);
+    }
+
+    function repinHero() {
+      measure();
+      if (phase !== 'released') return;
+      unpin();
+      applyFrame(1);
+      pin();
+    }
+
     function handleHeroResize() {
+      // Mobile browsers fire `resize` every time their own URL bar
+      // collapses or expands during ordinary scrolling: the width never
+      // changes, only the height. That alone was enough to run the whole
+      // unpin/pin cycle below mid-scroll -- and because pin() freezes
+      // everything at whatever getBoundingClientRect reports *at that
+      // instant*, doing it while the hero was scrolled past pinned the
+      // text and map at a large negative top, i.e. off screen for the rest
+      // of the visit. Reported live on iOS: scroll away from the hero,
+      // scroll back, and the text is gone with only the map left, the map
+      // jumping to the top and back and the text flashing once on the way
+      // through (that flash is unpin() dropping it into its in-flow
+      // position for one frame before pin() re-froze it out of view).
+      // Gating on width ignores browser chrome entirely while still
+      // catching genuine resizes and orientation changes.
+      if (window.innerWidth === lastHeroViewportWidth) return;
+      lastHeroViewportWidth = window.innerWidth;
+
       if (heroResizeTimer) clearTimeout(heroResizeTimer);
       heroResizeTimer = setTimeout(function () {
         heroResizeTimer = null;
-        measure();
-        if (phase === 'released') {
-          unpin();
-          applyFrame(1);
-          pin();
+        // Even a genuine resize can land while the hero is off screen --
+        // rotating the phone halfway down the page. Pinning against a rect
+        // that isn't visible is exactly the bug above, so defer instead;
+        // onScroll re-pins once the hero is actually back in view.
+        if (phase === 'released' && !heroContentInView()) {
+          heroRepinPending = true;
+          return;
         }
+        repinHero();
       }, 120);
     }
     window.addEventListener('resize', handleHeroResize, { passive: true });
