@@ -861,12 +861,35 @@ body { padding-top: var(--nav-h); }
      much taken off the right boxes it, and the auto side margins centre the
      button inside that box -- centring by margin rather than by transform
      because the pulse animates transform, and the two would fight. */
+  /* The drawing stops being a wide frame and becomes a stack: the airship
+     across the full column, the handwritten line under it, the chevron under
+     that. Side by side, the craft only ever got 62% of an already narrow
+     column and the line beside it was the size of a caption; stacked, the
+     airship is the width of the page and the line reads at the size it was
+     drawn to.
+
+     Which means the three of them can just be laid out in flow -- the
+     absolute positioning and the fixed ratio exist to rebuild the original
+     export's geometry, and that geometry is what is being abandoned here. */
+  .airship-row {
+    max-width: 520px;
+    aspect-ratio: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .airship__craft,
+  .airship__script {
+    position: static;
+    width: auto;
+    height: auto;
+  }
+  .airship__craft  { width: 100%; }
+  .airship__script { width: 62%; max-width: 250px; margin-top: 10px; }
   .deck__nav--next {
-    left: 0;
-    right: 37.7358%;
-    top: 92%;
-    bottom: auto;
-    margin: 0 auto;
+    position: static;
+    inset: auto;
+    margin: 10px 0 0;
   }
   .footer__inner > div + div { border-left: 0; padding-left: 0; }
   .cta__inner { padding-top: 40px; }
@@ -939,7 +962,6 @@ body { padding-top: var(--nav-h); }
   .cta__fields { grid-template-columns: 1fr; }
   .cohosts { grid-template-columns: 1fr; }
   .footer__legal { flex-direction: column; gap: 10px; }
-  .airship-row { max-width: 420px; }
 }
 
 /* Respect a reduced-motion preference: nothing here animates, but the
