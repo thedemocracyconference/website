@@ -980,17 +980,10 @@ body { padding-top: var(--nav-h); }
   .panel-team { padding-left: var(--gutter); }
   .deck__nav svg { width: 26px; height: 26px; }
   .deck__nav-hint { font-size: 9px; letter-spacing: 0.12em; }
-  /* The bottom bar is prev's alone. Written as .deck__nav it also caught the
-     next chevron, and being in a later media block it beat the rule above
-     that puts that one under the airship -- a media query adds no
-     specificity, so the last one written wins. Only one of the two is ever
-     on screen, so the pair never has to look like a pair. */
-  .deck__nav--prev {
-    top: auto; bottom: 12px;
-    height: auto;
-    margin: 0;
-    left: 10px;
-  }
+  /* No back chevron on a phone. Swiping is the native gesture at this size
+     and the dots already say which panel you are on, so the button was a
+     control sitting in the corner restating what the gesture does. */
+  .deck__nav--prev { display: none; }
   .deck__dots { bottom: 31px; }
   /* Nowhere on a phone's team panel is free for the airship to land: the
      single column fills the card from the heading down to the last host.
