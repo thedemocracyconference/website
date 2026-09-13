@@ -512,9 +512,13 @@ body { padding-top: var(--nav-h); }
    they are placeholders in the design itself. */
 .avatar {
   width: 118px; height: 118px;
-  /* 2px rather than a 1.5px hairline: at portrait size the half-pixel edge
-     renders soft and reads grey against the white card. */
-  border: 2px solid var(--ink);
+  /* 3px. The colour cannot go darker -- this is already the palette's ink,
+     and measured around the circumference the ring bottoms out near black
+     -- so weight is the only thing left to give it. It needs that weight
+     most on the host portraits, whose saturated cyan and pink discs make a
+     thin ring read faint next to the same ring on the speakers' pale
+     yellow; carrying it across all four keeps the two rows a set. */
+  border: 3px solid var(--ink);
   border-radius: 50%;
   flex: none;
   overflow: hidden;
