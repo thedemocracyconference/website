@@ -372,6 +372,13 @@ body { padding-top: var(--nav-h); }
   pointer-events: none;
 }
 .deck[data-state="team"] .deck__nav--next { opacity: 0; pointer-events: none; }
+/* And no beating while it is not on screen. Now that the pulse no longer
+   retires, it would otherwise keep animating behind the team panel for as
+   long as the page is open, which is a transform a phone has to composite
+   every frame for nobody's benefit. */
+.deck[data-state="team"] .deck__nav--next,
+.deck[data-state="team"] .deck__nav--next::before,
+.deck[data-state="team"] .deck__nav--next svg { animation-play-state: paused; }
 /* The prev chevron is the team panel's control, so it keeps the team's
    timing rather than appearing over the premise mid-flight. */
 .deck__nav--prev {
@@ -650,11 +657,18 @@ body { padding-top: var(--nav-h); }
 }
 .deck__nav:focus-visible { outline: 2px solid var(--hot-pink); outline-offset: 6px; }
 
-/* The pulse. It runs on the next chevron only, and only until the reader
-   has moved the rail once -- .has-swiped is set on the first move of any
-   kind, including a keyboard one, and never removed. The glow is a
-   pseudo-element so the beat scales a shape behind the arrow rather than
-   the arrow itself, which would wobble the stroke weight. */
+/* The pulse. It runs on the next chevron only, which is to say only on the
+   premise panel -- the chevron is the way off that panel and is not on
+   screen anywhere else, so the beat is never competing with anything.
+
+   It used to retire for good on the first move, on the reasoning that a
+   hint which keeps beating after it has been taken is noise. That was wrong
+   about where it is seen: coming back to the premise panel, the way onward
+   was a chevron sitting perfectly still, which reads as spent rather than
+   as restful.
+
+   The glow is a pseudo-element so the beat scales a shape behind the arrow
+   rather than the arrow itself, which would wobble the stroke weight. */
 .deck__nav--next::before {
   content: "";
   position: absolute;
@@ -669,11 +683,11 @@ body { padding-top: var(--nav-h); }
   opacity: 0;
   z-index: -1;
 }
-.deck:not(.has-swiped) .deck__nav--next { animation: chevron-nudge 2s ease-in-out infinite; }
-.deck:not(.has-swiped) .deck__nav--next::before { animation: chevron-halo 2s ease-out infinite; }
+.deck__nav--next { animation: chevron-nudge 2s ease-in-out infinite; }
+.deck__nav--next::before { animation: chevron-halo 2s ease-out infinite; }
 /* The glyph beats on its own element so its scale does not have to share a
    transform with the button's sideways nudge. */
-.deck:not(.has-swiped) .deck__nav--next svg { animation: chevron-beat 2s ease-in-out infinite; }
+.deck__nav--next svg { animation: chevron-beat 2s ease-in-out infinite; }
 
 /* Three parts to one beat, all on the same 2s clock: the arrow swells and
    leans towards the panel it is pointing at, then eases back, while a ring
@@ -999,14 +1013,16 @@ body { padding-top: var(--nav-h); }
   /* The chevron still needs to read as the thing to press, so it keeps its
      halo and simply stops beating. The script also swaps the rail's smooth
      scrolling for an instant jump under this preference. */
-  /* Matching the selector that starts the animation, not a shorter one --
-     a media query adds no specificity, so `.deck__nav--next` alone would
-     lose to `.deck:not(.has-swiped) .deck__nav--next` and the pulse would
-     keep beating for exactly the readers who asked it not to. */
-  .deck:not(.has-swiped) .deck__nav--next,
-  .deck:not(.has-swiped) .deck__nav--next::before,
-  .deck:not(.has-swiped) .deck__nav--next svg { animation: none; }
-  .deck:not(.has-swiped) .deck__nav--next::before { opacity: 0.18; transform: scale(1); }
+  /* The chevron still needs to read as the thing to press, so it keeps its
+     halo and simply stops beating. Same selectors as the rules that start
+     the animation, and after them in the file -- a media query adds no
+     specificity, so a shorter selector or an earlier position would lose,
+     and the pulse would keep going for exactly the readers who asked it
+     not to. */
+  .deck__nav--next,
+  .deck__nav--next::before,
+  .deck__nav--next svg { animation: none; }
+  .deck__nav--next::before { opacity: 0.18; transform: scale(1); }
 
   /* The change becomes a plain cross-fade: the airship is placed at its
      destination rather than flown there, the copy does not drift as it

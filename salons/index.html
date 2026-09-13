@@ -568,12 +568,8 @@
       i = Math.max(0, Math.min(STATES.length - 1, i));
       if (i === index) return;
       index = i;
-      swiped();
       render();
     }
-
-    // Any move at all retires the pulse -- the hint has been taken.
-    function swiped() { deck.classList.add('has-swiped'); }
 
     next.addEventListener('click', function () { go(index + 1); });
     prev.addEventListener('click', function () { go(index - 1); });
