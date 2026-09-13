@@ -933,7 +933,15 @@ body { padding-top: var(--nav-h); }
     margin: 10px 0 0;
   }
   .footer__inner > div + div { border-left: 0; padding-left: 0; }
-  .cta__inner { padding-top: 40px; }
+  /* The page gutter back. .cta__inner's own padding shorthand zeroes the
+     sides, which is deliberate on the wide card -- the lady bleeds off the
+     left edge there -- but on one column it left the heading, the fields and
+     the button all running into both edges of the screen. */
+  .cta__inner {
+    padding-top: 40px;
+    padding-left: var(--gutter);
+    padding-right: var(--gutter);
+  }
   .cta__art { height: 300px; max-width: 380px; }
 }
 
