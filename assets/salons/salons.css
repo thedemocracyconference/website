@@ -852,6 +852,22 @@ body { padding-top: var(--nav-h); }
      rather than beside the copy. */
   .premise__left { padding-left: 0; }
   .deck__nav--prev { left: 8px; }
+  /* The chevron moves under the airship. On one column the handwritten line
+     runs out near the card's right edge, and a control parked there reads as
+     an afterthought rather than as the way on. Under the craft it sits where
+     the eye already is.
+
+     The craft occupies the left 62.2642% of the row, so left:0 with that
+     much taken off the right boxes it, and the auto side margins centre the
+     button inside that box -- centring by margin rather than by transform
+     because the pulse animates transform, and the two would fight. */
+  .deck__nav--next {
+    left: 0;
+    right: 37.7358%;
+    top: 92%;
+    bottom: auto;
+    margin: 0 auto;
+  }
   .footer__inner > div + div { border-left: 0; padding-left: 0; }
   .cta__inner { padding-top: 40px; }
   .cta__art { height: 300px; max-width: 380px; }
@@ -890,23 +906,19 @@ body { padding-top: var(--nav-h); }
   /* Both columns run to the page gutter now that the flourish is gone. */
   .premise__left { padding-left: 0; }
   .panel-team { padding-left: var(--gutter); }
-  .deck__nav {
+  .deck__nav svg { width: 26px; height: 26px; }
+  .deck__nav-hint { font-size: 9px; letter-spacing: 0.12em; }
+  /* The bottom bar is prev's alone. Written as .deck__nav it also caught the
+     next chevron, and being in a later media block it beat the rule above
+     that puts that one under the airship -- a media query adds no
+     specificity, so the last one written wins. Only one of the two is ever
+     on screen, so the pair never has to look like a pair. */
+  .deck__nav--prev {
     top: auto; bottom: 12px;
     height: auto;
     margin: 0;
+    left: 10px;
   }
-  .deck__nav svg { width: 26px; height: 26px; }
-  .deck__nav-hint { font-size: 9px; letter-spacing: 0.12em; }
-  /* Beside the script there is no room for it at this size, so it drops to
-     just under the line instead -- still the end of that sentence, still
-     inside the row it belongs to. prev keeps the bottom bar it shares with
-     the dots; only one of the two is ever on screen, so the pair never has
-     to look like a pair. */
-  .deck__nav--next {
-    left: auto; right: 0;
-    top: 62%; bottom: auto;
-  }
-  .deck__nav--prev { left: 10px; }
   .deck__dots { bottom: 31px; }
   /* Nowhere on a phone's team panel is free for the airship to land: the
      single column fills the card from the heading down to the last host.
