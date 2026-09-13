@@ -939,6 +939,48 @@ body { padding-top: var(--nav-h); }
   .deck[data-state="team"] .airship__script { transform: none; }
 }
 
+/* ---------- Custom cursor ---------------------------------------------- */
+/* The enlarged arrow the rest of the site swaps in over anything clickable
+   (setupCustomCursor in sticky-nav.js). Reimplemented here for the same
+   reason the registration form is: loading that file on this page would drag
+   the homepage's scroll-stacking, hero intro and custom cursor in together.
+   Same SVG and the same behaviour, so the two pages feel identical.
+
+   Where sticky-nav.js tags each element with a class, this matches links and
+   buttons directly. It has to: Framer's markup bakes cursor:pointer onto
+   things that are not clickable, so that file has to sort them out first,
+   while everything here that is a link or a button is genuinely one -- and
+   matching live means the host modal's socials, which are built at click
+   time, are covered without re-tagging anything.
+
+   The !important and the descendant selectors are what actually close the
+   gaps: an element's own explicit cursor beats one inherited from an
+   ancestor, so only a higher-specificity override reaches an icon or label
+   inside a button. */
+.deck__nav:hover, .deck__nav:hover *,
+a[href]:hover, a[href]:hover *, a[href]:hover::before, a[href]:hover::after,
+button:hover, button:hover *, button:hover::before, button:hover::after {
+  cursor: none !important;
+}
+/* Inputs keep their own cursor -- an I-beam is information, not decoration. */
+.cta__form input:hover { cursor: auto !important; }
+
+.demcon-custom-cursor {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  will-change: transform;
+}
+.demcon-custom-cursor.demcon-custom-cursor-visible { opacity: 1; }
+/* Belt and braces with the JS-side check: no custom cursor on touch, where
+   a stray :hover after a tap could strand it on screen. */
+@media (hover: none) {
+  .demcon-custom-cursor { display: none !important; }
+}
+
 /* ---------- Form states ------------------------------------------------ */
 /* Visually hidden but still read by screen readers -- the inputs show their
    label as a placeholder, which assistive tech does not treat as a name. */

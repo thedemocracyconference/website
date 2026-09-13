@@ -751,6 +751,40 @@
       .catch(function () {});      // the markup already says the right thing
   })();
 
+  // The enlarged arrow cursor the rest of the site uses over anything
+  // clickable, in place of the OS pointer. Ported from setupCustomCursor in
+  // sticky-nav.js -- same SVG, same class names, same 40px arrow -- rather
+  // than loading that file here, which would bring the homepage's
+  // scroll-stacking and hero intro with it.
+  (function () {
+    // No real mouse, no custom cursor: some mobile browsers fire a synthetic
+    // mousemove on tap, which would leave the arrow stranded on screen.
+    if (!window.matchMedia || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+    var cursorEl = document.createElement('div');
+    cursorEl.className = 'demcon-custom-cursor';
+    cursorEl.innerHTML =
+      '<svg width="40" height="40" viewBox="0 0 24 24"><path d="M3 2 L3 19 L7.5 15.2 L10.4 21.6 L13.2 20.3 L10.4 14 L16.5 14 Z" fill="#030509" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+    document.body.appendChild(cursorEl);
+
+    // Asked of the element under the pointer each move rather than read off a
+    // class applied up front, so anything added later -- the host modal's
+    // social links, built when it opens -- is covered on the first pass.
+    var CLICKABLE = 'a[href], button';
+
+    document.addEventListener('mousemove', function (e) {
+      cursorEl.style.transform = 'translate(' + e.clientX + 'px,' + e.clientY + 'px)';
+      var over = e.target.closest && e.target.closest(CLICKABLE);
+      cursorEl.classList.toggle('demcon-custom-cursor-visible', !!over);
+    }, { passive: true });
+
+    // A cursor that stays drawn after the pointer has left the window reads
+    // as a stuck graphic on the page.
+    document.addEventListener('mouseleave', function () {
+      cursorEl.classList.remove('demcon-custom-cursor-visible');
+    });
+  })();
+
   // Mobile nav disclosure.
   (function () {
     var btn = document.querySelector('.nav__toggle');
