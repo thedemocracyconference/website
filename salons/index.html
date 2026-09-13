@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Democracy Salons | DemCon × The Parlor</title>
+<meta name="description" content="A monthly online series about democracy, politics, and the ideas that move us forward. Inaugural salon: Meet the Team, Sunday 20 September 2026.">
+
+<link rel="icon" href="/assets/framer/images/JLWoyIaV6o4D44sfmAYTgBCILU.png">
+<link rel="canonical" href="https://thedemcon.org/salons">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://thedemcon.org/salons">
+<meta property="og:title" content="Democracy Salons | DemCon × The Parlor">
+<meta property="og:description" content="A monthly online series about democracy, politics, and the ideas that move us forward.">
+<meta property="og:image" content="https://thedemcon.org/assets/framer/images/demcon-link-preview.png">
+<meta property="og:image:width" content="2000">
+<meta property="og:image:height" content="1198">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://thedemcon.org/assets/framer/images/demcon-link-preview.png">
+
+<!-- Playfair Display is the one spec font not already self-hosted here. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/salons/fonts.css">
+<link rel="stylesheet" href="/assets/salons/host-modal.css">
+<link rel="stylesheet" href="/assets/salons/salons.css?v=1789214710">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="section nav">
+  <div class="wrap nav__inner">
+    <a class="lockup" href="/index.html" aria-label="DemCon × The Parlor — home">
+      <img src="/assets/salons/logo-lockup.svg" width="268" height="26"
+           alt="DemCon × The Parlor">
+    </a>
+
+    <button class="nav__toggle" aria-expanded="false" aria-controls="navlinks" aria-label="Menu">
+      <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden="true"><path d="M0 1h18M0 6h18M0 11h18" stroke="currentColor" stroke-width="1.6"/></svg>
+    </button>
+
+    <nav class="nav__links" id="navlinks">
+      <a href="/about/index.html">About</a>
+      <a href="/index.html#salons-preview">Salons</a>
+      <a href="/index.html#agenda">Agenda</a>
+      <a href="/index.html#blog">Blog</a>
+      <a href="/index.html#contact">Contact</a>
+    </nav>
+
+    <a class="btn-join" href="#save-your-spot">Join us</a>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="section hero">
+  <div class="wrap hero__inner">
+    <div>
+      <h1 class="hero__title">
+        <span class="hero__democracy">Democracy</span>
+        <span class="hero__salons">Salons</span>
+      </h1>
+
+      <p class="hero__kicker">Good conversations travel far</p>
+      <p class="hero__lede" data-salon="blurb">A monthly online series about democracy, politics, and the ideas that move us forward.</p>
+
+      <p class="eyebrow eyebrow--pill" data-salon="eyebrow">Inaugural salon &bull; 01</p>
+      <h2 class="hero__topic" data-salon="topic">Meet the Team</h2>
+      <p class="hero__with">with the people building <a href="#guest">DemCon</a> &raquo;</p>
+
+      <ul class="meta">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          <span data-salon="date">Sunday, Sept 20, 2026</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <span data-salon="time">18:00 CET / 12:00 PM ET</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>
+          <span data-salon="mode">Online</span>
+        </li>
+      </ul>
+
+      <a class="btn-primary" href="#save-your-spot">Save my spot &rarr;</a>
+      <p class="hero__footnote">A jolly good time &bull; Free event</p>
+    </div>
+
+    <figure class="hero__art">
+      <!-- Asset #5: "Hero Illustration -- PNG @2x -- Vintage women at table scene" -->
+      <img src="/assets/salons/hero-illustration.png" width="1800" height="1560"
+           alt="Four people around a lace-covered tea table in Victorian dress, one in a modern blue jacket and sunglasses, a dog asleep beneath the table.">
+    </figure>
+  </div>
+</section>
+
+<!-- ============ PREMISE + MEET THE TEAM (one deck, two states) ======= -->
+<!-- Both panels share one pinned card and one grid cell, and the move
+     between them is a scene change rather than a slide: the premise copy
+     and the handwritten "Bold ideas this way..." fade out, the airship
+     floats up into the top right corner and stays there as the second
+     panel's decoration, and only once it has landed does the team copy fade
+     in. The flourish belongs to the card rather than to either panel, so it
+     sits outside both and never moves.
+
+     The chevron pulses until the first move, then stops for good -- a hint
+     that keeps beating after it has been taken is just noise. -->
+<section class="section deck" data-state="premise" aria-roledescription="carousel"
+         aria-label="The premise, and the people behind it">
+
+  <!-- Asset #4: decorative flourish. A child of the card, not of a panel:
+       it is the one thing that holds still through the change. -->
+  <img class="ornament" src="/assets/salons/ornament.svg" alt="" aria-hidden="true">
+
+  <!-- Where the airship flies to. An empty box rather than a hardcoded
+       transform: the script measures it and moves the craft onto it, so the
+       landing spot is described in CSS, at whatever size the card is. -->
+  <div class="airship__dock" aria-hidden="true"></div>
+
+  <div class="deck__stage" id="deck-stage" tabindex="0">
+
+    <article class="deck__panel panel-premise" role="group"
+             aria-roledescription="slide" aria-label="1 of 2: The premise">
+      <div class="premise__inner">
+        <div class="premise__left">
+          <div class="premise__copy">
+            <p class="eyebrow eyebrow--pink">The premise // 02</p>
+            <h2 class="premise__title">The future is<br>still unwritten.</h2>
+            <p class="premise__body">In a time of rising authoritarianism, growing inequality, and relentless disinformation, these salons bring together voices from across movements, borders, and generations to explore solutions, build connections, and imagine what comes next.</p>
+          </div>
+
+          <!-- Asset #6, split in two. The Figma frame baked the script into
+               the same export as the airship; they are cropped apart here
+               because they now do opposite things -- the craft flies, the
+               words fade -- and laid back out at the exact offsets they
+               held in the 1060x388 original, so the pair still reads as the
+               single drawing it was. -->
+          <div class="airship-row">
+            <img class="airship__craft" src="/assets/salons/airship-craft.png"
+                 alt="An engraved airship flying a banner reading DemCon × The Parlor.">
+            <img class="airship__script" src="/assets/salons/bold-ideas.png"
+                 alt="Handwritten: Bold ideas this way…">
+
+            <!-- The chevron sits at the end of that handwritten line, which
+                 is pointing at it. -->
+            <button class="deck__nav deck__nav--next" type="button" hidden
+                    aria-controls="deck-stage" aria-label="Next: meet the team">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M9 4l8 8-8 8" fill="none" stroke="currentColor"
+                      stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="deck__nav-hint" aria-hidden="true">Swipe</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="deck__panel panel-team" id="guest" role="group"
+             aria-roledescription="slide" aria-label="2 of 2: Meet the team">
+      <div class="team__inner">
+        <div class="team__intro">
+          <p class="eyebrow eyebrow--pill">In the room // 03</p>
+          <h2 class="premise__title team__title">Meet the team.</h2>
+          <p class="premise__body team__body">The DemCon &times; The Parlor&rsquo;s new event series Democracy Salon launches September 20th at 6pm CET. Salon 1 will feature DemCon Founder Hunter Christopher, The Parlor Founder Lindsey Brock Morales, Design &amp; Marketing lead Elizabeth Gallagher, and Head of Operations Louise A. Parker talking everything DemCon from the beginning to their big plans for the immediate future. If you want to learn about how this team is building the &ldquo;CPAC of the Left&rdquo; this is a must attend event.</p>
+        </div>
+
+        <div class="team__hosts">
+          <div class="cohost-head">
+            <span class="eyebrow">Your hosts</span>
+            <hr>
+          </div>
+
+          <div class="cohosts">
+            <div class="cohost">
+              <div class="avatar avatar--sm"><img src="/assets/images/hosts/hunter-christopher.png" alt="Hunter C."></div>
+              <div>
+                <p class="guest__name">Hunter C.</p>
+                <p class="guest__role">Founder, DemCon</p>
+                <p class="guest__bio">Brings a creative lens to big questions.</p>
+                <a class="link-arrow" href="#" data-host="hunter">About Hunter &rarr;</a>
+              </div>
+            </div>
+            <div class="cohost">
+              <div class="avatar avatar--sm"><img src="/assets/images/hosts/lindsey-brock-morales.png" alt="Lindsey B.M."></div>
+              <div>
+                <p class="guest__name">Lindsey B.M.</p>
+                <p class="guest__role">Founder, The Parlor</p>
+                <p class="guest__bio">Builds spaces for meaningful exchange.</p>
+                <a class="link-arrow" href="#" data-host="lindsey">About Lindsey &rarr;</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Speakers. Full names rather than the hosts' initials: a host
+               has a modal carrying their full name, and these cards are the
+               only place a speaker's is written. The ring is drawn into
+               these portraits rather than added by CSS, hence
+               .avatar--ringed. No bio line until there is copy for one. -->
+          <div class="cohost-head cohost-head--speakers">
+            <span class="eyebrow">Speakers</span>
+            <hr>
+          </div>
+
+          <div class="cohosts cohosts--speakers">
+            <div class="cohost">
+              <div class="avatar avatar--sm avatar--ringed"><img src="/assets/images/speakers/louise-a-parker.png" alt="Louise A. Parker"></div>
+              <div>
+                <p class="guest__name">Louise A. Parker</p>
+                <p class="guest__role">Head of Operations, DemCon</p>
+              </div>
+            </div>
+            <div class="cohost">
+              <div class="avatar avatar--sm avatar--ringed"><img src="/assets/images/speakers/elizabeth-gallagher.png" alt="Elizabeth Gallagher"></div>
+              <div>
+                <p class="guest__name">Elizabeth Gallagher</p>
+                <p class="guest__role">Design &amp; Marketing, DemCon</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- Hidden until the script wires it up: without JS the panels are both
+       simply there, stacked in the one cell, and a control that moved
+       nothing would be worse than none. -->
+  <button class="deck__nav deck__nav--prev" type="button" hidden
+          aria-controls="deck-stage" aria-label="Back to the premise">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M15 4l-8 8 8 8" fill="none" stroke="currentColor"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <div class="deck__dots" aria-hidden="true">
+    <span class="deck__dot is-on"></span><span class="deck__dot"></span>
+  </div>
+</section>
+
+<!-- ================= CTA + FOOTER (one stacked card) =============== -->
+<!-- These two share a wrapper so the footer travels with the CTA as the
+     tail of the final card, rather than sliding over it as a separate
+     one. The wrapper carries the sticky/stacking; the sections inside
+     are plain flow. -->
+<div class="stack-last">
+<section class="section cta" id="save-your-spot">
+  <div class="cta__dots" aria-hidden="true"></div>
+  <div class="wrap cta__inner">
+    <figure class="cta__art">
+      <!-- Asset #8: "Lady with Teacup + Starburst -- PNG @2x -- includes
+           speech bubble". Clipped at the bottom by .cta__art; hat stays whole. -->
+      <img src="/assets/salons/lady-teacup.png"
+           alt="A woman in a wide Victorian hat raising a teacup, with a speech bubble reading &ldquo;Pull up a chair&rdquo;.">
+    </figure>
+
+    <div>
+      <p class="eyebrow eyebrow--pink">Do join us // 04</p>
+      <h2 class="cta__title">Save your spot</h2>
+      <p class="cta__sub">Just your name and email &mdash; no hassle or spam.</p>
+
+      <form class="cta__form" method="post" action="/api/submit-form" novalidate>
+        <!-- Honeypot: hidden from real visitors, so a non-empty value means a
+             bot filled in every field it could find. Same field name and
+             behaviour as the forms on the main site. -->
+        <input class="hp" type="text" name="Website" tabindex="-1" autocomplete="off" aria-hidden="true" data-honeypot>
+        <div class="cta__fields">
+          <label class="sr-only" for="fn">First name</label>
+          <input id="fn" name="Name" type="text" placeholder="First name" autocomplete="given-name" required>
+          <label class="sr-only" for="em">Email address</label>
+          <input id="em" name="Email" type="email" placeholder="Email address" autocomplete="email" required>
+        </div>
+        <!-- The link sits inside the label on purpose: clicking interactive
+             content inside a label does not toggle the control, so pressing
+             the words opens the note while the box itself still answers a
+             click on it (or on the gap between the two). -->
+        <label class="checkline">
+          <input type="checkbox" name="Newsletter" value="yes" checked>
+          <a href="#" data-note="newsletter">Also send me The Parlor Magazine's newsletter.</a>
+        </label>
+        <button class="btn-primary" type="submit">Save my spot &rarr;</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="section footer">
+  <div class="wrap">
+    <div class="footer__inner">
+      <div>
+        <h4>About Democracy Salons</h4>
+        <p>Democracy Salons are smaller, ongoing talks throughout the year that keep ideas moving, relationships growing, and collaboration strong between DemCon summits.</p>
+        <a class="link-arrow" href="#">Learn more about the Salons &rarr;</a>
+      </div>
+
+      <div class="footer__brand">
+        <!-- The footer export is the full lockup: wordmarks plus the
+             "People - Ideas - A more progressive tomorrow" strapline beneath,
+             as outlined paths. The strapline therefore lives in alt text
+             rather than as a separate <p>, which would render it twice. -->
+        <img class="footer__lockup" src="/assets/salons/logo-lockup-footer.svg"
+             width="578" height="85"
+             alt="DemCon × The Parlor — People, Ideas, A more progressive tomorrow">
+      </div>
+
+      <div class="hashtags">
+        #DemocracySalons<br>
+        #DemCon<br>
+        #TheParlor
+      </div>
+    </div>
+
+    <div class="wrap footer__legal" style="padding-left:0;padding-right:0">
+      <span>&copy; 2026 DemCon x The Parlor. All rights reserved.</span>
+      <nav>
+        <a href="#">Privacy</a><span>|</span>
+        <a href="#">Terms</a><span>|</span>
+        <a href="/index.html#contact">Contact</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+</div><!-- /.stack-last -->
+
+<!-- What ticking the newsletter box on the registration form means. Same
+     shell as the host modal below, minus the parts a bio needs. -->
+<div id="demcon-note-modal" class="demcon-modal" hidden aria-hidden="true">
+  <div class="demcon-modal-backdrop" data-modal-dismiss></div>
+  <div class="demcon-modal-dialog demcon-note-modal-dialog" role="dialog" aria-modal="true"
+       aria-labelledby="demcon-note-modal-title">
+    <button type="button" class="demcon-modal-close" data-modal-dismiss aria-label="Close">&times;</button>
+    <div class="demcon-host-modal-body">
+      <h3 class="demcon-note-modal-title" id="demcon-note-modal-title">Newsletter sign-up</h3>
+      <p class="demcon-note-modal-text">Signing up for a Salon automatically signs you up to DemCon&rsquo;s newsletter.</p>
+      <p class="demcon-note-modal-text">Opting in here also puts you on The Parlor Magazine&rsquo;s newsletter &mdash; a global, intersectional feminist magazine about community resilience and local solutions.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Host bio modal -- same markup as the homepage's "Our Hosts" modal, so
+     the two look and behave identically. Populated at click time from
+     HOST_DATA in host-modal.js. -->
+<div id="demcon-host-modal" class="demcon-modal" hidden aria-hidden="true">
+  <div class="demcon-modal-backdrop" data-modal-dismiss></div>
+  <div class="demcon-modal-dialog demcon-host-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="demcon-host-modal-name">
+    <button type="button" class="demcon-modal-close" data-modal-dismiss aria-label="Close">&times;</button>
+    <div class="demcon-host-modal-photo-wrap"><img class="demcon-host-modal-photo" src="" alt=""></div>
+    <div class="demcon-host-modal-body">
+      <h3 class="demcon-host-modal-name" id="demcon-host-modal-name"></h3>
+      <p class="demcon-host-modal-title"></p>
+      <div class="demcon-host-modal-socials"></div>
+      <p class="demcon-host-modal-bio"></p>
+      <a class="demcon-host-modal-link" href="" target="_blank" rel="noopener">See their work &rarr;</a>
+    </div>
+  </div>
+</div>
+
+<script src="/assets/salons/host-modal.js" defer></script>
+<script>
+  // Keep --nav-h honest. The fixed header's real height depends on the
+  // lockup, the Join Us button's padding and whatever the fonts resolve to,
+  // so a hardcoded value drifts -- measured 91px against a guessed 75px,
+  // which let the bar sit over the top of the hero. Measuring it and writing
+  // it back means body padding-top and scroll-padding-top (both derived from
+  // the same custom property) always match the thing they are compensating
+  // for, including after a font swap or an orientation change.
+  (function () {
+    var nav = document.querySelector('.nav');
+    if (!nav) return;
+    function syncNavHeight() {
+      var h = Math.round(nav.getBoundingClientRect().height);
+      if (h) document.documentElement.style.setProperty('--nav-h', h + 'px');
+    }
+    syncNavHeight();
+    window.addEventListener('resize', syncNavHeight, { passive: true });
+    window.addEventListener('load', syncNavHeight);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncNavHeight);
+  })();
+
+  // Scroll-stacking offsets. A section taller than the viewport must not
+  // pin at top:0 -- it would hold with its own bottom off-screen and never
+  // show it. Giving it a negative top equal to (viewport - its height)
+  // means it scrolls through first and only sticks once its bottom edge
+  // reaches the viewport bottom. Same formula as setupStackedSectionOffsets
+  // in sticky-nav.js.
+  //
+  // visualViewport.height rather than innerHeight: on mobile the address
+  // bar collapsing mid-scroll changes what is actually visible without
+  // reliably firing a window resize, which would otherwise freeze every
+  // offset at its page-load value and open gaps between the cards.
+  (function () {
+    var stacked = [].slice.call(document.querySelectorAll('.hero, .deck, .stack-last'));
+    if (!stacked.length) return;
+
+    function adjust() {
+      var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+      // Bail on a zero height rather than computing against it. A viewport
+      // can transiently report 0 -- observed live while the preview pane was
+      // mid-resize -- and Math.min(0, 0 - height) would then hand every
+      // section a top of minus its own height, collapsing the whole stack
+      // until something happened to recalculate. Same guard measure() uses
+      // in sticky-nav.js.
+      if (!vh) return;
+      stacked.forEach(function (el) {
+        el.style.top = Math.min(0, vh - el.offsetHeight) + 'px';
+      });
+    }
+
+    adjust();
+    window.addEventListener('resize', adjust, { passive: true });
+    window.addEventListener('scroll', adjust, { passive: true });
+    window.addEventListener('load', adjust);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(adjust);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', adjust, { passive: true });
+      window.visualViewport.addEventListener('scroll', adjust, { passive: true });
+    }
+  })();
+
+  // Header tone. The bar is opaque now, so it has to be told what it is
+  // sitting on.
+  //
+  // The main site's header samples the pixels behind it, because a Framer
+  // page's sections are not a list anything can enumerate. This page's are:
+  // four cards in a known stacking order. So it walks them in that order and
+  // takes the last one whose top edge has passed under the bar -- the same
+  // "last one to have reached the sample point wins" rule the About page's
+  // stacked cards use in sticky-nav.js, and for the same reason: every
+  // pinned card's rect keeps satisfying a plain "is the bar inside it" test
+  // long after a higher card has covered it over.
+  (function () {
+    var nav = document.querySelector('.nav');
+    if (!nav) return;
+
+    // In stacking order, bottom card first. The footer travels up as the
+    // tail of the last card, so it gets its own entry rather than inheriting
+    // the CTA's yellow for the final stretch of the page.
+    //
+    // The hero takes the blush of its diagonal panel rather than the cream
+    // the card is painted in: the panel is the half of that card the bar
+    // actually meets on the way past.
+    var TONES = ['is-blush', 'is-cream', 'is-white', 'is-yellow'];
+    var CARDS = [
+      { sel: '.hero',   tone: 'is-blush' },
+      { sel: '.deck',   tone: 'is-white' },
+      { sel: '.cta',    tone: 'is-yellow' },
+      { sel: '.footer', tone: 'is-cream' }
+    ].map(function (c) {
+      return { el: document.querySelector(c.sel), tone: c.tone };
+    }).filter(function (c) { return c.el; });
+
+    if (!CARDS.length) return;
+    var current = null;
+
+    function check() {
+      // A pixel below the bar's own bottom edge: sampling level with it
+      // would flip a card early, while its top edge is still showing.
+      var y = nav.getBoundingClientRect().height + 1;
+      var tone = CARDS[0].tone;
+      CARDS.forEach(function (c) {
+        if (c.el.getBoundingClientRect().top <= y) tone = c.tone;
+      });
+      if (tone === current) return;
+      current = tone;
+      TONES.forEach(function (cls) { nav.classList.toggle(cls, cls === tone); });
+    }
+
+    check();
+    window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check, { passive: true });
+    window.addEventListener('load', check);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(check);
+  })();
+
+  // The premise/team deck.
+  //
+  // Two panels in one grid cell and a data-state on the card; CSS owns every
+  // fade and the airship's easing, and this owns three things it cannot:
+  // which state is current, how far the airship has to fly at this size, and
+  // the gestures (swipe, drag, trackpad, arrows) that ask for the change.
+  (function () {
+    var deck  = document.querySelector('.deck');
+    var stage = deck && deck.querySelector('.deck__stage');
+    if (!stage) return;
+
+    var craft  = deck.querySelector('.airship__craft');
+    var dock   = deck.querySelector('.airship__dock');
+    var next   = deck.querySelector('.deck__nav--next');
+    var prev   = deck.querySelector('.deck__nav--prev');
+    var dots   = [].slice.call(deck.querySelectorAll('.deck__dot'));
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    var STATES = ['premise', 'team'];
+    var index  = 0;
+
+    // Shipped hidden so a reader without JS gets the panels as they are
+    // rather than controls that move nothing.
+    next.hidden = false;
+    prev.hidden = false;
+
+    // How big the airship can be once it arrives is decided by the team
+    // column beside it, not by a number picked in advance: the hosts and
+    // speakers list is what the dock has to stay above, and it grows every
+    // time someone is added to it. So the dock is given whatever room is
+    // left between the header and the top of that list, up to a size past
+    // which the drawing starts to dominate the panel rather than decorate
+    // it. Below the breakpoint the CSS flies it off the top instead, and
+    // this leaves that alone.
+    var wide  = window.matchMedia('(min-width: 768px)');
+    var hosts = deck.querySelector('.team__hosts');
+
+    function sizeDock() {
+      if (!dock) return;
+      if (!wide.matches || !hosts) { dock.style.height = ''; return; }
+      var top = parseFloat(getComputedStyle(dock).top) || 0;
+      var room = hosts.getBoundingClientRect().top - deck.getBoundingClientRect().top - top - 18;
+      dock.style.height = Math.max(0, Math.min(room, 230)) + 'px';
+    }
+
+    // The flight, measured rather than guessed: the craft is moved centre
+    // onto centre of the dock and scaled to its width. Both boxes have to be
+    // read untransformed, so any transform already on the craft comes off
+    // first -- with transitions suppressed, or clearing it would animate the
+    // craft home and back on every resize.
+    function flightTransform() {
+      if (!craft || !dock) return '';
+      var prevTransform  = craft.style.transform;
+      var prevTransition = craft.style.transition;
+      craft.style.transition = 'none';
+      craft.style.transform = 'none';
+      var from = craft.getBoundingClientRect();
+      var to   = dock.getBoundingClientRect();
+      craft.style.transform = prevTransform;
+      void craft.offsetWidth;                    // land the revert before re-arming
+      craft.style.transition = prevTransition;
+
+      if (!from.width || !to.width) return '';
+      return 'translate(' +
+        Math.round((to.left + to.width / 2) - (from.left + from.width / 2)) + 'px, ' +
+        Math.round((to.top + to.height / 2) - (from.top + from.height / 2)) + 'px) scale(' +
+        (to.width / from.width).toFixed(4) + ')';
+    }
+
+    function render() {
+      deck.setAttribute('data-state', STATES[index]);
+      sizeDock();
+      if (craft) craft.style.transform = index === 1 ? flightTransform() : '';
+      dots.forEach(function (d, i) { d.classList.toggle('is-on', i === index); });
+    }
+
+    function go(i) {
+      i = Math.max(0, Math.min(STATES.length - 1, i));
+      if (i === index) return;
+      index = i;
+      swiped();
+      render();
+    }
+
+    // Any move at all retires the pulse -- the hint has been taken.
+    function swiped() { deck.classList.add('has-swiped'); }
+
+    next.addEventListener('click', function () { go(index + 1); });
+    prev.addEventListener('click', function () { go(index - 1); });
+
+    stage.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      go(index + (e.key === 'ArrowRight' ? 1 : -1));
+    });
+
+    // Swipe and drag. With no scroll container left there is nothing native
+    // to ride on, so the gesture is read here for every pointer type: the
+    // stage declares touch-action: pan-y, which hands vertical scrolling
+    // back to the browser and leaves horizontal movement to this.
+    (function () {
+      var startX = 0, startY = 0, tracking = false, moved = false;
+
+      stage.addEventListener('pointerdown', function (e) {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        // Let a press on something pressable stay a press.
+        if (e.target.closest('a, button, input, label')) return;
+        tracking = true; moved = false;
+        startX = e.clientX; startY = e.clientY;
+      });
+
+      stage.addEventListener('pointermove', function (e) {
+        if (!tracking || moved) return;
+        var dx = e.clientX - startX;
+        var dy = e.clientY - startY;
+        // Committed only once the movement is decisively sideways: a
+        // shallower angle than this is someone scrolling the page who
+        // happened to start the gesture on the card.
+        if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+        moved = true;
+        deck.classList.add('is-dragging');
+        go(index + (dx < 0 ? 1 : -1));
+      });
+
+      function release() {
+        tracking = false;
+        deck.classList.remove('is-dragging');
+      }
+      stage.addEventListener('pointerup', release);
+      stage.addEventListener('pointercancel', release);
+      stage.addEventListener('pointerleave', release);
+    })();
+
+    // Trackpad. A two-finger sideways swipe used to move the rail for free;
+    // with the rail gone it is read here, accumulated so one flick is one
+    // change and then locked out until the gesture's momentum has died --
+    // otherwise a single trailing-off swipe fires twice.
+    (function () {
+      var acc = 0, locked = false, idle = null;
+
+      stage.addEventListener('wheel', function (e) {
+        if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;   // that is a page scroll
+        e.preventDefault();
+        clearTimeout(idle);
+        idle = setTimeout(function () { acc = 0; locked = false; }, 220);
+        if (locked) return;
+        acc += e.deltaX;
+        if (Math.abs(acc) < 90) return;
+        locked = true;
+        go(index + (acc > 0 ? 1 : -1));
+      }, { passive: false });
+    })();
+
+    // A resize changes the distance to the dock; if the craft is already
+    // there it has to be re-aimed, or it hangs wherever the old maths put
+    // it. Re-aiming without a transition keeps it from sliding across the
+    // card while the window is being dragged.
+    window.addEventListener('resize', function () {
+      sizeDock();
+      if (index !== 1 || !craft) return;
+      var t = craft.style.transition;
+      craft.style.transition = 'none';
+      craft.style.transform = flightTransform();
+      void craft.offsetWidth;
+      craft.style.transition = t;
+    }, { passive: true });
+
+    // #guest -- the hero's "with the people building DemCon" link -- points
+    // at the team panel. Bring the card onto the screen first and then make
+    // the change, or the airship flies and the copy fades while the card is
+    // still below the fold, and the reader arrives after the show.
+    [].forEach.call(document.querySelectorAll('a[href="#guest"]'), function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        deck.scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'start' });
+        setTimeout(function () { go(1); }, reduce.matches ? 0 : 420);
+        if (history.replaceState) history.replaceState(null, '', '#guest');
+      });
+    });
+
+    render();
+    if (location.hash === '#guest') {
+      window.addEventListener('load', function () { go(1); });
+    }
+  })();
+
+  // The newsletter note. Its own small modal rather than a branch inside
+  // host-modal.js, which is a port of the homepage's hosts modal and should
+  // stay that; the shell, and the behaviour expected of it -- Escape, a
+  // click on the backdrop, Tab kept inside, focus handed back to whatever
+  // opened it -- are the same.
+  (function () {
+    var modal = document.getElementById('demcon-note-modal');
+    var triggers = document.querySelectorAll('[data-note]');
+    if (!modal || !triggers.length) return;
+
+    var dialog = modal.querySelector('.demcon-modal-dialog');
+    var focusableSelector = 'button, [href], [tabindex]:not([tabindex="-1"])';
+    var lastFocused = null;
+
+    function isOpen() { return !modal.hidden; }
+
+    function open() {
+      lastFocused = document.activeElement;
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      modal.querySelector('.demcon-modal-close').focus();
+    }
+
+    function close() {
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      if (lastFocused && lastFocused.focus) lastFocused.focus();
+    }
+
+    [].forEach.call(triggers, function (el) {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        open();
+      });
+    });
+
+    [].forEach.call(modal.querySelectorAll('[data-modal-dismiss]'), function (el) {
+      el.addEventListener('click', close);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (!isOpen()) return;
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key !== 'Tab') return;
+      var focusable = [].slice.call(dialog.querySelectorAll(focusableSelector));
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+      }
+    });
+  })();
+
+  // One source for the salon's facts.
+  //
+  // assets/salons/salon.json is what api/submit-form.js builds the
+  // registration confirmation from, and the page fills itself from the same
+  // file -- so what the hero advertises and what a registrant is emailed
+  // cannot drift apart. Changing the salon means editing that one file.
+  //
+  // The values are in the markup as well, and they are what a reader sees if
+  // the fetch fails or never runs: this replaces text rather than supplying
+  // it, so the page is complete without script and without waiting on a
+  // request. textContent, never innerHTML -- these strings are content, not
+  // markup.
+  (function () {
+    var nodes = document.querySelectorAll('[data-salon]');
+    if (!nodes.length || !window.fetch) return;
+
+    fetch('/assets/salons/salon.json', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        [].forEach.call(nodes, function (el) {
+          var value = data[el.getAttribute('data-salon')];
+          if (typeof value === 'string' && value) el.textContent = value;
+        });
+      })
+      .catch(function () {});      // the markup already says the right thing
+  })();
+
+  // Mobile nav disclosure.
+  (function () {
+    var btn = document.querySelector('.nav__toggle');
+    var links = document.getElementById('navlinks');
+    if (!btn || !links) return;
+    btn.addEventListener('click', function () {
+      var open = links.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      window.dispatchEvent(new Event('resize'));   // re-measure --nav-h
+    });
+  })();
+
+  // Registration form -> the same /api/submit-form pipeline every other form
+  // on the site uses, with formType "salon" (already defined in
+  // FORM_CONFIGS, so it gets its own subject line and Sender group).
+  //
+  // Reimplemented in miniature here rather than pulling in sticky-nav.js:
+  // that file is ~3,500 lines of homepage-specific behaviour, and loading it
+  // on this page would drag in the scroll-stacking, custom cursor and hero
+  // intro along with it. This is the same contract -- honeypot, disabled
+  // button while in flight, success swap, error text -- in 30 lines.
+  (function () {
+    var form = document.querySelector('.cta__form');
+    if (!form) return;
+
+    var error = document.createElement('p');
+    error.className = 'form-error';
+    error.hidden = true;
+    form.appendChild(error);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      var hp = form.querySelector('[data-honeypot]');
+      if (hp && hp.value) return;            // bot: drop silently
+      if (!form.reportValidity()) return;
+
+      var btn = form.querySelector('button[type="submit"]');
+      var fields = {};
+      new FormData(form).forEach(function (value, key) {
+        if (hp && key === hp.name) return;
+        fields[key] = value;
+      });
+
+      if (btn) btn.disabled = true;
+      error.hidden = true;
+
+      fetch('/api/submit-form', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ formType: 'salon', page: location.pathname, fields: fields })
+      })
+        .then(function (res) { if (!res.ok) throw new Error('submit failed'); return res.json(); })
+        .then(function () {
+          form.innerHTML = '<p class="form-success">You\u2019re on the list \u2014 we\u2019ll email you the joining link.</p>';
+        })
+        .catch(function () {
+          if (btn) btn.disabled = false;
+          error.textContent = 'Something went wrong sending that \u2014 please email us directly at info@thedemcon.org.';
+          error.hidden = false;
+        });
+    });
+  })();
+</script>
+</body>
+</html>

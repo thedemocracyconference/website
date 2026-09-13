@@ -1,0 +1,1030 @@
+/* Democracy Salons landing page (salons/index.html).
+
+   Built from the Figma "Dev Handoff -- Landing Page" spec: DemCon x The
+   Parlor, four full-width sections stacked flush at a 1440px design width.
+   Every colour, size and transform below that carries a comment referencing
+   the spec is a literal value from it rather than an eyeballed match.
+
+   Self-contained: this page shares only the webfonts with the rest of the
+   site (see fonts.css) and none of sticky-nav.css/js, so nothing here can
+   regress the homepage. */
+
+:root {
+  /* Colour palette -- the six core values from the spec, verbatim. */
+  --yellow: #fcf424;     /* DemCon: CTA bg, highlights, labels */
+  --hot-pink: #ff2e88;   /* DemCon: buttons, accents, arrows */
+  --cream: #f9f5ed;      /* The Parlor: hero & footer bg */
+  --soft-pink: #ffe9ed;  /* The Parlor: speakers section bg */
+  --ink: #1b1514;        /* shared: all body & heading text */
+  --white: #ffffff;
+
+  /* RT Goodneighbor Sans is commercial and not licensed into this repo --
+     only the Script weight is. League Spartan ExtraBold stands in for it on
+     "SALONS" and "SAVE YOUR SPOT"; it is DemCon's own display sans, so the
+     substitution stays inside the brand rather than reaching for a
+     lookalike. Swap --display the moment the real face is available. */
+  --script: "RT Goodneighbor Script", "Brush Script MT", cursive;
+  --display: "League Spartan", "Arial Black", sans-serif;
+  --spartan: "League Spartan", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --serif: "Playfair Display", Georgia, serif;
+  --body: "Satoshi", system-ui, -apple-system, sans-serif;
+
+  --page: 1440px;        /* spec: design width */
+  --gutter: 72px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+
+.wrap {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* Sections stack flush -- spec: "4 full-width sections stacked flush
+   (0px gap)". Heights there (642/733/413/249) are the Figma frame heights
+   at 1440px; they are min-heights here so nothing clips when text reflows
+   or a font falls back to a taller substitute. */
+.section { position: relative; width: 100%; }
+
+/* ---------- Eyebrow labels -------------------------------------------- */
+/* Spec: IBM Plex Mono Bold, 11px, letter-spacing 2px, all-caps, on a
+   #FCF424 yellow highlight pill. The pink variant (no pill) is used for
+   "THE PREMISE // 02" in the mock. */
+.eyebrow {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: inline-block;
+  margin: 0 0 18px;
+}
+.eyebrow--pill { background: var(--yellow); padding: 5px 10px; }
+.eyebrow--pink { color: var(--hot-pink); }
+
+/* ---------- Navbar ----------------------------------------------------- */
+/* Pinned, matching the rest of the site: the main pages' header is
+   position:fixed / top:0 / z-index:999 (set in sticky-nav.css), so it stays
+   visible for the whole scroll rather than leaving with the hero. Same
+   values here, and the translucent-plus-blur treatment mirrors the
+   backdrop-filter Framer bakes onto the header's own container there, so
+   type stays readable when the yellow CTA section passes underneath.
+
+   --nav-h is the single source of truth for the height: the body's
+   padding-top (which keeps the hero from starting underneath a fixed
+   element) and scroll-padding-top (which stops in-page anchors landing
+   behind it) are both derived from it. */
+:root { --nav-h: 75px; }
+
+html { scroll-padding-top: var(--nav-h); }
+body { padding-top: var(--nav-h); }
+
+/* Solid brand fill that snaps to whatever card is behind it, the same way
+   the main site's header treats its own sections (see the
+   .demcon-nav-* rules in sticky-nav.css). A translucent blur is what you
+   reach for when you do not know the colour underneath; here the cards are
+   a known, short list, so the bar can just be that colour -- and the page's
+   flat, printed look has nothing else frosted in it.
+
+   The default is the blush the hero opens on, so the bar is right before a
+   single line of script has run. */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 999;
+  background: var(--soft-pink);
+  border-bottom: 1px solid rgba(27, 21, 20, 0.12);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+.nav.is-blush  { background: var(--soft-pink); }
+.nav.is-cream  { background: var(--cream); }
+.nav.is-white  { background: var(--white); }
+.nav.is-yellow { background: var(--yellow); }
+/* On the yellow card the Join Us button would be the same yellow as the bar
+   it sits in, so it inverts rather than dissolving into it. */
+.nav.is-yellow .btn-join { background: var(--ink); color: var(--cream); }
+/* Yellow on yellow needs no seam: against the CTA card the bar reads as the
+   top of that card rather than a strip laid over it. */
+.nav.is-yellow { border-bottom-color: transparent; }
+.nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  min-height: 74px;
+}
+/* Both lockups are the real exported artwork now (assets #1 and #2 in the
+   inventory) rather than type set to look like them, so the star's textured
+   fill and the Parlor script are exact. Sized by width; height follows. */
+.lockup { display: flex; align-items: center; flex: none; }
+.lockup img { width: 268px; height: auto; }
+.footer__lockup { width: 100%; max-width: 340px; height: auto; }
+
+.nav__links { display: flex; align-items: center; gap: 30px; }
+.nav__links a {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.nav__links a:hover { color: var(--hot-pink); }
+.btn-join {
+  background: var(--yellow);
+  font-family: var(--spartan);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 11px 20px;
+  text-decoration: none;
+}
+.nav__toggle { display: none; }
+
+/* ---------- Hero ------------------------------------------------------- */
+.hero { background: var(--cream); min-height: 642px; overflow: hidden; }
+/* The pink panel behind the left column, cut on a diagonal as in the mock. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 56%;
+  background: var(--soft-pink);
+  clip-path: polygon(0 0, 100% 0, 78% 100%, 0 100%);
+  z-index: 0;
+}
+.hero__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  gap: 40px;
+  align-items: center;
+  padding-top: 46px;
+  padding-bottom: 46px;
+}
+
+.hero__title { margin: 0 0 34px; line-height: 1; }
+.hero__democracy {
+  position: relative;
+  display: inline-block;
+  font-family: var(--script);
+  font-size: 92px;
+  line-height: 0.9;
+  transform: rotate(-7.4deg);   /* spec */
+  padding: 0 10px;
+}
+/* The real brushstroke, exported straight from the Figma layer "Highlight
+   -- Democracy Brushstroke" (553x136, already filled #FCF424).
+
+   Spec puts the stroke at rotate(-7.1deg) and the word at rotate(-7.4deg).
+   This sits *inside* the rotated word, so it has already inherited -7.4 --
+   the 0.3deg here is the relative difference that lands it on the -7.1
+   the spec asks for, not an eyeballed nudge. */
+.hero__democracy::before {
+  content: "";
+  position: absolute;
+  left: -5%; right: -5%; top: 4%; bottom: 2%;
+  background: url("/assets/salons/brushstroke.svg") center / 100% 100% no-repeat;
+  transform: rotate(0.3deg);
+  z-index: -1;
+}
+.hero__salons {
+  display: block;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 118px;
+  line-height: 0.73;            /* spec: line-height 73% */
+  letter-spacing: -0.02em;
+  transform: rotate(-6.6deg);   /* spec */
+  transform-origin: left center;
+  margin-top: 4px;
+}
+
+.hero__kicker {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+.hero__lede {
+  font-size: 18px;
+  line-height: 28px;            /* spec: body 18px / 28px in the hero */
+  margin: 0 0 28px;
+  max-width: 34ch;
+}
+.hero__topic {
+  font-family: var(--spartan);
+  font-weight: 700;
+  font-size: 23px;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+.hero__with { font-family: var(--serif); font-style: italic; font-size: 18px; margin: 0 0 18px; }
+
+.meta { list-style: none; margin: 0 0 26px; padding: 0; display: grid; gap: 7px; }
+.meta li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 1px;          /* spec: metadata 12px / 1px / all-caps */
+  text-transform: uppercase;
+}
+.meta svg { width: 22px; height: 22px; flex: none; transform: translateY(2px); } /* spec: nudged down 2px */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--hot-pink);
+  color: var(--white);
+  font-family: var(--spartan);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 16px 30px;
+  border: 0;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-primary:hover { background: var(--ink); }
+.hero__footnote {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin: 12px 0 0;
+  opacity: 0.7;
+}
+/* Cap the illustration by height rather than width so the section stays
+   near its 642px spec height regardless of what aspect ratio the exported
+   artwork turns out to have -- an unconstrained 1800px-tall export pushed
+   the hero to 1652px. */
+.hero__art { margin: 0; display: flex; justify-content: flex-end; }
+.hero__art img { max-height: 548px; width: auto; object-fit: contain; }
+
+/* ---------- The deck: premise + meet the team -------------------------- */
+/* One card, two panels, both in the same grid cell -- so the change between
+   them is a cross-fade with an airship flying through it, not a slide. The
+   timings below are shared by every part of that change so the parts stay
+   in step; --float is the airship's flight, and it is what the incoming
+   copy waits out before it appears.
+
+   touch-action: pan-y on the stage leaves vertical scrolling entirely to
+   the browser while horizontal drags come to the script, so a swipe down
+   the page never gets swallowed by the deck. */
+.deck {
+  background: var(--white);
+  min-height: 733px;
+  position: relative;
+  --float: 1150ms;
+  --fade: 380ms;
+  /* How wide the flourish is standing at this card height -- it is drawn to
+     fill the card, so its width follows: 93/610 of the height it covers.
+     Now that it belongs to the card rather than to the premise panel it no
+     longer travels away, so both panels have to be told to keep off it. */
+  --flourish: calc((100dvh - var(--nav-h)) * 0.1525);
+}
+.deck__stage {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  touch-action: pan-y;
+  /* Grow to fill the card, but never shrink below the panels' own height:
+     with a 0 basis a panel taller than the viewport would be squeezed into
+     the card and clipped, losing its bottom. This way a short panel gets a
+     full-height card to sit in (which is what the flourish runs down) and a
+     tall one pushes the card taller instead, as the stack expects. */
+  flex: 1 0 auto;
+}
+/* Focusable so the panels can be changed from the keyboard; that focus ring
+   belongs on the card, not hairline-tight around a full-width strip. */
+.deck__stage:focus-visible { outline: 2px solid var(--hot-pink); outline-offset: -4px; }
+/* While a drag is in progress, suppress the text selection it would
+   otherwise sweep up. */
+.deck.is-dragging .deck__stage { cursor: grabbing; user-select: none; }
+
+/* Both panels occupy the one cell: they overlap exactly, and the cell takes
+   the height of the taller of them. */
+.deck__panel {
+  grid-area: 1 / 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 92px;                /* the gutter the prev chevron lives in */
+}
+/* The team column runs nearly the full card, so unlike the premise's
+   narrower centred column it would otherwise start on top of the flourish.
+   It gets the flourish's width plus a margin instead -- just enough to
+   stand clear, and no more: this column carries two host cards side by
+   side, and every pixel taken off its left is one those cards lose. */
+.panel-team { padding-left: max(92px, calc(var(--flourish) + 96px)); }
+
+/* What leaves, and what arrives. The delay is declared on the state being
+   moved TO, which is what makes one rule cover both directions: going to
+   the team, the copy leaves at once and the team waits out the flight;
+   coming back, the team leaves at once and the copy waits. */
+.premise__copy,
+.airship__script,
+.deck__nav--next {
+  transition: opacity var(--fade) ease, transform var(--fade) ease;
+}
+.panel-team {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--fade) ease, visibility 0s linear var(--fade);
+}
+.deck[data-state="team"] .panel-team {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: var(--float), var(--float);
+}
+.deck[data-state="premise"] .premise__copy,
+.deck[data-state="premise"] .airship__script,
+.deck[data-state="premise"] .deck__nav--next {
+  transition-delay: var(--float);
+}
+.deck[data-state="team"] .premise__copy,
+.deck[data-state="team"] .airship__script {
+  opacity: 0;
+  transform: translateY(-10px);
+  /* Invisible copy still answers the mouse, and a caption you cannot see
+     but can still select over reads as a ghost. */
+  pointer-events: none;
+}
+.deck[data-state="team"] .deck__nav--next { opacity: 0; pointer-events: none; }
+/* The prev chevron is the team panel's control, so it keeps the team's
+   timing rather than appearing over the premise mid-flight. */
+.deck__nav--prev {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--fade) ease, visibility 0s linear var(--fade);
+}
+.deck[data-state="team"] .deck__nav--prev {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: var(--float), var(--float);
+}
+
+/* ---------- Panel 1: the premise --------------------------------------- */
+/* A single centred column rather than the left half of a two-up grid --
+   with the team gone to its own panel there is no second column for it to
+   sit beside, and left-hugging text under an empty right half reads as a
+   layout that lost something. */
+.premise__inner {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 74px 0 66px;
+}
+/* Not positioned: the flourish inside it anchors to the panel instead (see
+   below). The padding stays, because it is what sets the text block's
+   inset within the centred column. */
+.premise__left { padding-left: 128px; }
+/* Decorative flourish (asset #4 in the inventory) runs full height down the
+   card's own left edge, where it sat before the column was centred -- it
+   belongs to the card, not to the text, so it stays put while the type
+   finds its own centre. Anchored to .deck__panel (the only positioned
+   ancestor) rather than to the column, whose left edge moves with the
+   centring margin at every width. */
+/* The real flourish exports at 93x610 and is drawn to the card's full
+   height from there, width following the ratio -- so it scales rather than
+   stretches, and both of its curled terminals stay intact.
+   
+   The height it fills is the card minus the header, not the whole card: the
+   bar is opaque now, and running the flourish up behind it would hide the
+   top curl and read as a crop nobody intended. The ratio is declared as
+   well as measured so it reserves its space before the SVG loads. */
+.ornament {
+  position: absolute;
+  left: 0;
+  top: var(--nav-h);
+  height: calc(100% - var(--nav-h));
+  width: auto;
+  aspect-ratio: 93 / 610;
+  opacity: 0.8;
+}
+.premise__title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 60px;
+  line-height: 1.04;
+  margin: 0 0 22px;
+}
+.premise__body { font-size: 18px; line-height: 32px; margin: 0 0 34px; } /* spec: 32px in speakers */
+/* The airship export (1060x388) baked the handwritten "Bold ideas this
+   way..." in beside the craft. The two are cropped apart into
+   airship-craft.png and bold-ideas.png, and this row puts them back at the
+   fractions of that original frame they held -- so the drawing is unchanged
+   at rest, sized by the whole column as before, and the craft can still fly
+   off on its own.
+
+   z-index carries the craft over the team panel, which paints after it in
+   DOM order: once docked it is that panel's decoration, not something
+   stranded behind it. */
+.airship-row {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: 740px;
+  aspect-ratio: 1060 / 388;
+  /* The row is a positioned box sitting above the team panel, and an empty
+     box still answers the mouse: left alone it swallows every click that
+     lands inside its rectangle -- which, once the panels changed, included
+     the first host's "About Hunter" link. Nothing in here is clickable
+     except the chevron, so the row itself stops taking the press and hands
+     it back. */
+  pointer-events: none;
+}
+.airship-row .deck__nav { pointer-events: auto; }
+.airship__craft,
+.airship__script { position: absolute; }
+.airship__craft  { left: 0;        top: 9.7938%;  width: 62.2642%; height: 79.8969%; }
+.airship__script { left: 66.2264%; top: 16.4948%; width: 27.0755%; height: 41.4948%; }
+
+/* The flight. Eased so it leaves slowly, covers the distance, and settles
+   without a bounce -- a drawn airship that snaps into place stops reading
+   as one. transform-origin stays at the centre, which is what the script's
+   centre-to-centre measurement assumes. */
+.airship__craft {
+  transition: transform var(--float) cubic-bezier(0.36, 0.03, 0.22, 1);
+  will-change: transform;
+}
+
+/* The landing spot: an empty box in the card's top right, sized and placed
+   in CSS so it answers to the media queries like everything else, and
+   measured by the script rather than being drawn. Its right edge lines up
+   with the team column's, and it holds the craft's own proportions so the
+   flight is a straight scale with no squash. */
+.airship__dock {
+  position: absolute;
+  top: calc(var(--nav-h) + 14px);
+  right: max(92px, calc(50% - 590px));
+  /* Sized by height, with the width following the craft's own ratio, and
+     the height itself replaced at runtime by whatever room there actually
+     is above the hosts -- the team column's length is what decides how big
+     the airship can be, and that changes with the copy. The value here is
+     the fallback for a card the script has not measured yet. */
+  height: min(230px, 26vh);
+  width: auto;
+  aspect-ratio: 660 / 310;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ---------- Panel 2: meet the team ------------------------------------- */
+.team__inner {
+  display: grid;
+  /* Weighted towards the hosts: the intro is four lines of body copy and
+     reads fine narrow, while the right column has to hold two host cards
+     side by side and goes to pieces when it does not. */
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 64px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 74px 0 66px;
+  width: 100%;
+}
+.team__title { font-size: 52px; margin-bottom: 18px; }
+.team__body { margin-bottom: 0; }
+.team__hosts { align-self: center; }
+
+/* Portrait circles. Empty ones (the featured guest, until a headshot
+   exists) render as a plain outlined circle, matching the Figma mock where
+   they are placeholders in the design itself. */
+.avatar {
+  width: 118px; height: 118px;
+  /* 2px rather than a 1.5px hairline: at portrait size the half-pixel edge
+     renders soft and reads grey against the white card. */
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  flex: none;
+  overflow: hidden;
+  background: transparent;
+}
+/* The co-host portraits carry the "Meet the team" panel now that there is
+   no single featured guest above them, so they sit a little larger than the
+   62px the Figma gave them as a secondary row. */
+.avatar--sm { width: 78px; height: 78px; }
+
+/* The two co-host headshots are the site's existing host PNGs, reused
+   rather than re-exported. Their circular subject does not fill its own
+   canvas: measured against the actual alpha bounds, the circle is 98% of
+   the canvas width and centred at (49.9%, 51.7%) -- noticeably above the
+   canvas centre. With object-fit:cover on a square frame that puts the
+   face too low, so object-position lifts it: 56.8% of the vertical
+   overflow sits above the frame, which lands the circle's real centre on
+   the frame's centre. The small scale() closes the last 2% so no sliver of
+   the panel background shows inside the ring. */
+.avatar img {
+  width: 100%; height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: 50% 56.8%;
+  transform: scale(1.04);
+}
+.guest__name {
+  display: inline-block;
+  background: var(--yellow);
+  font-family: var(--spartan);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  margin: 0 0 8px;
+}
+.guest__role { font-family: var(--mono); font-size: 12px; margin: 0 0 10px; }
+.guest__bio { font-size: 15px; line-height: 24px; margin: 0 0 10px; }
+.link-arrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.cohost-head {
+  display: flex; align-items: center; gap: 14px; margin: 0 0 22px;
+}
+.cohost-head .eyebrow { margin: 0; background: var(--hot-pink); color: var(--white); }
+.cohost-head hr { flex: 1; border: 0; border-top: 1px solid rgba(27, 21, 20, 0.25); }
+.cohosts { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+.cohost { display: flex; gap: 14px; align-items: flex-start; }
+
+/* The speakers row, under the hosts and reading as the second half of the
+   same list: identical cards, its own rule across the top. The gap above it
+   is wider than the one between cards so the two groups read as two. */
+.cohost-head--speakers { margin-top: 34px; }
+/* The speakers' portraits arrived with a ring drawn into the artwork, but a
+   ring that is part of a photograph is at the mercy of the scaling: at 78px
+   it came out soft and grey beside the hosts' crisp one (measured: the
+   hosts' edge bottoming out at luminance 15 against the speakers' 43). The
+   files are cropped to the yellow disc instead -- the ring taken off in the
+   image, not in CSS -- so these circles draw the same border as every other
+   one here. The class stays as the marker of that, and as the place to look
+   if a future portrait arrives ringed again. */
+.avatar--ringed { /* nothing: the ring is .avatar's, like the rest */ }
+/* A speaker card carries no bio line, so the role is its last line and
+   needs the breathing room the bio used to leave under it. */
+.cohost .guest__role:last-child { margin-bottom: 0; }
+/* Speakers are named in full where the hosts use initials, so the
+   highlight has a longer string to hold. Tighter by about a tenth, which
+   keeps "Elizabeth Gallagher" on one line from roughly 1400px up and is not
+   a difference you can see between one row and the next. Narrower than that
+   the text beside a portrait is only ~160px and the name wraps to two lines
+   inside the highlight -- which is what the host names already do at those
+   widths, and reads as a block rather than a mistake. */
+.cohosts--speakers .guest__name { font-size: 13px; letter-spacing: 0.04em; }
+
+/* ---------- Deck controls ---------------------------------------------- */
+.deck__nav {
+  position: absolute;
+  /* Centred by auto margins between top:0 and bottom:0 rather than by a
+     translate, which leaves `transform` free for the nudge below -- and
+     lets the small-screen rule drop the whole thing to the bottom bar
+     without the keyframes dragging it back up by half its height. */
+  top: 0; bottom: 0;
+  height: 58px;
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 56px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.deck__nav svg { width: 34px; height: 34px; display: block; }
+/* The next chevron is positioned inside the airship row, immediately after
+   the handwritten line that is pointing at it -- percentages of that row,
+   so it stays at the end of the words at every width instead of being
+   pinned to a card edge the words move away from. Top and bottom bracket
+   the script's own band (16.49% down, 41.49% tall, so 42.01% left beneath
+   it) and the auto margins centre the button on that line.
+
+   The two chevrons are never on screen together -- each belongs to the
+   panel that can leave from it -- so prev keeps the card's left edge,
+   clear of the wider team column beside it. */
+.deck__nav--next {
+  left: 96%;
+  right: auto;
+  top: 16.4948%;
+  bottom: 42.0104%;
+}
+/* In the gutter between the flourish and the team column -- the mirror of
+   the next chevron, which sits at the end of the line it is leaving. At the
+   card's left edge it would be drawn over the middle of the flourish, and
+   any further right it is on top of the copy. */
+.deck__nav--prev { left: max(20px, calc(var(--flourish) + 20px)); }
+.deck__nav-hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.deck__nav:focus-visible { outline: 2px solid var(--hot-pink); outline-offset: 6px; }
+
+/* The pulse. It runs on the next chevron only, and only until the reader
+   has moved the rail once -- .has-swiped is set on the first move of any
+   kind, including a keyboard one, and never removed. The glow is a
+   pseudo-element so the beat scales a shape behind the arrow rather than
+   the arrow itself, which would wobble the stroke weight. */
+.deck__nav--next::before {
+  content: "";
+  position: absolute;
+  /* Centred on the chevron glyph (34px tall, so its middle is at 17px),
+     not on the button box -- the box includes the SWIPE caption below,
+     which would drag the halo down off the arrow it is meant to ring. */
+  top: -9px; left: 50%;
+  width: 52px; height: 52px;
+  margin-left: -26px;
+  border-radius: 50%;
+  background: var(--hot-pink);
+  opacity: 0;
+  z-index: -1;
+}
+.deck:not(.has-swiped) .deck__nav--next { animation: chevron-nudge 2s ease-in-out infinite; }
+.deck:not(.has-swiped) .deck__nav--next::before { animation: chevron-halo 2s ease-out infinite; }
+/* The glyph beats on its own element so its scale does not have to share a
+   transform with the button's sideways nudge. */
+.deck:not(.has-swiped) .deck__nav--next svg { animation: chevron-beat 2s ease-in-out infinite; }
+
+/* Three parts to one beat, all on the same 2s clock: the arrow swells and
+   leans towards the panel it is pointing at, then eases back, while a ring
+   opens out behind it and fades. The halo carries most of the read -- the
+   nudge alone was a 9px shift at the far right of the card, and a hint you
+   have to be looking at to notice is not doing its job. */
+@keyframes chevron-nudge {
+  0%, 58%, 100% { transform: translateX(0); }
+  22%           { transform: translateX(11px); }
+  40%           { transform: translateX(3px); }
+}
+@keyframes chevron-beat {
+  0%, 58%, 100% { transform: scale(1); }
+  22%           { transform: scale(1.18); }
+}
+@keyframes chevron-halo {
+  0%        { opacity: 0;    transform: scale(0.5); }
+  18%       { opacity: 0.34; transform: scale(1); }
+  58%, 100% { opacity: 0;    transform: scale(1.55); }
+}
+
+.deck__dots {
+  position: absolute;
+  left: 0; right: 0; bottom: 26px;
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+}
+.deck__dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  opacity: 0.45;
+}
+.deck__dot.is-on { background: var(--ink); opacity: 1; }
+
+/* ---------- CTA registration ------------------------------------------ */
+.cta { background: var(--yellow); min-height: 413px; overflow: hidden; }
+.cta__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: center;
+  padding: 0 0 8px;
+}
+/* Spec: the lady is clipped at the bottom by her container while her hat
+   stays fully visible at the top -- so the figure is bottom-aligned in a
+   box that hides the overflow, not scaled down to fit. */
+.cta__art { position: relative; align-self: end; height: 405px; overflow: hidden; }
+.cta__art img { position: absolute; bottom: -22px; left: 0; width: 100%; }
+
+.cta__title {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 62px;
+  line-height: 0.9;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+.cta__sub { font-family: var(--mono); font-size: 13px; margin: 0 0 20px; }
+.cta__form { display: grid; gap: 14px; max-width: 560px; }
+.cta__fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cta__form input[type="text"], .cta__form input[type="email"] {
+  background: var(--white);
+  border: 1px solid rgba(27, 21, 20, 0.25);
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 13px;
+  width: 100%;
+}
+.cta__form input::placeholder { color: rgba(27, 21, 20, 0.45); }
+.checkline {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: 12px;
+}
+.checkline input { width: 15px; height: 15px; accent-color: var(--ink); }
+/* The line reads as a link because it is one -- it opens the note saying
+   what ticking the box signs you up for. Underlined rather than coloured:
+   on the yellow card, pink would be the third accent in one short line. */
+.checkline a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.checkline a:hover { color: var(--hot-pink); }
+.cta .btn-primary { justify-self: start; }
+
+/* Spec: 289 5px circles at 15% opacity, staggered, rotated -8deg, right
+   third only. Drawn as two offset radial-gradient layers rather than 289
+   DOM nodes -- same staggered lattice, no markup cost. pointer-events:none
+   keeps it clear of the form sitting beside it. */
+.cta__dots {
+  position: absolute;
+  top: -20%; right: -6%;
+  width: 38%;
+  height: 140%;
+  transform: rotate(-8deg);
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle, rgba(27, 21, 20, 0.15) 2.5px, transparent 2.6px),
+    radial-gradient(circle, rgba(27, 21, 20, 0.15) 2.5px, transparent 2.6px);
+  background-size: 26px 26px, 26px 26px;
+  background-position: 0 0, 13px 13px;
+}
+
+/* ---------- Footer ----------------------------------------------------- */
+.footer { background: var(--cream); min-height: 249px; }
+.footer__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 0.6fr);
+  gap: 48px;
+  padding: 44px 0 26px;
+}
+.footer__inner > div + div { border-left: 1px solid rgba(27, 21, 20, 0.15); padding-left: 48px; }
+.footer h4 {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0 0 14px;
+}
+.footer p { font-size: 14px; line-height: 22px; margin: 0 0 12px; }
+.footer__brand { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.hashtags { font-family: var(--mono); font-size: 13px; line-height: 22px; }
+.footer__legal {
+  border-top: 1px solid rgba(27, 21, 20, 0.15);
+  display: flex; justify-content: space-between; gap: 20px;
+  padding: 14px 0 26px;
+  font-family: var(--mono); font-size: 11px;
+}
+.footer__legal nav { display: flex; gap: 16px; }
+
+/* ---------- Responsive ------------------------------------------------- */
+/* Single column from the tablet band down, matching the mobile mock:
+   everything stacks, the hero's diagonal pink panel becomes a full-width
+   band behind the heading, and the lady sits above the form rather than
+   beside it. */
+@media (max-width: 1099.98px) {
+  :root { --gutter: 40px; }
+  .hero__inner, .team__inner, .cta__inner, .footer__inner { grid-template-columns: 1fr; }
+  .hero::before { width: 100%; clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%); }
+  .team__inner { gap: 48px; }
+  .deck__panel { padding: 0 74px; }
+  /* Restated after the shorthand above, which would otherwise reset the
+     left side and drop the team column back onto the flourish. */
+  .panel-team { padding-left: max(74px, calc(var(--flourish) + 96px)); }
+  .footer__inner > div + div { border-left: 0; padding-left: 0; }
+  .cta__inner { padding-top: 40px; }
+  .cta__art { height: 300px; max-width: 380px; }
+}
+
+@media (max-width: 767.98px) {
+  :root { --gutter: 22px; }
+  .nav__links { display: none; }
+  .nav__links.is-open {
+    display: flex; flex-direction: column; align-items: flex-start;
+    gap: 16px; padding: 18px 0 22px; width: 100%;
+    max-height: calc(100vh - var(--nav-h));
+    overflow-y: auto;
+  }
+  .nav__inner { flex-wrap: wrap; }
+  .nav__toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border: 1.5px solid var(--ink);
+    border-radius: 50%; background: transparent; cursor: pointer;
+  }
+  .nav .btn-join { display: none; }
+  .nav__links.is-open + .btn-join { display: inline-block; }
+
+  .lockup img { width: 190px; }
+  .hero__democracy { font-size: 54px; }
+  .hero__salons { font-size: 62px; }
+  .premise__title { font-size: 38px; }
+  .team__title { font-size: 34px; }
+  /* A phone has no width to spare for a chevron gutter beside the text --
+     at this size the column would drop to about 230px and the body copy
+     would set two or three words to the line. So the controls leave the
+     sides and join the dots in a bottom bar, and the panels get the plain
+     page gutter back. Swiping is the native gesture here anyway; the
+     chevron is a hint more than a control. */
+  .deck__panel { padding: 0 var(--gutter); }
+  .premise__left { padding-left: 44px; }
+  /* The flourish is a 34px motif at this size, so the clearance is a fixed
+     one: the same 44px inset the premise text keeps, past the gutter. */
+  .panel-team { padding-left: calc(var(--gutter) + 44px); }
+  /* A phone has no room for the full-height version: at this card height it
+     would come out about 115px wide and run straight under the text, which
+     starts at 66px. So here it stays a small motif beside the heading,
+     sized by width and centred, as it was. */
+  .ornament {
+    width: 34px;
+    height: auto;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .deck__nav {
+    top: auto; bottom: 12px;
+    height: auto;
+    margin: 0;
+  }
+  .deck__nav svg { width: 26px; height: 26px; }
+  .deck__nav-hint { font-size: 9px; letter-spacing: 0.12em; }
+  /* Beside the script there is no room for it at this size, so it drops to
+     just under the line instead -- still the end of that sentence, still
+     inside the row it belongs to. prev keeps the bottom bar it shares with
+     the dots; only one of the two is ever on screen, so the pair never has
+     to look like a pair. */
+  .deck__nav--next {
+    left: auto; right: 0;
+    top: 62%; bottom: auto;
+  }
+  .deck__nav--prev { left: 10px; }
+  .deck__dots { bottom: 31px; }
+  /* Nowhere on a phone's team panel is free for the airship to land: the
+     single column fills the card from the heading down to the last host.
+     So here it flies up out of frame instead of docking, fading as it
+     climbs -- the same departure, just without a berth at the end of it. */
+  .airship__dock {
+    top: -20%;
+    right: 8%;
+    width: 44%;
+    height: auto;
+  }
+  .airship__craft {
+    transition: transform var(--float) cubic-bezier(0.36, 0.03, 0.22, 1),
+                opacity var(--float) ease-in;
+  }
+  .deck[data-state="team"] .airship__craft { opacity: 0; }
+  .cta__title { font-size: 42px; }
+  .cta__fields { grid-template-columns: 1fr; }
+  .cohosts { grid-template-columns: 1fr; }
+  .footer__legal { flex-direction: column; gap: 10px; }
+  .airship-row { max-width: 420px; }
+}
+
+/* Respect a reduced-motion preference: nothing here animates, but the
+   tilted display type is the one thing that can read as motion sickness
+   inducing at large sizes, so it straightens out. */
+@media (prefers-reduced-motion: reduce) {
+  .hero__democracy, .hero__salons, .cta__dots { transform: none; }
+  /* The chevron still needs to read as the thing to press, so it keeps its
+     halo and simply stops beating. The script also swaps the rail's smooth
+     scrolling for an instant jump under this preference. */
+  /* Matching the selector that starts the animation, not a shorter one --
+     a media query adds no specificity, so `.deck__nav--next` alone would
+     lose to `.deck:not(.has-swiped) .deck__nav--next` and the pulse would
+     keep beating for exactly the readers who asked it not to. */
+  .deck:not(.has-swiped) .deck__nav--next,
+  .deck:not(.has-swiped) .deck__nav--next::before,
+  .deck:not(.has-swiped) .deck__nav--next svg { animation: none; }
+  .deck:not(.has-swiped) .deck__nav--next::before { opacity: 0.18; transform: scale(1); }
+
+  /* The change becomes a plain cross-fade: the airship is placed at its
+     destination rather than flown there, the copy does not drift as it
+     goes, and nothing waits on a flight that no longer takes any time. */
+  .deck { --float: 0ms; }
+  .airship__craft { transition: none; }
+  .deck[data-state="team"] .premise__copy,
+  .deck[data-state="team"] .airship__script { transform: none; }
+}
+
+/* ---------- Form states ------------------------------------------------ */
+/* Visually hidden but still read by screen readers -- the inputs show their
+   label as a placeholder, which assistive tech does not treat as a name. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Honeypot -- off-screen rather than display:none, since some bots skip
+   fields that are explicitly hidden. */
+.hp {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px; height: 1px;
+  opacity: 0;
+}
+
+.form-error {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 18px;
+  margin: 4px 0 0;
+  color: #8a1020;
+}
+.form-success {
+  font-family: var(--spartan);
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0;
+}
+.cta__form button[disabled] { opacity: 0.6; cursor: progress; }
+
+/* ---------- Scroll-stacking sections ----------------------------------- */
+/* Same effect as the main pages: each section pins to the top of the
+   viewport and holds while the next slides up to cover it, z-index
+   following document order. Technique and the shadow value are lifted from
+   sticky-nav.css so the two feel identical.
+
+   Height is min-height, not height, so a section taller than one viewport
+   (Premise on a short window) scrolls through naturally instead of being
+   clipped -- setupStack() in the page's script then gives it a negative
+   `top` so it releases only once its own bottom reaches the viewport
+   bottom. dvh alongside vh because mobile browsers' vh is the largest
+   possible viewport, which leaves a strip of the section below uncovered
+   while the address bar is showing.
+
+   The spec's fixed frame heights (642/733/413) become the floor rather
+   than the target here -- filling the viewport is the point of the
+   stack. */
+.hero, .deck, .stack-last {
+  position: sticky;
+  top: 0;
+  box-shadow: 0 -40px 60px -20px rgba(3, 5, 9, 0.45);
+}
+.hero, .deck {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.hero       { z-index: 1; }
+.deck       { z-index: 2; }
+.stack-last { z-index: 3; }
+
+/* The final card is the CTA and the footer together, not the CTA alone --
+   the footer is the tail of that card rather than a fourth one sliding
+   over it. So the wrapper owns the sticky/stacking and the top edge, and
+   both children sit in plain flow inside it.
+
+   That makes the card taller than the viewport by exactly the footer's
+   height, which is the intended ending: the CTA fills the screen, then the
+   last stretch of scroll draws the footer up underneath it before the card
+   settles. setupStack()'s Math.min(0, vh - height) handles that offset
+   without any special-casing. */
+.cta {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.footer { position: relative; }
+
+/* The sections' inner wrappers already centre their own content; with the
+   section now taller than its content, let them keep their designed
+   padding rather than stretching. */
+.hero__inner, .premise__inner, .cta__inner { width: 100%; }

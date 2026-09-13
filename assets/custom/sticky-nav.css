@@ -3600,15 +3600,22 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   text-transform: uppercase;
   text-decoration: none;
   transition: background-color 0.2s ease, transform 0.2s ease;
-  /* This is a real <button>, not an <a> -- unlike Framer's own baked
-     links/buttons, a plain <button> here has no baked cursor:pointer of
-     its own, computing to the browser default ("default", a plain
-     arrow) instead. enhanceButtons (sticky-nav.js) only tags elements
-     that already compute to cursor:pointer as custom-cursor targets, so
-     without this, this one button was silently skipped -- it kept
-     showing the native arrow on hover instead of the custom cursor every
-     other clickable element on the site gets (confirmed live). */
+  /* Now an <a> pointing at /salons, not the <button> it used to be: the
+     strip's CTA opens the Salons landing page rather than the salon modal.
+     The explicit cursor:pointer stays -- it was originally here because a
+     plain <button> computes to the default arrow, and enhanceButtons
+     (sticky-nav.js) only tags elements that already compute to
+     cursor:pointer as custom-cursor targets, so without it this control was
+     silently skipped and kept the native arrow on hover. An <a href> would
+     get pointer on its own, but leaving it makes that dependency explicit
+     rather than incidental.
+
+     display:inline-flex + centring because an anchor does not centre its
+     own label inside padding the way a button does. */
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .demcon-salon-strip-cta:hover {

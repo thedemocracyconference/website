@@ -1,6 +1,15 @@
 (function () {
   var HEADER_SELECTOR = '.framer-1kfysrm-container';
-  var SECTION_IDS = ['about', 'salons', 'agenda', 'participate', 'contact'];
+  /* 'salons-preview', not 'salons': the homepage's DemCon Salons block is
+     what the nav's "Salons" item points at again, but the block keeps the id
+     it was renamed to when it was a teaser -- 'salons' would collide with
+     the /salons URL, and the standalone page is still there for the block's
+     own "Join here" to lead to. The scroll-spy highlights by matching a
+     link's hash against a section id (see applyActiveState below), so this
+     list and the hrefs in the nav have to agree letter for letter.
+
+     The order is the order the sections appear on the page. */
+  var SECTION_IDS = ['salons-preview', 'about', 'agenda', 'participate', 'contact'];
 
   function pinHeader(header) {
     // Fixed positioning itself is a static CSS rule now (sticky-nav.css) --
@@ -347,23 +356,95 @@
       if (history.pushState) history.pushState(null, '', '#' + id);
     });
 
-    var observer = new IntersectionObserver(
-      function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            var match = sections.filter(function (s) {
-              return s.el === entry.target;
-            })[0];
-            if (match) setActive(match.id);
-          }
-        });
-      },
-      { rootMargin: '-' + Math.round(getHeaderHeight() + 8) + 'px 0px -60% 0px', threshold: 0 }
-    );
+    // Which section is current, worked out from the scroll position rather
+    // than from an IntersectionObserver.
+    //
+    // The observer this replaces only ever acted on entries whose
+    // isIntersecting was true, and an observer reports transitions. Going
+    // down that is enough: each section crosses into the band in turn and
+    // reports itself. Coming back up it is not -- these sections are sticky
+    // and stack, so the one you are returning to never left the band and has
+    // no transition to report, while the one you are leaving reports only
+    // that it is no longer intersecting, which the callback ignored. The
+    // underline therefore stuck on whichever section you had reached at the
+    // bottom and stayed there for the whole way back up (confirmed live:
+    // scrolling down lit Salons, About, Agenda, Participate, Contact in
+    // turn; scrolling back up left Contact lit at every stop).
+    //
+    // Reading the scroll position instead is symmetric by construction: the
+    // current section is simply the last one whose top the page has passed,
+    // and that is the same question going either way.
+    var tops = null;
+    var headerOffset = 0;
+    var measuredHeight = 0;
 
-    sections.forEach(function (s) {
-      observer.observe(s.el);
-    });
+    // The sections' true document offsets, which cannot be read while they
+    // are sticky: a stuck section's getBoundingClientRect reports where it
+    // is pinned, not where it lives, and its offsetTop chain is no better
+    // (measured: both report a stuck section at the current scroll position
+    // rather than at its own). Flattening them to static for one synchronous
+    // measurement is the same trick the click handler above uses, and for
+    // the same reason -- here the result is cached, so the cost is paid on a
+    // resize rather than on a scroll.
+    function measureTops() {
+      var stacked = Array.prototype.slice.call(
+        document.querySelectorAll(
+          '.demcon-home-page [data-framer-name="DemocracySalons"], ' +
+            '.demcon-home-page [data-framer-name="Journey Section"], ' +
+            '.demcon-home-page [data-framer-name="Agenda"], ' +
+            '.demcon-home-page [data-framer-name="Speakers - Section"], ' +
+            '.demcon-home-page [data-framer-name="Participation"], ' +
+            '.demcon-home-page [data-framer-name="JOIN US"]'
+        )
+      );
+      var prev = stacked.map(function (el) { return el.style.position; });
+      stacked.forEach(function (el) { el.style.position = 'static'; });
+      tops = sections.map(function (s) {
+        return s.el.getBoundingClientRect().top + window.pageYOffset;
+      });
+      stacked.forEach(function (el, i) { el.style.position = prev[i]; });
+      // Cached with the offsets rather than read per scroll: both are
+      // getBoundingClientRect calls, and the whole point of caching is that
+      // scrolling costs no layout at all.
+      headerOffset = getHeaderHeight() + 8;
+      measuredHeight = document.documentElement.scrollHeight;
+    }
+
+    // Cheap enough to run on the scroll event itself: a read of
+    // pageYOffset, which costs no layout, and a walk of five cached
+    // numbers. No rAF -- deferring this frame-ward buys nothing when the
+    // work is a handful of comparisons, and a hidden or throttled page
+    // stops delivering frames while still delivering scroll events, which
+    // would leave the underline frozen exactly as it was before.
+    function onScroll() {
+      // The offsets go stale whenever the page's height changes -- reveal
+      // animations settling, images arriving, the hero releasing its pin --
+      // and on this page it changes well after load (measured: 7312, then
+      // 7472, then 7438 over a single visit), which is enough to leave the
+      // underline a whole section out. scrollHeight is the reliable tell; a
+      // ResizeObserver on body is not, because the sections that grow are
+      // not what body's own box measures (tried: it never fired).
+      if (!tops || document.documentElement.scrollHeight !== measuredHeight) measureTops();
+      var y = window.pageYOffset + headerOffset;
+      var id = null;
+      for (var i = 0; i < sections.length; i++) {
+        if (tops[i] <= y) id = sections[i].id;
+      }
+      // null above the first section, which is the hero: nothing underlined.
+      if (id !== currentActiveId) setActive(id);
+    }
+
+    function remeasure() {
+      tops = null;
+      onScroll();
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', remeasure, { passive: true });
+    window.addEventListener('load', remeasure);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
+
+    onScroll();
   }
 
   // Mobile hamburger menu. The static export only baked in the Desktop nav

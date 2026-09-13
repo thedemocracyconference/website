@@ -1,0 +1,37 @@
+/* Brand webfonts for the Democracy Salons landing page.
+
+   These are the same self-hosted faces the main site already ships -- the
+   @font-face blocks are lifted verbatim out of index.html (where Framer had
+   inlined them) and pointed at the same files under /assets/fonts and
+   /assets/framer, so this page adds no new font downloads for anyone who has
+   already visited the homepage.
+
+   Paths are rewritten from './assets/...' to '/assets/...' because this page
+   lives one directory down; the originals only resolved from the site root.
+
+   Two faces from the Figma spec are NOT here:
+     - RT Goodneighbor Sans  (commercial; only the Script weight is licensed
+       into this repo) -- "SALONS" and "SAVE YOUR SPOT" fall back to League
+       Spartan ExtraBold, which is DemCon's own display sans.
+     - Playfair Display -- loaded from Google Fonts in the page head, since
+       it is free and not otherwise used on this site. */
+
+@font-face { font-family: "IBM Plex Mono"; src: url('/assets/fonts/b73856d361b5274b--F6qfjptAgt5VM-kVkqdyU8n3twJ8lJPg-IUDNg.woff2'); font-style: normal; font-weight: 500 }
+@font-face { font-family: "IBM Plex Mono"; src: url('/assets/fonts/79d11fae3b6f8920--F63fjptAgt5VM-kVkqdyU8n5i0g1l9kn-s.woff2'); font-style: normal; font-weight: 400 }
+@font-face { font-family: "League Spartan"; src: url('/assets/fonts/db484ca574782f9b-kJEnBuEW6A0lliaV_m88ja5Twtx8BWhtkDVmjZvMGYPpAcdcFguczA.woff2'); font-display: swap; font-style: normal; font-weight: 700 }
+@font-face { font-family: "League Spartan"; src: url('/assets/fonts/a68414c1828d2bb3-kJEnBuEW6A0lliaV_m88ja5Twtx8BWhtkDVmjZvMoITpAcdcFguczA.woff2'); font-display: swap; font-style: normal; font-weight: 300 }
+@font-face { font-family: "League Spartan"; src: url('/assets/fonts/8a8ecb420ed44060-kJEnBuEW6A0lliaV_m88ja5Twtx8BWhtkDVmjZvMIIPpAcdcFguczA.woff2'); font-display: swap; font-style: normal; font-weight: 600 }
+@font-face { font-family: "IBM Plex Mono"; src: url('/assets/fonts/1880d02cf5bc5a15--F6qfjptAgt5VM-kVkqdyU8n3pQP8lJPg-IUDNg.woff2'); font-style: normal; font-weight: 700 }
+@font-face { font-family: "IBM Plex Mono"; src: url('/assets/fonts/f2841ec6e384fd1a--F6sfjptAgt5VM-kVkqdyU8n1ioSblJFgsARHNh4zg.woff2'); font-style: italic; font-weight: 700 }
+@font-face { font-family: "IBM Plex Mono"; src: url('/assets/fonts/e96dcedea645019c--F6sfjptAgt5VM-kVkqdyU8n1ioSJlRFgsARHNh4zg.woff2'); font-style: italic; font-weight: 500 }
+@font-face { font-family: "League Spartan"; src: url('/assets/fonts/93356c5e71700409-kJEnBuEW6A0lliaV_m88ja5Twtx8BWhtkDVmjZvMV4PpAcdcFguczA.woff2'); font-style: normal; font-weight: 900 }
+@font-face { font-family: "League Spartan"; src: url('/assets/fonts/417fba7a4e3ea451-kJEnBuEW6A0lliaV_m88ja5Twtx8BWhtkDVmjZvMzITpAcdcFguczA.woff2'); font-display: swap; font-style: normal; font-weight: 500 }
+@font-face { font-family: "League Spartan"; src: url('/assets/fonts/10e89d92c8be629e-kJEnBuEW6A0lliaV_m88ja5Twtx8BWhtkDVmjZvM_oTpAcdcFguczA.woff2'); font-display: swap; font-style: normal; font-weight: 400 }
+@font-face { font-family: "IBM Plex Mono"; src: url('/assets/fonts/041067cf5ab155d0--F6qfjptAgt5VM-kVkqdyU8n3vAO8lJPg-IUDNg.woff2'); font-style: normal; font-weight: 600 }
+@font-face { font-family: "IBM Plex Mono"; src: url('/assets/fonts/9177425717259c1f--F6qfjptAgt5VM-kVkqdyU8n3oQI8lJPg-IUDNg.woff2'); font-style: normal; font-weight: 300 }
+@font-face { font-family: "RT Goodneighbor Script"; src: url("/assets/framer/assets/2byXkR6qnOW43UzYoitwi3yI5k0.woff2'); font-display: swap; font-style: normal; font-weight: 400 }
+@font-face { font-family: "Satoshi"; src: url("/assets/framer/third-party-assets/fontshare/wf/TTX2Z3BF3P6Y5BQT3IV2VNOK6FL22KUT/7QYRJOI3JIMYHGY6CH7SOIFRQLZOLNJ6/KFIAZD4RUMEZIYV6FQ3T3GP5PDBDB6JY.woff2'); font-display: swap; font-style: normal; font-weight: 400 }
+@font-face { font-family: "Satoshi"; src: url("/assets/framer/third-party-assets/fontshare/wf/P2LQKHE6KA6ZP4AAGN72KDWMHH6ZH3TA/ZC32TK2P7FPS5GFTL46EU6KQJA24ZYDB/7AHDUZ4A7LFLVFUIFSARGIWCRQJHISQP.woff2'); font-display: swap; font-style: normal; font-weight: 500 }
+@font-face { font-family: "Satoshi"; src: url("/assets/framer/third-party-assets/fontshare/wf/LAFFD4SDUCDVQEXFPDC7C53EQ4ZELWQI/PXCT3G6LO6ICM5I3NTYENYPWJAECAWDD/GHM6WVH6MILNYOOCXHXB5GTSGNTMGXZR.woff2'); font-display: swap; font-style: normal; font-weight: 700 }
+@font-face { font-family: "Satoshi"; src: url("/assets/framer/third-party-assets/fontshare/wf/CDEBEFT2R7XKNGXSBBLZGMY4MMHZG75P/HEVKDGQCYDZ7Z6CDVR2ZQGBCTUD6ZARH/BKWEE3VKGTFABE37K2DTH625VUSN2N35.woff2'); font-display: swap; font-style: italic; font-weight: 700 }
+@font-face { font-family: "Satoshi"; src: url("/assets/framer/third-party-assets/fontshare/wf/MPIFA4B3XXRNY2MJDGP6GOOOAF6EOCLO/W5E4ZFYPJ3V6JKMBGHB6YMITK6EWS2XA/QOMBWPST76ICDYF6WOBS7SQ7RBT67QW2.woff2'); font-display: swap; font-style: italic; font-weight: 400 }

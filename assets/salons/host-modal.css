@@ -1,0 +1,408 @@
+/* Host bio modal styles for the Democracy Salons page.
+
+   Extracted verbatim from assets/custom/sticky-nav.css -- every rule whose
+   selector mentions .demcon-modal or .demcon-host-modal -- so the modal
+   looks identical to the homepage's. Duplicated rather than shared because
+   this page does not load sticky-nav.css, which carries a great deal of
+   homepage-specific layout that would fight this page's own.
+
+   sticky-nav.css stays the source of truth; restyle there first, then
+   re-extract. */
+
+/* Join Us modal -- hand-built to replace Framer's React-only overlay, which
+   this session confirmed rendered underneath the sticky header. */
+.demcon-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.demcon-modal[hidden] {
+  display: none;
+}
+.demcon-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 5, 9, 0.7);
+}
+.demcon-modal-dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  max-width: 940px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border: 2.5px solid #030509;
+  border-radius: 16px;
+  box-shadow: 8px 8px 0 #030509;
+  background: #fff;
+}
+.demcon-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border: 2px solid #030509;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.demcon-modal-panel-dark,
+.demcon-modal-panel-light {
+  flex: 1 1 50%;
+  min-width: 0;
+  padding: 48px 36px;
+}
+.demcon-modal-panel-dark {
+  background: #030509;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+/* Same [hidden] specificity fix as .demcon-modal-form/.demcon-propose-
+   modal-success elsewhere in this file -- the Register modal hides this
+   panel (along with its own heading) on submit so only the Thank You
+   message remains, and the explicit display:flex above would otherwise
+   silently defeat that. */
+.demcon-modal-panel-dark[hidden] {
+  display: none;
+}
+.demcon-modal-mark {
+  margin: 0;
+  font-family: 'League Spartan', 'League Spartan Placeholder', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.demcon-modal-mark span {
+  display: block;
+  font-size: 40px;
+  color: #ff66ff;
+}
+.demcon-modal-note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6em;
+}
+.demcon-modal-when h6 {
+  margin: 0 0 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+.demcon-modal-when p {
+  margin: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  line-height: 1.7em;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #fff500;
+}
+.demcon-modal-when p span {
+  color: rgba(255, 255, 255, 0.6);
+}
+.demcon-modal-panel-light h2 {
+  margin: 0 0 28px;
+  font-family: 'RT Goodneighbor Script', 'RT Goodneighbor Script Placeholder', sans-serif;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.1em;
+  color: #030509;
+}
+.demcon-modal-panel-light h2 span {
+  font-family: 'Hidalgo Regular', 'Hidalgo Regular Placeholder', sans-serif;
+  font-size: 40px;
+  color: #00b3ff;
+  -webkit-text-stroke: 1px #030509;
+}
+.demcon-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* Without this, form.hidden = true (used on submit to swap in the success
+   message) has no visual effect -- the [hidden] attribute's default
+   display:none carries the same specificity as .demcon-modal-form's own
+   display:flex above, and this rule wins by coming later in the sheet. */
+.demcon-modal-form[hidden] {
+  display: none;
+}
+.demcon-modal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #030509;
+}
+.demcon-modal-form label em {
+  font-style: normal;
+  font-weight: 400;
+  text-transform: none;
+  opacity: 0.5;
+}
+.demcon-modal-form input,
+.demcon-modal-form textarea {
+  padding: 12px 14px;
+  border: 1.5px solid rgba(3, 5, 9, 0.3);
+  border-radius: 8px;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 15px;
+  color: #030509;
+  background: #fff;
+}
+.demcon-modal-form textarea {
+  resize: vertical;
+  min-height: 44px;
+  font-family: inherit;
+}
+.demcon-modal-form input:focus,
+.demcon-modal-form textarea:focus {
+  outline: none;
+  border-color: #030509;
+}
+/* Qualified with .demcon-modal-form (see the same note on
+   .demcon-propose-links-add/-remove above) so this ties, and wins over,
+   the shared .demcon-modal-form button pink-pill rule -- otherwise that
+   rule's extra type selector (button) outranks a single bare class. */
+.demcon-modal-form .demcon-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin-top: 0;
+  padding: 12px 14px;
+  border: 1.5px solid rgba(3, 5, 9, 0.3);
+  border-radius: 8px;
+  background: #030509;
+  color: #fff;
+  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  text-align: left;
+  text-transform: none;
+  cursor: pointer;
+}
+.demcon-modal-form .demcon-select-trigger:focus {
+  outline: none;
+  border-color: #030509;
+  box-shadow: 0 0 0 2px #ff0074;
+}
+.demcon-modal-form button {
+  margin-top: 8px;
+  padding: 14px 20px;
+  border: 2px solid #030509;
+  border-radius: 999px;
+  background: #ff0074;
+  color: #fff;
+  font-family: 'League Spartan', 'League Spartan Placeholder', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.demcon-modal-dialog {
+    flex-direction: column;
+}
+.demcon-host-modal-dialog {
+  flex-direction: column;
+  max-width: 480px;
+  padding: 48px 36px;
+}
+/* The note carries one heading and one sentence, so it takes a narrower
+   dialog than a bio does -- at the host modal's width a single line would
+   sit marooned across 480px. */
+.demcon-note-modal-dialog {
+  flex-direction: column;
+  max-width: 420px;
+  padding: 44px 36px 40px;
+}
+.demcon-host-modal-photo-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  overflow: hidden;
+  /* Same seamless-fill fix as the card circles (see .demcon-host-photo-
+     wrap) -- solid black behind the photo in case any sliver of the
+     source PNG's transparent margin is still visible. */
+  background: #030509;
+  box-shadow: 0 0 0 3px #030509;
+}
+/* Without this the photo renders at its natural size inside the circle and
+   is letterboxed, leaving the black backstop showing as a ring around it.
+   Framed the same way as the card portraits rather than by the main site's
+   fixed pixel crop: same source PNGs, same measured centre (the circular
+   subject sits at 51.7% of the canvas, above its middle, so 56.8% of the
+   vertical overflow goes above the frame to bring it back to centre), and
+   it holds at whatever size the circle is. */
+.demcon-host-modal-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 56.8%;
+  transform: scale(1.04);
+}
+.demcon-host-modal-body {
+  text-align: center;
+}
+.demcon-host-modal-name,
+.demcon-note-modal-title {
+  margin: 0 0 4px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.demcon-host-modal-title {
+  margin: 0 0 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  color: #ff0074;
+}
+.demcon-host-modal-socials {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0 0 20px;
+}
+.demcon-host-modal-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: #030509;
+  opacity: 0.75;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.demcon-host-modal-social:hover,
+.demcon-host-modal-social:focus-visible {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+.demcon-host-modal-social svg {
+  width: 100%;
+  height: 100%;
+}
+.demcon-host-modal-bio,
+.demcon-note-modal-text {
+  margin: 0 0 24px;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.5em;
+  color: #3a3a3a;
+}
+/* Nothing follows the last paragraph here, so it does not need the gap a
+   bio leaves for the link under it -- but the paragraphs still need one
+   between them. */
+.demcon-note-modal-text { margin-bottom: 14px; }
+.demcon-note-modal-text:last-child { margin-bottom: 6px; }
+.demcon-note-modal-title { margin-bottom: 14px; }
+.demcon-host-modal-link {
+  display: inline-block;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #030509;
+  text-decoration: underline;
+}
+/* Salon event modal -- opened from the yellow strip's "Join Here" button.
+   Reuses the shared .demcon-modal shell and .demcon-modal-form's
+   input/button styling (see the Join Us modal above), just single-column
+   with its own heading/date/blurb on top. */
+.demcon-salon-modal-dialog {
+  flex-direction: column;
+  max-width: 460px;
+  padding: 48px 36px;
+}
+/* Propose a Salon modal -- opened from the "Propose a Salon" link under
+   the hosts. Reuses the shared .demcon-modal shell and .demcon-modal-form
+   styling (see the Join Us modal above), single-column like the salon
+   event modal but wider to comfortably fit the longer pitch fields. */
+.demcon-propose-modal-dialog {
+  flex-direction: column;
+  max-width: 560px;
+  padding: 48px 36px;
+}
+/* Author styles beat the UA stylesheet's [hidden] default at equal
+   specificity regardless of source order, so the explicit display:flex
+   above would otherwise leave this visible even while .hidden -- same
+   fix as .demcon-modal-form[hidden] elsewhere in this file. */
+.demcon-propose-modal-success[hidden] {
+  display: none;
+}
+/* Same stylized blue treatment as "JOIN US" in the Join Us modal's own
+   heading (.demcon-modal-panel-light h2 span) -- reused here so both
+   modals' "you're in" moments read as the same visual language. */
+.demcon-propose-modal-success-heading {
+  margin: 0;
+  font-family: 'Hidalgo Regular', 'Hidalgo Regular Placeholder', sans-serif;
+  font-size: 40px;
+  color: #00b3ff;
+  -webkit-text-stroke: 1px #030509;
+}
+/* Qualified with .demcon-modal-form (rather than left bare) so these two
+   specificity-tie with, and override, the shared .demcon-modal-form
+   button pink-pill rule above -- otherwise that rule's extra type
+   selector (button) outranks a single bare class here and both of these
+   render as pink pills instead of their own plain styles. */
+.demcon-modal-form .demcon-propose-links-remove {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin-top: 0;
+  padding: 0;
+  border: 1.5px solid rgba(3, 5, 9, 0.3);
+  border-radius: 50%;
+  background: #fff;
+  color: #030509;
+  font-size: 16px;
+  font-weight: 400;
+  text-transform: none;
+  line-height: 1;
+  cursor: pointer;
+}
+.demcon-modal-form .demcon-propose-links-remove:hover {
+  border-color: #030509;
+}
+.demcon-modal-form .demcon-propose-links-add {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: none;
+  color: #ff0074;
+  cursor: pointer;
+}
+.demcon-modal-form .demcon-propose-links-add:hover {
+  background: none;
+  text-decoration: underline;
+}
