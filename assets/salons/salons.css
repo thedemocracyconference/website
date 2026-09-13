@@ -395,6 +395,7 @@ body { padding-top: var(--nav-h); }
   margin: 0 auto;
   padding: 74px 0 66px;
 }
+
 /* Not positioned: the flourish inside it anchors to the panel instead (see
    below). The padding stays, because it is what sets the text block's
    inset within the centred column. */
@@ -820,10 +821,37 @@ body { padding-top: var(--nav-h); }
   .hero__inner, .team__inner, .cta__inner, .footer__inner { grid-template-columns: 1fr; }
   .hero::before { width: 100%; clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%); }
   .team__inner { gap: 48px; }
-  .deck__panel { padding: 0 74px; }
-  /* Restated after the shorthand above, which would otherwise reset the
-     left side and drop the team column back onto the flourish. */
-  .panel-team { padding-left: max(74px, calc(var(--flourish) + 96px)); }
+  /* No flourish below the desktop layout, so no gutter to keep clear of it
+     and no need for the team column's own inset either. */
+  .ornament { display: none; }
+
+  /* Content to the top of the card rather than the middle of it. Both
+     panels share one grid cell, so the cell is as tall as the taller of
+     them -- the team panel, which on a narrow screen is a heading, a
+     paragraph and four people. Centred in that, the premise panel's text
+     was pushed most of a screen down, opening a gap above it that read as
+     the page having failed to load. The airship's own breathing room below
+     is what the panel keeps instead.
+
+     The top padding clears the fixed header: the card slides up under it,
+     so without this the eyebrow would arrive beneath the bar. */
+  .deck__panel {
+    align-items: start;
+    padding: calc(var(--nav-h) + 28px) 74px 0;
+  }
+  .panel-team { padding-left: 74px; }
+  /* The panel supplies the top spacing now, so neither column may add its
+     own on top of it. Stated here rather than beside each column's own rule
+     because a media query adds no specificity: written earlier in the file
+     it lost to the very rules it was meant to override, and the team panel's
+     text sat 74px lower than the premise panel's. */
+  .premise__inner, .team__inner { padding-top: 0; }
+  /* The premise column's inset was the gutter the flourish stood in, and the
+     back chevron was placed off the flourish's width. With it gone both go
+     back to the panel's own edge -- the chevron sitting in the panel padding
+     rather than beside the copy. */
+  .premise__left { padding-left: 0; }
+  .deck__nav--prev { left: 8px; }
   .footer__inner > div + div { border-left: 0; padding-left: 0; }
   .cta__inner { padding-top: 40px; }
   .cta__art { height: 300px; max-width: 380px; }
@@ -858,21 +886,10 @@ body { padding-top: var(--nav-h); }
      sides and join the dots in a bottom bar, and the panels get the plain
      page gutter back. Swiping is the native gesture here anyway; the
      chevron is a hint more than a control. */
-  .deck__panel { padding: 0 var(--gutter); }
-  .premise__left { padding-left: 44px; }
-  /* The flourish is a 34px motif at this size, so the clearance is a fixed
-     one: the same 44px inset the premise text keeps, past the gutter. */
-  .panel-team { padding-left: calc(var(--gutter) + 44px); }
-  /* A phone has no room for the full-height version: at this card height it
-     would come out about 115px wide and run straight under the text, which
-     starts at 66px. So here it stays a small motif beside the heading,
-     sized by width and centred, as it was. */
-  .ornament {
-    width: 34px;
-    height: auto;
-    top: 50%;
-    transform: translateY(-50%);
-  }
+  .deck__panel { padding: calc(var(--nav-h) + 20px) var(--gutter) 0; }
+  /* Both columns run to the page gutter now that the flourish is gone. */
+  .premise__left { padding-left: 0; }
+  .panel-team { padding-left: var(--gutter); }
   .deck__nav {
     top: auto; bottom: 12px;
     height: auto;
