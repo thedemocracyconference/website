@@ -980,10 +980,43 @@ body { padding-top: var(--nav-h); }
   .panel-team { padding-left: var(--gutter); }
   .deck__nav svg { width: 26px; height: 26px; }
   .deck__nav-hint { font-size: 9px; letter-spacing: 0.12em; }
-  /* No back chevron on a phone. Swiping is the native gesture at this size
+  /* No back chevron on a phone: swiping is the native gesture at this size
      and the dots already say which panel you are on, so the button was a
-     control sitting in the corner restating what the gesture does. */
-  .deck__nav--prev { display: none; }
+     control in the corner restating what the gesture does -- and that corner
+     is where the browser's own back button lives.
+     
+     Hidden rather than removed, by the same measurements .sr-only uses. A
+     swipe is not a control: display:none would leave anyone on VoiceOver or
+     a switch device with no way back to the premise panel at all. It returns
+     to view when focused, so whoever tabs to it can see what they have
+     landed on. */
+  .deck__nav--prev {
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  /* :focus, not :focus-visible. Whether a browser calls focus "visible"
+     turns on its own heuristic about keyboard modality, and switch control
+     and screen reader navigation do not reliably trip it -- which would
+     leave the one reader this button exists for focused on something 1px
+     across. */
+  .deck__nav--prev:focus {
+    width: 56px;
+    height: auto;
+    margin: 0;
+    padding: 6px 4px;
+    overflow: visible;
+    clip: auto;
+    top: auto;
+    bottom: 12px;
+    left: 10px;
+    background: var(--white);
+  }
   .deck__dots { bottom: 31px; }
   /* Nowhere on a phone's team panel is free for the airship to land: the
      single column fills the card from the heading down to the last host.
