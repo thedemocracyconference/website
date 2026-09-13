@@ -852,6 +852,33 @@ body { padding-top: var(--nav-h); }
      rather than beside the copy. */
   .premise__left { padding-left: 0; }
   .deck__nav--prev { left: 8px; }
+
+  /* The card takes the height of the panel you are looking at, rather than
+     of the taller of the two.
+     
+     Both panels share one grid cell, which is what lets them cross-fade in
+     place -- but a grid cell is as tall as its tallest item, so the premise
+     panel was carrying the team panel's height and trailing most of a screen
+     of white below the chevron. Taking the hidden panel out of the flow
+     leaves the visible one to size the card on its own, and because which
+     one is hidden is already expressed in data-state, this needs no script:
+     the height simply follows the panel that is in flow.
+     
+     Only below the desktop layout. On a wide card the two panels are within
+     a couple of hundred pixels of each other and both are shorter than the
+     viewport, so the card is a screen tall either way and there is nothing
+     to win -- while a card that changed height under a pinned, stacked
+     layout is a good deal more to go wrong. */
+  .deck__stage { display: block; position: relative; }
+  .deck__panel {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+  }
+  .deck[data-state="premise"] .panel-premise,
+  .deck[data-state="team"] .panel-team {
+    position: relative;
+  }
   /* The chevron moves under the airship. On one column the handwritten line
      runs out near the card's right edge, and a control parked there reads as
      an afterthought rather than as the way on. Under the craft it sits where

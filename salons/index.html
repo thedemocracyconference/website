@@ -553,6 +553,13 @@
     function render() {
       deck.setAttribute('data-state', STATES[index]);
       sizeDock();
+      // Below the desktop layout the card takes the height of whichever
+      // panel is showing (see .deck__stage in the media block), so changing
+      // panels changes the card -- and the stacked-card offsets are
+      // calculated from that height. They are recalculated on resize, so
+      // saying so here is what keeps a shorter card from pinning at the
+      // taller one's offset. Every listener this reaches only re-measures.
+      window.dispatchEvent(new Event('resize'));
       if (craft) craft.style.transform = index === 1 ? flightTransform() : '';
       dots.forEach(function (d, i) { d.classList.toggle('is-on', i === index); });
     }
