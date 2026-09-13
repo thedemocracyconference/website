@@ -267,7 +267,12 @@
         <!-- Honeypot: hidden from real visitors, so a non-empty value means a
              bot filled in every field it could find. Same field name and
              behaviour as the forms on the main site. -->
-        <input class="hp" type="text" name="Website" tabindex="-1" autocomplete="off" aria-hidden="true" data-honeypot>
+        <!-- The name is deliberately meaningless. Called "Website" it was a
+             name Chrome's autofill recognises, and autofill will fill an
+             off-screen field: a real visitor whose browser filled the trap
+             was dropped as a bot, silently, with the button appearing to do
+             nothing at all. -->
+        <input class="hp" type="text" name="hp_check" tabindex="-1" autocomplete="off" aria-hidden="true" data-honeypot>
         <div class="cta__fields">
           <label class="sr-only" for="fn">First name</label>
           <input id="fn" name="Name" type="text" placeholder="First name" autocomplete="given-name" required>
@@ -781,6 +786,11 @@
 
       var hp = form.querySelector('[data-honeypot]');
       if (hp && hp.value) return;            // bot: drop silently
+
+      // Belt and braces against the same autofill problem: anything a
+      // browser put in the trap before the reader pressed the button was
+      // not typed by them, and the check above has already had its say.
+      if (hp) hp.value = '';
       if (!form.reportValidity()) return;
 
       var btn = form.querySelector('button[type="submit"]');
