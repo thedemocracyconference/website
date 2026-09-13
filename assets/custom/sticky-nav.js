@@ -292,12 +292,29 @@
       applyActiveState();
     }
 
-    header.addEventListener('click', function (e) {
-      var link = e.target.closest && e.target.closest('a.framer-YmthU');
+    /* On the document rather than the header, and matching any link rather
+       than the nav's own class, because the footer's Explore column points
+       at these same sections and was relying on the browser's native jump.
+       That jump reads the same corrupted rect described below, so it worked
+       going down the page and failed going back up: from the footer,
+       "About" and "Salons" did not move at all and "Agenda" moved 353px and
+       landed nowhere (confirmed live). Anything whose hash is not one of
+       these sections -- the footer's Register/Apply/Propose/Partner modal
+       links, say -- falls through untouched.
+
+       Cross-page links are left alone too: a link whose path is not this
+       page's should navigate, even when it carries a hash this page
+       happens to have a section for. */
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest && e.target.closest('a[href]');
       if (!link) return;
       var id = linkHash(link);
       var s = id && sectionsById[id];
       if (!s) return;
+      var href = link.getAttribute('href');
+      try {
+        if (new URL(href, window.location.href).pathname !== window.location.pathname) return;
+      } catch (err) {}
       e.preventDefault();
       setActive(id);
       // Every one of these sections is position:sticky -- once you've
