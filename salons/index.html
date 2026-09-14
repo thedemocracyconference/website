@@ -518,6 +518,10 @@
     var wide  = window.matchMedia('(min-width: 768px)');
     var hosts = deck.querySelector('.team__hosts');
 
+    // Set while render() is doing its own work, so the resize it announces
+    // does not come back round and undo the flight. See both uses below.
+    var settling = false;
+
     function sizeDock() {
       if (!dock) return;
       if (!wide.matches || !hosts) { dock.style.height = ''; return; }
@@ -559,7 +563,9 @@
       // calculated from that height. They are recalculated on resize, so
       // saying so here is what keeps a shorter card from pinning at the
       // taller one's offset. Every listener this reaches only re-measures.
+      settling = true;
       window.dispatchEvent(new Event('resize'));
+      settling = false;
       if (craft) craft.style.transform = index === 1 ? flightTransform() : '';
       dots.forEach(function (d, i) { d.classList.toggle('is-on', i === index); });
     }
@@ -642,6 +648,17 @@
     // it. Re-aiming without a transition keeps it from sliding across the
     // card while the window is being dragged.
     window.addEventListener('resize', function () {
+      // Not while render() is mid-change. This handler re-aims the craft
+      // *instantly*, which is what a window resize wants -- the airship
+      // should not go sailing across the card because someone dragged the
+      // window -- but it is the opposite of what a panel change wants, and
+      // render() announces a resize of its own so the stacked-card offsets
+      // pick up the card's new height. Left unguarded, that announcement
+      // teleported the airship to its dock before it could fly: measured
+      // live, 120ms after the click it was already there, with no
+      // transition on it at all. render() sets the transform itself, a
+      // line later, with the transition intact.
+      if (settling) return;
       sizeDock();
       if (index !== 1 || !craft) return;
       var t = craft.style.transition;
