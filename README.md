@@ -75,6 +75,14 @@ curl -s -X POST 'https://thedemcon.org/api/submit-form?debug=1' -H 'Content-Type
 
 `{"ok":true}` means the notification sent; anything else names the cause. `?debug=1` surfaces Sender's own rejection reason and is never used by the site's own forms.
 
+For a salon registration, `?debug=1` also reports the registrant's own confirmation under `confirmation`, because that half is sent best-effort and otherwise leaves no trace outside the host's function log — `{"ok":true}` on its own says the *organisers'* notification sent and nothing about whether the registrant was emailed:
+
+```bash
+curl -s -X POST 'https://www.thedemcon.org/api/submit-form?debug=1' -H 'Content-Type: application/json' -d '{"formType":"salon","fields":{"Email":"you@example.com","Name":"Test"}}'
+```
+
+`confirmation.status` is Sender's HTTP status for that second send, `detail` its rejection body, and `joinUrlSet` whether `SALON_JOIN_URL` was set at the time (the link itself is never echoed).
+
 ## Deployment
 
 `api/submit-form.js` follows Vercel's serverless-function convention, so **Vercel — or another host that runs `api/` — is required**. On a purely static host (Netlify Drop, GitHub Pages, S3+CloudFront) `/api/submit-form` 404s and every form on the site breaks, silently from the visitor's side apart from the error message. Everything else is plain static files needing no special headers, CORS config, or build step.

@@ -193,6 +193,15 @@ module.exports = async function handler(req, res) {
 
   var notified = false;
   var notifyErrorDetail = null;
+  // The registrant's own confirmation is sent best-effort further down, so
+  // its outcome never reaches the response and a failure shows up only as a
+  // line in the host's function log. That is the gap this pair closes: with
+  // ?debug=1 the result is reported back, which is the difference between
+  // "the form said it worked but no mail arrived" and knowing what Sender
+  // actually said. Null when no confirmation was attempted at all (every
+  // form that is not a salon registration).
+  var confirmStatus = null;
+  var confirmDetail = null;
   try {
     var sendRes = await fetch(SENDER_API_BASE + '/message/send', {
       method: 'POST',
@@ -308,10 +317,13 @@ module.exports = async function handler(req, res) {
           html: confirmation.html
         })
       });
+      confirmStatus = confirmRes.status;
       if (!confirmRes.ok) {
-        console.error('Salon confirmation failed', confirmRes.status, await confirmRes.text());
+        confirmDetail = await confirmRes.text();
+        console.error('Salon confirmation failed', confirmRes.status, confirmDetail);
       }
     } catch (err) {
+      confirmDetail = String(err && err.message ? err.message : err);
       console.error('Salon confirmation error', err);
     }
   }
@@ -328,5 +340,17 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  res.status(200).json({ ok: true });
+  var okResponse = { ok: true };
+  if (req.query && req.query.debug === '1') {
+    okResponse.confirmation = {
+      attempted: confirmStatus !== null || confirmDetail !== null,
+      status: confirmStatus,
+      detail: confirmDetail,
+      // Whether the Zoom link was available to put in the mail -- never the
+      // link itself, which is a key to the room and is why it lives in an
+      // environment variable rather than in salon.json.
+      joinUrlSet: Boolean(process.env.SALON_JOIN_URL)
+    };
+  }
+  res.status(200).json(okResponse);
 };
