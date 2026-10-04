@@ -202,6 +202,10 @@ module.exports = async function handler(req, res) {
   // form that is not a salon registration).
   var confirmStatus = null;
   var confirmDetail = null;
+  // Same for the subscriber capture, for the same reason.
+  var subscriberStatus = null;
+  var subscriberDetail = null;
+  var subscriberGroups = null;
   try {
     var sendRes = await fetch(SENDER_API_BASE + '/message/send', {
       method: 'POST',
@@ -257,7 +261,8 @@ module.exports = async function handler(req, res) {
     groups = groups.filter(function (id, i) { return groups.indexOf(id) === i; });
     if (groups.length) subscriberBody.groups = groups;
 
-    await fetch(SENDER_API_BASE + '/subscribers', {
+    subscriberGroups = groups.length;
+    var subRes = await fetch(SENDER_API_BASE + '/subscribers', {
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + apiKey,
@@ -266,7 +271,20 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify(subscriberBody)
     });
+    // This response used to be discarded outright -- not checked, not even
+    // logged -- which made it the one call in the flow that could fail in
+    // total silence. It matters more than "best effort" suggests: a
+    // registrant who is not an active subscriber is a plausible reason for
+    // Sender to accept the confirmation below with a 200 and then not
+    // deliver it, and with both SENDER_GROUP_* vars unset this request
+    // carries no groups at all.
+    subscriberStatus = subRes.status;
+    if (!subRes.ok) {
+      subscriberDetail = await subRes.text();
+      console.error('Sender subscriber capture failed', subRes.status, subscriberDetail);
+    }
   } catch (err) {
+    subscriberDetail = String(err && err.message ? err.message : err);
     console.error('Sender subscriber capture error', err);
   }
 
@@ -350,6 +368,14 @@ module.exports = async function handler(req, res) {
       // link itself, which is a key to the room and is why it lives in an
       // environment variable rather than in salon.json.
       joinUrlSet: Boolean(process.env.SALON_JOIN_URL)
+    };
+    okResponse.subscriber = {
+      status: subscriberStatus,
+      detail: subscriberDetail,
+      // How many Sender groups the registrant was filed into. Zero means
+      // both SENDER_GROUP_* vars are unset and the subscriber is on no
+      // list -- the ids themselves are not echoed.
+      groups: subscriberGroups
     };
   }
   res.status(200).json(okResponse);
