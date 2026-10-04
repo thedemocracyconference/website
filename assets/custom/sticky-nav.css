@@ -3623,7 +3623,14 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   transform: translateY(-2px);
 }
 
-@media (max-width: 767.98px) {
+/* Up to 900px, not just phone width. The one-row desktop bar needs about
+   890px before its title, date and button stop colliding (measured: at
+   768px the row's own content plus the title's indent past the tab came
+   to 819px against a 768px bar, putting "Join Here" 51px off the right
+   edge); below that this compact two-row grid is what fits. The tablet
+   band's own one-row treatment picks up from 900px -- see the
+   `min-width: 900px` block further down. */
+@media (max-width: 899.98px) {
   /* Title + button share the top row (button right-aligned next to the
      title instead of stacked below the date), date drops to its own row
      spanning the full width underneath. Grid (not flex) so the button
@@ -4133,5 +4140,167 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 @media (max-width: 767.98px) {
   .demcon-about-page .framer-fn74nn {
     height: min-content;
+  }
+}
+
+/* Tablet: stack the three sections that still ran multi-column there.
+
+   Framer lays the homepage out from its own breakpoints, and the
+   768-1199.98px band keeps a two-column treatment that stops fitting well
+   before 1200px -- reported live as these sections looking broken on a
+   tablet. Below 768px each of them already stacks; this brings that band
+   into line with it.
+
+   Scoped to these three sections by id/name rather than applied to the
+   band as a whole: the rest of the homepage is fine at this width and was
+   explicitly left alone. The selectors are Framer's generated class names,
+   which is unavoidable here -- they are the only handle on these
+   containers -- so each is paired with the section it sits in, and what it
+   holds is named, so a regenerated export can be re-matched by content
+   rather than by guessing at a hash.
+
+   Diffed against the <768px layout rather than eyeballed: at 1024px the
+   participation cards sat in a `470px 470px` grid and the contact section
+   ran its form beside its illustration, neither of which happens on a
+   phone. Everything else in these sections already matched. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  /* Participation: the Speakers / Attendees / Partners cards. */
+  .demcon-home-page [data-framer-name="Participation"] .framer-1kmjog0 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Contact: "Send us a message" beside its illustration, and the row of
+     supporting blocks under it. */
+  .demcon-home-page #contact .demcon-contact-cta-row,
+  .demcon-home-page #contact .framer-1fyds12 {
+    flex-direction: column;
+  }
+}
+
+/* Tablet: lift the DemocracySalons card's content clear of the "Next
+   Salon" strip, and shrink the strip's own contents to fit the width.
+
+   Two separate symptoms, same root cause -- this band inherits the
+   desktop sizing of a card and a bar that were both measured against a
+   much wider, taller viewport.
+
+   The card. Its section is pinned at exactly 100vh with overflow:hidden,
+   so anything past that height is not merely covered by the fixed strip,
+   it is clipped away. Measured at 1024x768: the stack ran 72 (padding)
+   + 345 (logo) + 72 (row-gap) + 430 (text/hosts/divider/button) = 919px
+   against a 768px box, putting the host headshots at 694-806 and
+   "Propose a Salon" at 855-919 -- the headshots behind the strip, the
+   button clipped out of existence entirely. The phone breakpoint already
+   solves this (see the `max-width: 767.98px` block that sets row-gap to
+   10px and anchors the card to the top); the fix here is the same moves
+   plus a smaller logo, because tablet shares the phone's 768px height
+   budget while keeping the desktop logo. Numbers below are what it takes
+   to land "Propose a Salon" just above the bar across the band: the
+   stack now ends at 629px, against a bar whose top edge is at 670px at
+   the tightest point in the band (899px wide, where the bar still uses
+   the compact layout and its shorter 26px tab) and lower than that
+   everywhere else; the headshots finish at 528px, clear even of the tab
+   poking up above the bar.
+
+   The row-gap/margins are !important because Framer writes them as
+   inline styles on the element (gap:72px) and the phone block above
+   already has to do the same.
+
+   The star is positioned absolutely against Left Content, not against
+   the logo, so it does not follow the logo when the logo shrinks --
+   hence the explicit re-placement, scaled by the same 310/460 factor and
+   kept at the same relative point over the logo's lower right.
+
+   The strip. `padding: 16px 160px` plus the title's 90px indent left
+   only 704px of a 1024px bar for ~793px of content: measured, the bar's
+   scrollWidth was 1044px and "JOIN HERE" sat at 877-1044, i.e. 20px off
+   the right edge, with the date clipped. Pulling the padding and the tab
+   in and stepping the three type sizes down (between the phone's sizes
+   and the desktop's) brings it to a scrollWidth of exactly 1024 with
+   ~82px of even breathing room either side of the date. Those strip
+   rules sit in their own `min-width: 900px` block below, because the
+   one-row bar needs that much width to hold together. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .demcon-home-page [data-framer-name="DemocracySalons"] {
+    padding-top: 30px;
+  }
+
+  /* Gap between the logo graphic and the text block beneath it. */
+  .demcon-home-page #salons-preview .framer-sfxkli {
+    row-gap: 10px !important;
+  }
+
+  /* ...and then 30px further up again, pulling the text block's top line
+     into the bottom of the logo's own box. That sounds like a collision
+     and is not one: the logo PNG has no transparent margin, but its
+     bottom ~40 rendered pixels are only the pink arrow tapering to a
+     point (measured off the source file's alpha: 3px wide on the last
+     row, 50px at 15px up), and that taper sits at the box's horizontal
+     centre while the eyebrow line runs from the column's left edge.
+     Measured at 1024px: the eyebrow's inked box ends at x=432 and the
+     arrow occupies 514-541 at the overlapping height, so the two are
+     82px apart. Everything below the eyebrow -- the description onward
+     -- clears the logo's box outright.
+
+     A negative row-gap would be the obvious way to express this and is
+     not legal CSS (gaps cannot go below zero), hence a negative margin
+     on the text block itself. */
+  .demcon-home-page #salons-preview .framer-6yy4j6 {
+    margin-top: -30px;
+  }
+
+  /* The "Democracy Salons" logo graphic, 460x345 at this breakpoint. */
+  .demcon-home-page #salons-preview .framer-jzspmu {
+    width: 290px;
+    height: 217px;
+  }
+
+  /* The small yellow star beside the logo. */
+  .demcon-home-page #salons-preview .framer-1e1o681 {
+    top: 164px;
+    left: 429px;
+    right: auto;
+    bottom: auto;
+    width: 33px;
+    height: 33px;
+  }
+
+  .demcon-home-page #salons-preview .demcon-hosts {
+    margin-top: 16px !important;
+  }
+
+  /* "Propose a Salon". */
+  .demcon-home-page #salons-preview .framer-1ilqax {
+    margin-top: -12px !important;
+  }
+}
+
+/* The strip's half of the above, on its own narrower range. The one-row
+   bar needs ~890px of width to hold its three pieces without colliding,
+   so below 900px it keeps the compact two-row grid instead (the
+   `max-width: 899.98px` block above, widened from phone width for exactly
+   this reason) and this picks up from there. */
+@media (min-width: 900px) and (max-width: 1199.98px) {
+  .demcon-salon-strip {
+    padding: 16px 40px;
+  }
+
+  .demcon-salon-strip-tab {
+    left: 24px;
+  }
+
+  /* Still indented past the tab, which now ends at 171px. */
+  .demcon-salon-strip-title {
+    margin-left: 150px;
+    font-size: 22px;
+  }
+
+  .demcon-salon-strip-date {
+    font-size: 16px;
+  }
+
+  .demcon-salon-strip-cta {
+    padding: 14px 28px;
+    font-size: 16px;
   }
 }
