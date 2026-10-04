@@ -1097,6 +1097,38 @@ body { padding-top: var(--nav-h); }
      Tablet only: at desktop the card sits in a two-column layout with room
      to spare, and on a phone the extra height is scroll nobody asked for. */
   .cta { padding-bottom: 44px; }
+  /* The illustration is pinned right by .hero__art's justify-content on the
+     base rule, which is where it belongs beside a text column. On one column
+     there is no column to sit beside, so it reads as shoved to one edge. */
+  .hero__art { justify-content: center; }
+}
+
+/* Phone only -- the two things that band needs and the tablet one does not.
+
+   The gap between the hero copy and the illustration was never the grid gap
+   (40px); it was the image being letterboxed. .hero__art is a flex box, so
+   with the default align-items:stretch the <img> is pulled to the full
+   height of its grid row -- 548px -- while object-fit:contain then fits the
+   artwork inside that and centres it. At 390px wide the image only needs
+   354px, so roughly 97px of empty space sat above it and as much again
+   below. Letting the image keep its own height removes both.
+
+   Only a phone sees this: it needs the container to be narrower than the
+   image's natural width at max-height, which stops happening well before
+   the tablet band -- at 900px the image fits at its full height and there is
+   no letterbox to remove.
+
+   The padding under "Save my spot" is the same dial as the tablet block, and
+   splits the same way: the section centres its content, so 44px buys 22px. */
+@media (max-width: 767.98px) {
+  /* height:auto so the width cap drives the height and the artwork keeps its
+     own aspect. Without it the image took max-height's 548px and object-fit
+     centred the artwork inside that, leaving ~97px of empty space above it
+     and as much below -- which read as a gap between the copy and the
+     illustration. */
+  .hero__art { align-items: flex-start; }
+  .hero__art img { height: auto; }
+  .cta { padding-bottom: 44px; }
 }
 
 /* Desktop sizing for the people cards.
