@@ -32,6 +32,27 @@
 //                       with the joining line left out rather than empty.
 
 var SENDER_API_BASE = 'https://api.sender.net/v2';
+
+// Every outbound call goes through this rather than bare fetch(), because
+// bare fetch() has no timeout at all and Sender's API does hang: measured
+// live, one /message/send sat open for 60 seconds before Cloudflare gave up
+// and returned its own 522 "connection timed out" page. With four of these
+// in a row and nothing bounding them, one slow call holds the whole response
+// open, the submitter sees a form that neither succeeds nor fails, and the
+// sends queued behind it may never be attempted before the platform kills
+// the function.
+//
+// A timeout here turns that into a prompt, ordinary failure: the call is
+// abandoned, the catch around it runs, and the response goes out. The caller
+// cannot tell a timeout from any other network error, which is what it wants
+// -- both mean "this did not send".
+var OUTBOUND_TIMEOUT_MS = 8000;
+
+function fetchWithTimeout(url, options, timeoutMs) {
+  return fetch(url, Object.assign({}, options, {
+    signal: AbortSignal.timeout(timeoutMs || OUTBOUND_TIMEOUT_MS)
+  }));
+}
 var MAILERLITE_API_BASE = 'https://connect.mailerlite.com/api';
 
 // The same file the salons page fills its hero from, so a registrant is
@@ -122,7 +143,7 @@ async function addToParlorNewsletter(email, firstName, lastName) {
   var groupId = process.env.MAILERLITE_GROUP_PARLOR;
   if (groupId) body.groups = [groupId];
 
-  var res = await fetch(MAILERLITE_API_BASE + '/subscribers', {
+  var res = await fetchWithTimeout(MAILERLITE_API_BASE + '/subscribers', {
     method: 'POST',
     headers: {
       Authorization: 'Bearer ' + apiKey,
@@ -207,7 +228,7 @@ module.exports = async function handler(req, res) {
   var subscriberDetail = null;
   var subscriberGroups = null;
   try {
-    var sendRes = await fetch(SENDER_API_BASE + '/message/send', {
+    var sendRes = await fetchWithTimeout(SENDER_API_BASE + '/message/send', {
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + apiKey,
@@ -262,7 +283,7 @@ module.exports = async function handler(req, res) {
     if (groups.length) subscriberBody.groups = groups;
 
     subscriberGroups = groups.length;
-    var subRes = await fetch(SENDER_API_BASE + '/subscribers', {
+    var subRes = await fetchWithTimeout(SENDER_API_BASE + '/subscribers', {
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + apiKey,
@@ -320,7 +341,7 @@ module.exports = async function handler(req, res) {
       var firstName = String(fields.Name || fields['Full Name'] || '').trim().split(/\s+/)[0] || '';
       var confirmation = salonConfirmation(firstName, joinUrl);
 
-      var confirmRes = await fetch(SENDER_API_BASE + '/message/send', {
+      var confirmRes = await fetchWithTimeout(SENDER_API_BASE + '/message/send', {
         method: 'POST',
         headers: {
           Authorization: 'Bearer ' + apiKey,

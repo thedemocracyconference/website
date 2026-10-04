@@ -595,10 +595,17 @@
       if (submitBtn) submitBtn.disabled = true;
       errorEl.hidden = true;
 
+      // No timeout on fetch() means no timeout at all, and the endpoint can
+      // genuinely take a minute when Sender's API hangs (measured: 60s, then
+      // a Cloudflare 522). That left the form in its worst possible state --
+      // button disabled, nothing said, no way to tell whether it had worked
+      // -- for as long as the reader was willing to sit there. Bounded, so a
+      // slow backend fails like any other error and the reader is told.
       fetch('/api/submit-form', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ formType: formType, page: window.location.pathname, fields: fields })
+        body: JSON.stringify({ formType: formType, page: window.location.pathname, fields: fields }),
+        signal: AbortSignal.timeout(20000)
       })
         .then(function (res) {
           if (!res.ok) throw new Error('submit-form request failed');
