@@ -831,6 +831,19 @@
     var form = document.querySelector('.cta__form');
     if (!form) return;
 
+    // See the matching comment in wireBackendForm (sticky-nav.js): the trap
+    // has to be cleared by real interaction before it is read, or Chrome's
+    // autofill trips it and the registration is thrown away with no success
+    // message, no error, and no request -- the button simply does nothing.
+    // The old "belt and braces" clear here ran *after* the check, so it
+    // protected nothing.
+    var hp = form.querySelector('[data-honeypot]');
+    if (hp) {
+      ['pointerdown', 'keydown'].forEach(function (evt) {
+        form.addEventListener(evt, function () { hp.value = ''; }, { once: true });
+      });
+    }
+
     var error = document.createElement('p');
     error.className = 'form-error';
     error.hidden = true;
@@ -839,13 +852,11 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
-      var hp = form.querySelector('[data-honeypot]');
-      if (hp && hp.value) return;            // bot: drop silently
+      if (hp && hp.value) {                  // bot: drop, but say so
+        console.warn('submit dropped: honeypot filled and no interaction recorded');
+        return;
+      }
 
-      // Belt and braces against the same autofill problem: anything a
-      // browser put in the trap before the reader pressed the button was
-      // not typed by them, and the check above has already had its say.
-      if (hp) hp.value = '';
       if (!form.reportValidity()) return;
 
       var btn = form.querySelector('button[type="submit"]');

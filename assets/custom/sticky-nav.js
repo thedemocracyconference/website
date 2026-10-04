@@ -549,15 +549,33 @@
     errorEl.hidden = true;
     form.appendChild(errorEl);
 
+    // A value in the trap only means "bot" if no human has touched this
+    // form. Chrome's autofill fills off-screen fields, the trap included,
+    // so checking it cold dropped real visitors whose browser had filled
+    // it in -- silently, with the button appearing to do nothing at all,
+    // which is exactly how this was reported. Any genuine interaction
+    // clears it; a bot that sets the fields programmatically and submits
+    // dispatches neither of these events, so the trap still catches it.
+    var honeypot = form.querySelector('[data-honeypot]');
+    if (honeypot) {
+      ['pointerdown', 'keydown'].forEach(function (evt) {
+        form.addEventListener(evt, function () { honeypot.value = ''; }, { once: true });
+      });
+    }
+
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
       // Honeypot: a field real visitors never see or fill in (see the CSS
-      // hiding it), so a non-empty value here means a bot filled out every
-      // field it could find. Silently drop it -- no request, no error, no
-      // indication to the bot that anything happened.
-      var honeypot = form.querySelector('[data-honeypot]');
-      if (honeypot && honeypot.value) return;
+      // hiding it), so a non-empty value here -- after the clearing above
+      // had its chance -- means a bot filled out every field it could
+      // find. Dropped silently as far as the submitter is concerned, but
+      // logged, because a submission vanishing without trace is the thing
+      // that made the autofill bug so hard to see.
+      if (honeypot && honeypot.value) {
+        console.warn('submit dropped: honeypot filled and no interaction recorded');
+        return;
+      }
 
       if (validate && !validate()) return;
 
