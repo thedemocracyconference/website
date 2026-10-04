@@ -882,8 +882,19 @@
         signal: AbortSignal.timeout(20000)
       })
         .then(function (res) { if (!res.ok) throw new Error('submit failed'); return res.json(); })
-        .then(function () {
-          form.innerHTML = '<p class="form-success">You\u2019re on the list \u2014 we\u2019ll email you the joining link.</p>';
+        .then(function (data) {
+          // Registering again is a legitimate thing to do -- people lose the
+          // email -- and the subscriber call upserts, so a repeat signup is
+          // not an error. What a repeat can hit is Sender refusing to mail an
+          // address it has marked as bounced, and in that case promising the
+          // link again would be the second lie in a row. The server says
+          // which happened; anything other than an explicit false is treated
+          // as sent, so an older deployment that omits the field still reads
+          // as success.
+          var emailed = !data || data.confirmed !== false;
+          form.innerHTML = emailed
+            ? '<p class="form-success">You\u2019re on the list \u2014 we\u2019ll email you the joining link.</p>'
+            : '<p class="form-success">You\u2019re on the list, but we couldn\u2019t email the joining link to that address. Write to info@thedemcon.org and we\u2019ll send it over.</p>';
         })
         .catch(function () {
           if (btn) btn.disabled = false;

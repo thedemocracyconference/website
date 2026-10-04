@@ -380,6 +380,20 @@ module.exports = async function handler(req, res) {
   }
 
   var okResponse = { ok: true };
+
+  // Whether the registrant actually got their copy. The registration itself
+  // succeeded either way -- the organisers were notified, which is what
+  // being registered means -- but the page should not promise an email that
+  // Sender refused. It does refuse, permanently, once an address has bounced
+  // ("type":"subscriber_status"), so someone signing up again after a bounce
+  // would otherwise be told twice that a link is on its way and never get
+  // one. Only meaningful for the forms that send a confirmation at all;
+  // omitted entirely for the rest, so `confirmed !== false` reads correctly
+  // on every form.
+  if (SALON_FORMS[formType]) {
+    okResponse.confirmed = confirmStatus !== null && confirmStatus >= 200 && confirmStatus < 300;
+  }
+
   if (req.query && req.query.debug === '1') {
     okResponse.confirmation = {
       attempted: confirmStatus !== null || confirmDetail !== null,
