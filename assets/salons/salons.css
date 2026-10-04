@@ -512,7 +512,9 @@ body { padding-top: var(--nav-h); }
   width: 100%;
 }
 .team__title { font-size: 52px; margin-bottom: 18px; }
-.team__body { margin-bottom: 0; }
+/* Now a wrapper holding one <p> per paragraph rather than a single
+   paragraph itself, so the last one carries the zero bottom margin. */
+.team__body > p:last-child { margin-bottom: 0; }
 .team__hosts { align-self: center; }
 
 /* Portrait circles. Empty ones (the featured guest, until a headshot
@@ -945,7 +947,29 @@ body { padding-top: var(--nav-h); }
   .cta__art { height: 300px; max-width: 380px; }
 }
 
-@media (max-width: 767.98px) {
+/* The phone layout, which now also covers the tablet band.
+
+   It used to stop at 767.98px, leaving 768-1099.98px with the two-column
+   treatment: full nav, desktop type sizes, and -- the reason this changed --
+   the airship docking beside the team panel. That dock was sized for the
+   short "Meet the team." heading and its paragraph. With a longer title and
+   two paragraphs of copy the panel grew underneath it, and the airship ended
+   up drawn across the heading and the first lines of the description
+   (measured at 1024px: the craft's box intersecting both the title and the
+   body). Below 768px there was never a collision, because the rule at the
+   end of this block flies the airship out of frame on the team panel rather
+   than docking it at all.
+
+   So rather than invent a third set of dock coordinates for the tablet
+   band, the phone treatment simply extends up to meet the desktop one. The
+   two bands are now identical by construction, which is also what was
+   asked for. Consequences, all intended: the nav collapses to the toggle
+   from 1100px down, type takes the smaller sizes, and the deck controls sit
+   in the bottom bar.
+
+   This block stays *after* the max-width:1099.98px block above, so where
+   both set the same property this one wins. */
+@media (max-width: 1099.98px) {
   :root { --gutter: 22px; }
   .nav__links { display: none; }
   .nav__links.is-open {
@@ -968,9 +992,9 @@ body { padding-top: var(--nav-h); }
   .hero__salons { font-size: 62px; }
   .premise__title { font-size: 38px; }
   .team__title { font-size: 34px; }
-  /* A phone has no width to spare for a chevron gutter beside the text --
-     at this size the column would drop to about 230px and the body copy
-     would set two or three words to the line. So the controls leave the
+  /* At the narrow end of this band there is no width to spare for a chevron
+     gutter beside the text -- the column would drop to about 230px and the
+     body copy would set two or three words to the line. So the controls leave the
      sides and join the dots in a bottom bar, and the panels get the plain
      page gutter back. Swiping is the native gesture here anyway; the
      chevron is a hint more than a control. */
@@ -980,7 +1004,8 @@ body { padding-top: var(--nav-h); }
   .panel-team { padding-left: var(--gutter); }
   .deck__nav svg { width: 26px; height: 26px; }
   .deck__nav-hint { font-size: 9px; letter-spacing: 0.12em; }
-  /* No back chevron on a phone: swiping is the native gesture at this size
+  /* No back chevron here: swiping is the native gesture on the touch sizes
+     this band covers
      and the dots already say which panel you are on, so the button was a
      control in the corner restating what the gesture does -- and that corner
      is where the browser's own back button lives.
@@ -1018,8 +1043,10 @@ body { padding-top: var(--nav-h); }
     background: var(--white);
   }
   .deck__dots { bottom: 31px; }
-  /* Nowhere on a phone's team panel is free for the airship to land: the
-     single column fills the card from the heading down to the last host.
+  /* Nowhere on the one-column team panel is free for the airship to land:
+     the column fills the card from the heading down to the last host, and
+     a longer title or an extra paragraph only makes that worse -- which is
+     exactly what put the craft across the heading in the tablet band.
      So here it flies up out of frame instead of docking, fading as it
      climbs -- the same departure, just without a berth at the end of it. */
   .airship__dock {
@@ -1037,6 +1064,55 @@ body { padding-top: var(--nav-h); }
   .cta__fields { grid-template-columns: 1fr; }
   .cohosts { grid-template-columns: 1fr; }
   .footer__legal { flex-direction: column; gap: 10px; }
+}
+
+/* Tablet only: centre the airship group in the panel.
+
+   The craft, the handwritten line and the chevron are already centred with
+   one another -- they are laid out in .airship-row, which the one-column
+   rules turn into a centred flex column. What is off-centre is the row
+   itself: capped at 520px and sitting flush against the page gutter, so on
+   a ~900px panel its centre lands at 282px against the panel's 450px.
+   Auto side margins move all three together, which is why nothing here
+   touches the children.
+
+   Bounded at both ends on purpose. Below 768px the row is nearly as wide as
+   the panel, so there is no slack to centre into and the gutter alignment is
+   the right one; above 1099.98px the two-column desktop layout takes over
+   and the row belongs beside the text, not in the middle of it. */
+@media (min-width: 768px) and (max-width: 1099.98px) {
+  .airship-row {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Breathing room under "Save my spot". The section's own padding is 0 --
+     the 80px below the button comes from the inner wrapper -- so this adds
+     to the section rather than changing where that 80px comes from, taking
+     the gap to roughly 124px. Tablet only: at desktop the card sits in a
+     two-column layout with room to spare, and on a phone the extra height
+     is scroll nobody asked for. */
+  .cta { padding-bottom: 44px; }
+}
+
+/* Desktop sizing for the people cards.
+
+   min-width rather than another max-width: everything from 1099.98px down is
+   the phone treatment now, and that band is deliberately left alone. Only the
+   two-column desktop layout has the room for these, so the increases are
+   scoped to it and cannot leak back into the narrow band.
+
+   The portraits carry this panel -- a host and a single guest, no longer a
+   row of four -- and at 78px they read as secondary to copy set at 18px. The
+   name pill and the role line move with them so the card scales as a unit
+   rather than a bigger circle beside unchanged type. */
+@media (min-width: 1100px) {
+  .avatar--sm { width: 104px; height: 104px; }
+  .cohost { gap: 18px; }
+  .guest__name { font-size: 17px; padding: 4px 10px; margin-bottom: 10px; }
+  .cohosts--speakers .guest__name { font-size: 16px; }
+  .guest__role { font-size: 14px; margin-bottom: 12px; }
+  .guest__bio { font-size: 16px; line-height: 26px; }
 }
 
 /* Respect a reduced-motion preference: nothing here animates, but the
