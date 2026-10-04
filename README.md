@@ -65,6 +65,8 @@ Its facts come from `assets/salons/salon.json`, which is the same file the salon
 
 The Zoom link is **not** in that file. `salon.json` is served to anyone who visits the site, and a Zoom link carrying a `pwd` token is a key to the room, so it lives in `SALON_JOIN_URL` and is read only when the email is built. Leave it unset and registrants still get their confirmation, with the joining line omitted rather than empty (the handler logs a warning).
 
+`SALON_JOIN_URL` is set as a Vercel **team shared** variable, not on the `website` project itself, so it does **not** appear in that project's own Environment Variables list — look under the *Shared* tab. Edit it there when the salon changes. Adding a project-level variable of the same name instead would override the shared one for this site while leaving a stale link in the shared value, which is the kind of split that is painful to debug later.
+
 With any of the first three missing, the endpoint returns 500 and visitors see an error pointing them at info@thedemcon.org. To check a live deployment end to end:
 
 ```bash
