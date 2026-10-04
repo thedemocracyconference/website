@@ -1086,12 +1086,16 @@ body { padding-top: var(--nav-h); }
     margin-right: auto;
   }
 
-  /* Breathing room under "Save my spot". The section's own padding is 0 --
-     the 80px below the button comes from the inner wrapper -- so this adds
-     to the section rather than changing where that 80px comes from, taking
-     the gap to roughly 124px. Tablet only: at desktop the card sits in a
-     two-column layout with room to spare, and on a phone the extra height
-     is scroll nobody asked for. */
+  /* Breathing room under "Save my spot": 80px to 102px, measured.
+
+     Note the gap grows by half what is added here. The section centres its
+     content inside a full-viewport box (min-height 100dvh, justify-content
+     center), so with 146px of slack at 900x900 the padding is split evenly
+     above and below -- 44px buys 22px. Same redistribution sticky-nav.css
+     documents on the hero. Double this if more is wanted.
+
+     Tablet only: at desktop the card sits in a two-column layout with room
+     to spare, and on a phone the extra height is scroll nobody asked for. */
   .cta { padding-bottom: 44px; }
 }
 
