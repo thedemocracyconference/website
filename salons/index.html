@@ -67,7 +67,7 @@
 
       <p class="eyebrow eyebrow--pill" data-salon="eyebrow">Episode &bull; 02</p>
       <h2 class="hero__topic" data-salon="topic">Open Society, Closed Borders</h2>
-      <p class="hero__with">with <span data-salon="speaker">Adam Gurri, Co-Founder Liberal Currents</span> &raquo;</p>
+      <p class="hero__with">with <span data-salon="speaker">Adam Gurri, Co-Founder and Editor-in-Chief, Liberal Currents</span> &raquo;</p>
 
       <ul class="meta">
         <li>
@@ -96,7 +96,7 @@
   </div>
 </section>
 
-<!-- ============ PREMISE + MEET THE TEAM (one deck, two states) ======= -->
+<!-- ============ PREMISE + THIS SALON (one deck, two states) ========= -->
 <!-- Both panels share one pinned card and one grid cell, and the move
      between them is a scene change rather than a slide: the premise copy
      and the handwritten "Bold ideas this way..." fade out, the airship
@@ -146,7 +146,7 @@
             <!-- The chevron sits at the end of that handwritten line, which
                  is pointing at it. -->
             <button class="deck__nav deck__nav--next" type="button" hidden
-                    aria-controls="deck-stage" aria-label="Next: meet the team">
+                    aria-controls="deck-stage" aria-label="Next: Open Society, Closed Borders">
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M9 4l8 8-8 8" fill="none" stroke="currentColor"
                       stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -159,17 +159,17 @@
     </article>
 
     <article class="deck__panel panel-team" id="guest" role="group"
-             aria-roledescription="slide" aria-label="2 of 2: Meet the team">
+             aria-roledescription="slide" aria-label="2 of 2: Open Society, Closed Borders">
       <div class="team__inner">
         <div class="team__intro">
           <p class="eyebrow eyebrow--pill">In the room // 03</p>
-          <h2 class="premise__title team__title">Meet the team.</h2>
-          <p class="premise__body team__body">The DemCon &times; The Parlor&rsquo;s new event series Democracy Salon launches September 20th at 6pm CET. Salon 1 will feature DemCon Founder Hunter Christopher, The Parlor Founder Lindsey Brock Morales, Design &amp; Marketing lead Elizabeth Gallagher, and Head of Operations Louise A. Parker talking everything DemCon from the beginning to their big plans for the immediate future. If you want to learn about how this team is building the &ldquo;CPAC of the Left&rdquo; this is a must attend event.</p>
+          <h2 class="premise__title team__title" data-salon="topic">Open Society, Closed Borders</h2>
+          <div class="team__body" data-salon="description"><p class="premise__body">The next Democracy Salon brings Adam Gurri, Co-Founder and Editor-in-Chief of Liberal Currents, into the room on Thursday, October 8th at 12PM ET / 6PM CET.</p><p class="premise__body">Liberal democracies were built on the promise of openness: free movement of people, ideas, and trade. So why do they keep pulling up the drawbridge? From border walls and mass deportations to tariffs and &ldquo;national renewal,&rdquo; the instinct to close ranks is shaping politics on both sides of the Atlantic. Adam joins DemCon Founder Hunter Christopher to ask where that impulse comes from, what it costs us, and what a confident, open democracy could look like instead.</p></div>
         </div>
 
         <div class="team__hosts">
           <div class="cohost-head">
-            <span class="eyebrow">Your hosts</span>
+            <span class="eyebrow">Your host</span>
             <hr>
           </div>
 
@@ -183,15 +183,6 @@
                 <a class="link-arrow" href="#" data-host="hunter">About Hunter &rarr;</a>
               </div>
             </div>
-            <div class="cohost">
-              <div class="avatar avatar--sm"><img src="/assets/images/hosts/lindsey-brock-morales.png" alt="Lindsey B.M."></div>
-              <div>
-                <p class="guest__name">Lindsey B.M.</p>
-                <p class="guest__role">Founder, The Parlor</p>
-                <p class="guest__bio">Builds spaces for meaningful exchange.</p>
-                <a class="link-arrow" href="#" data-host="lindsey">About Lindsey &rarr;</a>
-              </div>
-            </div>
           </div>
 
           <!-- Speakers. Full names rather than the hosts' initials: a host
@@ -200,23 +191,16 @@
                these portraits rather than added by CSS, hence
                .avatar--ringed. No bio line until there is copy for one. -->
           <div class="cohost-head cohost-head--speakers">
-            <span class="eyebrow">Speakers</span>
+            <span class="eyebrow">Guest speaker</span>
             <hr>
           </div>
 
           <div class="cohosts cohosts--speakers">
             <div class="cohost">
-              <div class="avatar avatar--sm avatar--ringed"><img src="/assets/images/speakers/louise-a-parker.png" alt="Louise A. Parker"></div>
+              <div class="avatar avatar--sm avatar--ringed"><img src="/assets/images/speakers/adam-gurri.png" alt="Adam Gurri"></div>
               <div>
-                <p class="guest__name">Louise A. Parker</p>
-                <p class="guest__role">Head of Operations, DemCon</p>
-              </div>
-            </div>
-            <div class="cohost">
-              <div class="avatar avatar--sm avatar--ringed"><img src="/assets/images/speakers/elizabeth-gallagher.png" alt="Elizabeth Gallagher"></div>
-              <div>
-                <p class="guest__name">Elizabeth Gallagher</p>
-                <p class="guest__role">Design &amp; Marketing, DemCon</p>
+                <p class="guest__name">Adam Gurri</p>
+                <p class="guest__role">Co-Founder &amp; Editor-in-Chief, Liberal Currents</p>
               </div>
             </div>
           </div>
@@ -765,7 +749,24 @@
         if (!data) return;
         [].forEach.call(nodes, function (el) {
           var value = data[el.getAttribute('data-salon')];
-          if (typeof value === 'string' && value) el.textContent = value;
+          if (typeof value === 'string' && value) {
+            el.textContent = value;
+            return;
+          }
+          // An array is a run of paragraphs -- one <p> each. Built node by
+          // node with textContent rather than joined into innerHTML, for
+          // the same reason as the single-string case: these strings are
+          // content, not markup.
+          if (Array.isArray(value) && value.length) {
+            el.textContent = '';
+            value.forEach(function (para) {
+              if (!para) return;
+              var para_el = document.createElement('p');
+              para_el.className = 'premise__body';
+              para_el.textContent = para;
+              el.appendChild(para_el);
+            });
+          }
         });
       })
       .catch(function () {});      // the markup already says the right thing
