@@ -11,22 +11,6 @@
      The order is the order the sections appear on the page. */
   var SECTION_IDS = ['salons-preview', 'about', 'agenda', 'participate', 'contact'];
 
-  function pinHeader(header) {
-    // Fixed positioning itself is a static CSS rule now (sticky-nav.css) --
-    // this only needs to hide/show the header at the two discrete moments
-    // the Join Us modal opens/closes. Toggling a class (rather than setting
-    // inline styles) is required here so it can out-specificity the
-    // unconditional "visibility: visible !important" sticky rule.
-    return {
-      hide: function () {
-        header.classList.add('demcon-header-hidden');
-      },
-      show: function () {
-        header.classList.remove('demcon-header-hidden');
-      }
-    };
-  }
-
   function watchHeaderContrast(header, getHeaderHeight) {
     function parseColor(str) {
       var m = str && str.match(/rgba?\(([^)]+)\)/);
@@ -194,10 +178,11 @@
     // couple of unlucky reads right at load can latch onto the wrong bucket
     // with nothing to self-correct it until the next scroll/resize. Run a
     // short, bounded burst of checks (not an infinite poll) so a stray bad
-    // sample gets outvoted by the many good ones. Also re-run this burst
-    // whenever the Join Us modal closes: its full-viewport backdrop sits
-    // over the sample point while open, so a check firing during that
-    // window can misclassify the header as black until re-sampled.
+    // sample gets outvoted by the many good ones. The returned warmup() let
+    // callers re-run the burst after a full-viewport overlay stopped covering
+    // the sample point; the Join Us modal was its only caller and is gone, so
+    // nothing triggers it externally now -- the initial burst below still
+    // runs.
     //
     // Uses setTimeout rather than requestAnimationFrame -- rAF callbacks
     // proved unreliable in testing (queued but silently never firing),
@@ -622,85 +607,6 @@
     });
   }
 
-  function initJoinUsModal(header, headerVisibility, headerContrast) {
-    var modal = document.getElementById('demcon-joinus-modal');
-    // The header button this used to hang off is now a plain Donate link out
-    // to PayPal, and the handler below calls preventDefault() -- left pointing
-    // at it, the link would do nothing but reopen this modal. Nothing carries
-    // data-joinus-modal-trigger at the moment, so this returns here and the
-    // modal sits dormant rather than half-wired. Give any element that
-    // attribute to bring it back.
-    var trigger = header.querySelector('[data-joinus-modal-trigger]');
-    if (!modal || !trigger) return;
-
-    var dialog = modal.querySelector('.demcon-modal-dialog');
-    var form = modal.querySelector('.demcon-modal-form');
-    var firstField = modal.querySelector('input');
-    var focusableSelector = 'input, button, [href], [tabindex]:not([tabindex="-1"])';
-    var lastFocused = null;
-
-    function isOpen() {
-      return !modal.hidden;
-    }
-
-    function open() {
-      lastFocused = document.activeElement;
-      modal.hidden = false;
-      modal.setAttribute('aria-hidden', 'false');
-      headerVisibility.hide();
-      if (firstField) firstField.focus();
-    }
-
-    function close() {
-      modal.hidden = true;
-      modal.setAttribute('aria-hidden', 'true');
-      headerVisibility.show();
-      // The modal's full-viewport backdrop sits right over the header's
-      // color-sample point while open; re-run the warm-up burst now that
-      // it's gone, in case a check happened to fire during that window.
-      headerContrast.warmup();
-      if (lastFocused && lastFocused.focus) lastFocused.focus();
-    }
-
-    trigger.addEventListener('click', function (e) {
-      e.preventDefault();
-      open();
-    });
-
-    modal.querySelectorAll('[data-modal-dismiss]').forEach(function (el) {
-      el.addEventListener('click', close);
-    });
-
-    // No success-state markup exists for this one (unlike the pitch
-    // modals below, which were built with their own success panel from
-    // the start) -- swapping the form's own contents for a thank-you
-    // message is simplest rather than adding matching markup on every
-    // page this modal is duplicated onto (home, About, Contact).
-    wireBackendForm(form, 'joinus', function () {
-      form.innerHTML = '<p class="demcon-form-success">Thanks for signing up -- we\'ll keep you posted.</p>';
-    });
-
-    document.addEventListener('keydown', function (e) {
-      if (!isOpen()) return;
-      if (e.key === 'Escape') {
-        close();
-        return;
-      }
-      if (e.key !== 'Tab') return;
-      var focusable = Array.prototype.slice.call(dialog.querySelectorAll(focusableSelector));
-      if (!focusable.length) return;
-      var first = focusable[0];
-      var last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    });
-  }
-
   // Simple, single-path glyphs (viewBox 0 0 24 24) for each social platform
   // -- rendered as icons instead of text labels in the host bio modal, with
   // the platform name kept as an aria-label/title for accessibility since
@@ -718,9 +624,10 @@
 
   // Salons section (index.html) "Our Hosts" bios -- clicking either host's
   // photo opens a shared modal populated with their name/title/bio/link.
-  // Mirrors initJoinUsModal's open/close/focus-trap pattern above, minus
-  // the header-hide/contrast-rewarm steps that modal needs specifically
-  // because it's triggered *from* the header itself.
+  // Same open/close/focus-trap shape as the other modals below. (It used to
+  // be described as mirroring the Join Us modal, which was the one triggered
+  // from the header and so had extra header-hide/contrast-rewarm steps; that
+  // modal is gone, and nothing here needed those.)
   var HOST_DATA = {
     lindsey: {
       name: 'Lindsey Brock Morales',
@@ -850,72 +757,6 @@
     });
   }
 
-  // Salons section "Join Here" button (the yellow strip) -- opens a modal
-  // with event details and an email capture instead of linking out. Event
-  // info is a placeholder until there's a real page to send people to; the
-  // form itself has nowhere real to submit yet either, so it just swaps in
-  // a thank-you message rather than posting anywhere.
-  function initSalonModal() {
-    var modal = document.getElementById('demcon-salon-modal');
-    var trigger = document.querySelector('[data-salon-modal-trigger]');
-    if (!modal || !trigger) return;
-
-    var dialog = modal.querySelector('.demcon-modal-dialog');
-    var form = modal.querySelector('[data-salon-form]');
-    var success = modal.querySelector('.demcon-salon-modal-success');
-    var firstField = modal.querySelector('input');
-    var focusableSelector = 'input, button, [href], [tabindex]:not([tabindex="-1"])';
-    var lastFocused = null;
-
-    function isOpen() {
-      return !modal.hidden;
-    }
-
-    function open() {
-      lastFocused = document.activeElement;
-      modal.hidden = false;
-      modal.setAttribute('aria-hidden', 'false');
-      if (firstField) firstField.focus();
-    }
-
-    function close() {
-      modal.hidden = true;
-      modal.setAttribute('aria-hidden', 'true');
-      if (lastFocused && lastFocused.focus) lastFocused.focus();
-    }
-
-    trigger.addEventListener('click', open);
-
-    modal.querySelectorAll('[data-modal-dismiss]').forEach(function (el) {
-      el.addEventListener('click', close);
-    });
-
-    wireBackendForm(form, 'salon', function () {
-      form.hidden = true;
-      if (success) success.hidden = false;
-    });
-
-    document.addEventListener('keydown', function (e) {
-      if (!isOpen()) return;
-      if (e.key === 'Escape') {
-        close();
-        return;
-      }
-      if (e.key !== 'Tab') return;
-      var focusable = Array.prototype.slice.call(dialog.querySelectorAll(focusableSelector));
-      if (!focusable.length) return;
-      var first = focusable[0];
-      var last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    });
-  }
-
   // Participate section "Register to Attend" button -- mirrors the Join
   // Us modal's own two-panel layout/copy (same DEMCON mark, when/where,
   // and form fields), just reworded around registering interest ahead of
@@ -996,9 +837,8 @@
   // and links) instead of linking out. The trigger is one of Framer's
   // built-in animated button components (a styled div, not a real
   // <button>/<a>), so clicks and Enter/Space both need to be wired up by
-  // hand for it to be operable via keyboard. Nowhere real to submit to
-  // yet, so it just swaps in a thank-you message rather than posting
-  // anywhere, same as the salon event modal above.
+  // hand for it to be operable via keyboard. Submits through wireBackendForm
+  // like every other form on the site, then swaps in its own success panel.
   // Shared by both the "Propose a Salon" and "Apply to Speak" modals --
   // same fields, same custom-dropdown/dynamic-links/success-swap behavior,
   // just different copy and a couple of scoping selectors, so this is
@@ -1214,10 +1054,11 @@
       return (nav || header).getBoundingClientRect().height;
     }
 
-    var headerVisibility = pinHeader(header);
-    var headerContrast = watchHeaderContrast(header, getHeaderHeight);
+    // Called for the scroll/resize listeners it registers; its return value
+    // existed only to hand to the Join Us modal, which is gone. (pinHeader
+    // went with it -- it did nothing but hand that modal a hide/show pair.)
+    watchHeaderContrast(header, getHeaderHeight);
     initScrollSpy(header, getHeaderHeight);
-    initJoinUsModal(header, headerVisibility, headerContrast);
     initMobileMenu(header);
   }
 
@@ -3695,7 +3536,6 @@
   setupUDHRSequence();
   setupPrinciplesOneWayGate();
   initHostBioModal();
-  initSalonModal();
   initPitchModal('demcon-propose-modal', '[data-propose-modal-trigger]', '[data-propose-intro]', '[data-propose-form]', 'propose');
   initPitchModal('demcon-apply-modal', '[data-apply-modal-trigger]', '[data-apply-intro]', '[data-apply-form]', 'apply');
   initPitchModal('demcon-partner-modal', '[data-partner-modal-trigger]', '[data-partner-intro]', '[data-partner-form]', 'partner');

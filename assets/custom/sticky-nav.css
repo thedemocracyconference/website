@@ -17,15 +17,6 @@
   visibility: visible !important;
 }
 
-/* Hides the header while the Join Us modal is open. Needs the extra class
-   for specificity to win over the "visibility: visible !important" rule
-   directly above. */
-.framer-1kfysrm-container.demcon-header-hidden,
-.framer-1kfysrm-container.demcon-header-hidden nav {
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
 /* The nav links have their own native onMouseEnter/data-highlight hover
    behavior (from Framer's built-in current-hash highlighting), which
    otherwise fights with our scroll-driven underline over the same visual
@@ -966,8 +957,11 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   border: 1px solid rgb(35, 31, 32) !important;
 }
 
-/* Join Us modal -- hand-built to replace Framer's React-only overlay, which
-   this session confirmed rendered underneath the sticky header. */
+/* Shared modal shell -- hand-built to replace Framer's React-only overlay,
+   which rendered underneath the sticky header. Originally written for the
+   Join Us modal (since removed, along with the salon event modal); it is now
+   the common base for the host bio, Propose, Apply, Partner and Register
+   modals, each of which adds only its own body layout on top. */
 .demcon-modal {
   position: fixed;
   inset: 0;
@@ -3759,8 +3753,8 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
 }
 
 /* Host bio modal -- reuses the shared .demcon-modal/.demcon-modal-dialog
-   shell (see the Join Us modal above) for the overlay/backdrop/close
-   button, with its own single-column body layout. */
+   shell (defined above) for the overlay/backdrop/close button, with its own
+   single-column body layout. */
 .demcon-host-modal-dialog {
   flex-direction: column;
   max-width: 480px;
@@ -3865,64 +3859,10 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   text-decoration: underline;
 }
 
-/* Salon event modal -- opened from the yellow strip's "Join Here" button.
-   Reuses the shared .demcon-modal shell and .demcon-modal-form's
-   input/button styling (see the Join Us modal above), just single-column
-   with its own heading/date/blurb on top. */
-.demcon-salon-modal-dialog {
-  flex-direction: column;
-  max-width: 460px;
-  padding: 48px 36px;
-}
-
-.demcon-salon-modal-label {
-  margin: 0 0 8px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  color: #ff0074;
-}
-
-.demcon-salon-modal-heading {
-  margin: 0 0 8px;
-  font-family: 'League Spartan', sans-serif;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-}
-
-.demcon-salon-modal-when {
-  margin: 0 0 20px;
-  font-family: 'League Spartan', sans-serif;
-  font-size: 16px;
-  font-weight: 300;
-  color: #3a3a3a;
-}
-
-.demcon-salon-modal-bio {
-  margin: 0 0 24px;
-  font-family: 'League Spartan', sans-serif;
-  font-size: 15px;
-  font-weight: 300;
-  line-height: 1.5em;
-  color: #3a3a3a;
-}
-
-.demcon-salon-modal-success {
-  margin: 0;
-  font-family: 'League Spartan', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  color: #030509;
-}
-
 /* Propose a Salon modal -- opened from the "Propose a Salon" link under
    the hosts. Reuses the shared .demcon-modal shell and .demcon-modal-form
-   styling (see the Join Us modal above), single-column like the salon
-   event modal but wider to comfortably fit the longer pitch fields. */
+   styling (both defined above), single-column but wider than the others to
+   comfortably fit the longer pitch fields. */
 .demcon-propose-modal-dialog {
   flex-direction: column;
   max-width: 560px;
@@ -3971,9 +3911,9 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
   display: none;
 }
 
-/* Same stylized blue treatment as "JOIN US" in the Join Us modal's own
-   heading (.demcon-modal-panel-light h2 span) -- reused here so both
-   modals' "you're in" moments read as the same visual language. */
+/* The stylized blue treatment the shared .demcon-modal-panel-light h2 span
+   carries -- repeated here so this modal's "you're in" moment reads as the
+   same visual language as the headings elsewhere. */
 .demcon-propose-modal-success-heading {
   margin: 0;
   font-family: 'Hidalgo Regular', 'Hidalgo Regular Placeholder', sans-serif;
@@ -3994,7 +3934,7 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
    .demcon-form-error is appended once per form and toggled visible on a
    failed submission; .demcon-form-success replaces a form's own contents
    on the ones that had no purpose-built success panel of their own
-   (newsletter signup, homepage contact form, Join Us modal). */
+   (the newsletter signup and the homepage contact form). */
 .demcon-form-error {
   margin: 12px 0 0;
   font-family: 'League Spartan', sans-serif;
