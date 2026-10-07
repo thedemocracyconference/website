@@ -624,7 +624,13 @@
 
   function initJoinUsModal(header, headerVisibility, headerContrast) {
     var modal = document.getElementById('demcon-joinus-modal');
-    var trigger = header.querySelector('[data-framer-name="Navbar Button"]');
+    // The header button this used to hang off is now a plain Donate link out
+    // to PayPal, and the handler below calls preventDefault() -- left pointing
+    // at it, the link would do nothing but reopen this modal. Nothing carries
+    // data-joinus-modal-trigger at the moment, so this returns here and the
+    // modal sits dormant rather than half-wired. Give any element that
+    // attribute to bring it back.
+    var trigger = header.querySelector('[data-joinus-modal-trigger]');
     if (!modal || !trigger) return;
 
     var dialog = modal.querySelector('.demcon-modal-dialog');
