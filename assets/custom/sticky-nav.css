@@ -234,17 +234,6 @@
   transform: translateX(4px);
 }
 
-.demcon-newsletter-note {
-  margin: 0 0 32px;
-  max-width: 260px;
-  font-family: 'Satoshi', 'Satoshi Placeholder', sans-serif;
-  font-size: 14px;
-  line-height: 1.5em;
-  letter-spacing: -0.01em;
-  text-align: left;
-  color: rgba(255, 255, 255, 0.7);
-}
-
 /* Comic-book speech bubble shown on hover over the hero's Subscribe button. */
 .demcon-subscribe-bubble {
   position: fixed;
@@ -1951,11 +1940,6 @@ button:hover [data-framer-name="Icon Wrapper"] svg {
      a sliver of it visible prematurely. */
   .demcon-principles-section {
     padding: 200px 24px;
-  }
-
-  .demcon-principles-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
   }
 }
 
