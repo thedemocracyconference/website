@@ -831,18 +831,21 @@
     var form = document.querySelector('.cta__form');
     if (!form) return;
 
-    // See the matching comment in wireBackendForm (sticky-nav.js): the trap
-    // has to be cleared by real interaction before it is read, or Chrome's
-    // autofill trips it and the registration is thrown away with no success
-    // message, no error, and no request -- the button simply does nothing.
-    // The old "belt and braces" clear here ran *after* the check, so it
-    // protected nothing.
     var hp = form.querySelector('[data-honeypot]');
-    if (hp) {
-      ['pointerdown', 'keydown'].forEach(function (evt) {
-        form.addEventListener(evt, function () { hp.value = ''; }, { once: true });
-      });
-    }
+    // A value in the trap only means "bot" if no human has touched this form
+    // at all. Clearing it on the first interaction was not enough: the
+    // listener removed itself ({once:true}), and Chrome's autofill lands
+    // *after* that first click -- you click a field, the trap is cleared and
+    // the listener is gone, then autofill refills every field including the
+    // trap, and submit finds it populated with nothing left to clear. So this
+    // records that a human was here and never stops listening; the trap's
+    // value is judged against that at submit time, and cleared regardless so
+    // it is never sent. A bot that sets the fields programmatically and
+    // submits dispatches neither event, so it is still caught.
+    var interacted = false;
+    ['pointerdown', 'keydown'].forEach(function (evt) {
+      form.addEventListener(evt, function () { interacted = true; }, true);
+    });
 
     var error = document.createElement('p');
     error.className = 'form-error';
@@ -872,10 +875,11 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
-      if (hp && hp.value) {                  // bot: drop, but say so
+      if (hp && hp.value && !interacted) {    // bot: drop, but say so
         console.warn('submit dropped: honeypot filled and no interaction recorded');
         return;
       }
+      if (hp) hp.value = '';                 // never send the trap's value
 
       if (!form.reportValidity()) return;
 

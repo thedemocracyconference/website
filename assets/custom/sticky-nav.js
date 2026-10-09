@@ -554,19 +554,24 @@
     errorEl.hidden = true;
     form.appendChild(errorEl);
 
-    // A value in the trap only means "bot" if no human has touched this
-    // form. Chrome's autofill fills off-screen fields, the trap included,
-    // so checking it cold dropped real visitors whose browser had filled
-    // it in -- silently, with the button appearing to do nothing at all,
-    // which is exactly how this was reported. Any genuine interaction
-    // clears it; a bot that sets the fields programmatically and submits
-    // dispatches neither of these events, so the trap still catches it.
+    // A value in the trap only means "bot" if no human has touched this form
+    // at all. Chrome's autofill fills off-screen fields, the trap included.
+    // Clearing it on the first interaction was not enough: that listener
+    // removed itself ({once:true}) and autofill lands *after* the first
+    // click -- click a field, trap cleared and listener gone, then autofill
+    // refills everything including the trap, and submit finds it populated
+    // with nothing left to clear. Reported as the button doing nothing, with
+    // "honeypot filled and no interaction recorded" in the console.
+    //
+    // So this records that a human was here and never stops listening. The
+    // trap is judged against that at submit time and cleared regardless, so
+    // its value is never sent. A bot that sets the fields programmatically
+    // and submits dispatches neither event, so it is still caught.
     var honeypot = form.querySelector('[data-honeypot]');
-    if (honeypot) {
-      ['pointerdown', 'keydown'].forEach(function (evt) {
-        form.addEventListener(evt, function () { honeypot.value = ''; }, { once: true });
-      });
-    }
+    var interacted = false;
+    ['pointerdown', 'keydown'].forEach(function (evt) {
+      form.addEventListener(evt, function () { interacted = true; }, true);
+    });
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -577,10 +582,11 @@
       // find. Dropped silently as far as the submitter is concerned, but
       // logged, because a submission vanishing without trace is the thing
       // that made the autofill bug so hard to see.
-      if (honeypot && honeypot.value) {
+      if (honeypot && honeypot.value && !interacted) {
         console.warn('submit dropped: honeypot filled and no interaction recorded');
         return;
       }
+      if (honeypot) honeypot.value = '';   // never send the trap's value
 
       if (validate && !validate()) return;
 
