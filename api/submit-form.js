@@ -123,10 +123,21 @@ function salonConfirmation(firstName, joinUrl) {
   //
   // The cost is the yellow button; a bare URL is clickable only where the
   // client auto-links it, so the wording tells people they can copy it.
+  // Looks like the yellow button it replaces, without being one. The <a> that
+  // made it a button is what Sender rewrote through campaign-statistics.com,
+  // so the address itself is the clickable part now -- mail clients auto-link
+  // a bare URL, and the link they build points straight at Zoom instead of at
+  // a tracking domain. A table rather than a styled div because Outlook
+  // ignores padding and background on divs.
   var joinBlock = joinUrl
-    ? '<p style="margin:0 0 6px;font-family:Helvetica,Arial,sans-serif;font-weight:700">Join here</p>' +
-      '<p style="margin:0 0 28px;font-family:Helvetica,Arial,sans-serif;font-size:15px;' +
-      'line-height:1.5;word-break:break-all;color:#1b1514">' + escapeHtml(joinUrl) + '</p>' +
+    ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px">' +
+      '<tr><td style="background:#fcf424;border:2px solid #1b1514;padding:16px 22px;' +
+      'font-family:Helvetica,Arial,sans-serif">' +
+      '<p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.06em;' +
+      'text-transform:uppercase;color:#1b1514">Join the salon</p>' +
+      '<p style="margin:0;font-size:14px;line-height:1.5;word-break:break-all;color:#1b1514">' +
+      escapeHtml(joinUrl) + '</p>' +
+      '</td></tr></table>' +
       '<p style="margin:0 0 28px;font-family:Helvetica,Arial,sans-serif;font-size:13px;color:#6b6763">' +
       'If that is not clickable in your mail app, copy it into your browser.</p>'
     : '';
