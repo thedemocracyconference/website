@@ -111,13 +111,24 @@ function salonConfirmation(firstName, joinUrl) {
   if (joinUrl) lines.push('', 'Join here: ' + joinUrl);
   lines.push('', 'See you there.', '— DemCon × The Parlor');
 
+  // Deliberately contains no <a> element, and nothing else in this mail does
+  // either. Sender rewrites every anchor it finds through
+  // campaign-statistics.com, a tracking domain shared across its free tier --
+  // so the button that said "Join the salon" resolved somewhere other than
+  // Zoom, while the plain URL printed underneath it pointed at the real room.
+  // A link that does not go where it says, next to one that does, is the
+  // shape of a phishing mail, and it was landing in spam. The text/plain part
+  // was never rewritten, so this brings the HTML into line with it: one
+  // address, visible, unwrapped, going exactly where it claims.
+  //
+  // The cost is the yellow button; a bare URL is clickable only where the
+  // client auto-links it, so the wording tells people they can copy it.
   var joinBlock = joinUrl
-    ? '<p style="margin:0 0 28px"><a href="' + escapeHtml(joinUrl) + '"' +
-      ' style="display:inline-block;background:#fcf424;color:#1b1514;font-family:Helvetica,Arial,sans-serif;' +
-      'font-weight:700;font-size:15px;letter-spacing:0.06em;text-transform:uppercase;' +
-      'text-decoration:none;padding:14px 26px;border:2px solid #1b1514">Join the salon</a></p>' +
+    ? '<p style="margin:0 0 6px;font-family:Helvetica,Arial,sans-serif;font-weight:700">Join here</p>' +
+      '<p style="margin:0 0 28px;font-family:Helvetica,Arial,sans-serif;font-size:15px;' +
+      'line-height:1.5;word-break:break-all;color:#1b1514">' + escapeHtml(joinUrl) + '</p>' +
       '<p style="margin:0 0 28px;font-family:Helvetica,Arial,sans-serif;font-size:13px;color:#6b6763">' +
-      'Or paste this into your browser:<br>' + escapeHtml(joinUrl) + '</p>'
+      'If that is not clickable in your mail app, copy it into your browser.</p>'
     : '';
 
   var html =
