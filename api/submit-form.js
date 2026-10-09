@@ -123,23 +123,25 @@ function salonConfirmation(firstName, joinUrl) {
   //
   // The cost is the yellow button; a bare URL is clickable only where the
   // client auto-links it, so the wording tells people they can copy it.
-  // Looks like the yellow button it replaces, without being one. The <a> that
-  // made it a button is what Sender rewrote through campaign-statistics.com,
-  // so the address itself is the clickable part now -- mail clients auto-link
-  // a bare URL, and the link they build points straight at Zoom instead of at
-  // a tracking domain. A table rather than a styled div because Outlook
-  // ignores padding and background on divs.
+  // The button is back, with every per-link tracking opt-out the major email
+  // platforms use. Sender documents none of its own, but an attribute a
+  // platform does not recognise is simply ignored, so trying all of them
+  // costs nothing: clicktracking (SendGrid), disable-tracking (Mailgun),
+  // data-as-no-track (several others).
+  //
+  // If Sender honours any of them the href stays pointed at Zoom and this is
+  // both the clean button and an honest link. If it honours none, the button
+  // is rewritten through campaign-statistics.com again, exactly as before --
+  // check where it actually lands before trusting it. The plain address below
+  // is never rewritten either way, which is why it stays as the fallback.
   var joinBlock = joinUrl
-    ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px">' +
-      '<tr><td style="background:#fcf424;border:2px solid #1b1514;padding:16px 22px;' +
-      'font-family:Helvetica,Arial,sans-serif">' +
-      '<p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.06em;' +
-      'text-transform:uppercase;color:#1b1514">Join the salon</p>' +
-      '<p style="margin:0;font-size:14px;line-height:1.5;word-break:break-all;color:#1b1514">' +
-      escapeHtml(joinUrl) + '</p>' +
-      '</td></tr></table>' +
+    ? '<p style="margin:0 0 28px"><a href="' + escapeHtml(joinUrl) + '"' +
+      ' clicktracking="off" disable-tracking="true" data-as-no-track="true"' +
+      ' style="display:inline-block;background:#fcf424;color:#1b1514;font-family:Helvetica,Arial,sans-serif;' +
+      'font-weight:700;font-size:15px;letter-spacing:0.06em;text-transform:uppercase;' +
+      'text-decoration:none;padding:14px 26px;border:2px solid #1b1514">Join the salon</a></p>' +
       '<p style="margin:0 0 28px;font-family:Helvetica,Arial,sans-serif;font-size:13px;color:#6b6763">' +
-      'If that is not clickable in your mail app, copy it into your browser.</p>'
+      'Or paste this into your browser:<br>' + escapeHtml(joinUrl) + '</p>'
     : '';
 
   var html =
