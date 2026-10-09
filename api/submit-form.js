@@ -421,7 +421,12 @@ module.exports = async function handler(req, res) {
       // link itself, which is a key to the room and is why it lives in an
       // environment variable rather than in salon.json.
       joinUrlSet: Boolean(process.env.SALON_JOIN_URL),
-      joinUrlFingerprint: joinUrlFingerprint()
+      joinUrlFingerprint: joinUrlFingerprint(),
+      // Domain only, never the mailbox. SPF and DKIM are published on
+      // thedemcon.org; a From: on any other domain fails alignment outright,
+      // which is a guaranteed trip to the spam folder no matter how the mail
+      // is worded, and is invisible from outside without this.
+      fromDomain: (fromEmail.split('@')[1] || '').toLowerCase()
     };
     okResponse.subscriber = {
       status: subscriberStatus,
