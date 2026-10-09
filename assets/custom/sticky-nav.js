@@ -526,6 +526,26 @@
   // validate (optional) runs before anything is sent; returning false
   // aborts the submission entirely, for forms with their own extra
   // required-field checks (e.g. the pitch modals' custom select).
+  // AbortSignal.timeout() is not old enough to use bare: Safari only got it
+  // in 16, Chrome in 103. Evaluating it on anything older throws, and it sat
+  // inside the fetch options *after* the submit button had been disabled --
+  // so on those browsers a form disabled itself, sent nothing, and showed
+  // neither success nor error. Falls back to AbortController, and to no
+  // timeout at all rather than taking the form down with it.
+  function timeoutSignal(ms) {
+    try {
+      if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+        return AbortSignal.timeout(ms);
+      }
+      if (typeof AbortController !== 'undefined') {
+        var c = new AbortController();
+        setTimeout(function () { c.abort(); }, ms);
+        return c.signal;
+      }
+    } catch (err) { /* fall through */ }
+    return undefined;
+  }
+
   function wireBackendForm(form, formType, onSuccess, validate) {
     if (!form) return;
 
@@ -580,30 +600,47 @@
       if (submitBtn) submitBtn.disabled = true;
       errorEl.hidden = true;
 
+      // Everything from here is wrapped, because the one failure this form
+      // must never have again is the silent one: anything that throws between
+      // disabling the button and attaching the catch below would otherwise
+      // leave a dead form saying nothing at all. That is precisely what a
+      // bare AbortSignal.timeout() did on older Safari. A visitor is told
+      // something went wrong even when the cause is a browser we did not
+      // anticipate.
+      try {
       // No timeout on fetch() means no timeout at all, and the endpoint can
       // genuinely take a minute when Sender's API hangs (measured: 60s, then
       // a Cloudflare 522). That left the form in its worst possible state --
       // button disabled, nothing said, no way to tell whether it had worked
       // -- for as long as the reader was willing to sit there. Bounded, so a
       // slow backend fails like any other error and the reader is told.
-      fetch('/api/submit-form', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ formType: formType, page: window.location.pathname, fields: fields }),
-        signal: AbortSignal.timeout(20000)
-      })
+        fetch('/api/submit-form', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ formType: formType, page: window.location.pathname, fields: fields }),
+          signal: timeoutSignal(20000)
+        })
         .then(function (res) {
           if (!res.ok) throw new Error('submit-form request failed');
           return res.json();
         })
-        .then(function () {
-          onSuccess();
+        .then(function (data) {
+          // Passed through so a caller can tell a registration that was
+          // emailed from one that was not -- see the Register modal, which
+          // sends a salon confirmation and so has something to say about it.
+          onSuccess(data);
         })
-        .catch(function () {
-          if (submitBtn) submitBtn.disabled = false;
-          errorEl.textContent = "Something went wrong sending that -- please email us directly at info@thedemcon.org.";
-          errorEl.hidden = false;
-        });
+        .catch(fail);
+      } catch (err) {
+        console.error('submit-form: handler threw before the request', err);
+        fail();
+      }
+
+      function fail() {
+        if (submitBtn) submitBtn.disabled = false;
+        errorEl.textContent = "Something went wrong sending that -- please email us directly at info@thedemcon.org.";
+        errorEl.hidden = false;
+      }
     });
   }
 
@@ -800,7 +837,7 @@
       el.addEventListener('click', close);
     });
 
-    wireBackendForm(form, 'register', function () {
+    wireBackendForm(form, 'register', function (data) {
       if (darkPanel) darkPanel.hidden = true;
       if (heading) heading.hidden = true;
       form.hidden = true;
@@ -808,6 +845,18 @@
         success.hidden = false;
         var successHeading = success.querySelector('[id]');
         if (successHeading) dialog.setAttribute('aria-labelledby', successHeading.id);
+        // This form registers for a salon, so the server tells us whether the
+        // joining email actually went. Sender refuses an address it has marked
+        // as bounced, and this panel would otherwise promise a link that was
+        // never sent -- the same lie the salons page was fixed for. Appended
+        // rather than rewritten so the panel's own copy stays intact.
+        if (data && data.confirmed === false && !success.querySelector('.demcon-confirm-warning')) {
+          var note = document.createElement('p');
+          note.className = 'demcon-form-error demcon-confirm-warning';
+          note.textContent = 'We could not email the joining link to that address -- '
+            + 'write to info@thedemcon.org and we will send it over.';
+          success.appendChild(note);
+        }
       }
     });
 

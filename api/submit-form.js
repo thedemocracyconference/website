@@ -58,6 +58,24 @@ var MAILERLITE_API_BASE = 'https://connect.mailerlite.com/api';
 // The same file the salons page fills its hero from, so a registrant is
 // told exactly what the page advertised. Editing it changes both.
 var SALON = require('../assets/salons/salon.json');
+var crypto = require('crypto');
+
+// A short fingerprint of whatever SALON_JOIN_URL currently holds, so "is the
+// deployment actually serving the new Zoom link?" can be answered without
+// ever echoing the link itself -- it is a key to the room, which is the whole
+// reason it is an environment variable and not a field in salon.json.
+//
+// Worth having because the failure it catches is silent and already happened:
+// Vercel binds environment variables to a deployment, so editing one in the
+// dashboard changes nothing until something redeploys. Between the edit and
+// the next deploy the old link keeps going out, and every response looks
+// exactly like success. Compare this against a hash of the link you intended
+// and a stale deployment is obvious in seconds.
+function joinUrlFingerprint() {
+  var url = process.env.SALON_JOIN_URL;
+  if (!url) return null;
+  return crypto.createHash('sha256').update(url.trim()).digest('hex').slice(0, 12);
+}
 
 // Which forms mean "I am coming to the salon", and so earn a confirmation
 // with the joining details. Every other form on the site is a message or an
@@ -402,7 +420,8 @@ module.exports = async function handler(req, res) {
       // Whether the Zoom link was available to put in the mail -- never the
       // link itself, which is a key to the room and is why it lives in an
       // environment variable rather than in salon.json.
-      joinUrlSet: Boolean(process.env.SALON_JOIN_URL)
+      joinUrlSet: Boolean(process.env.SALON_JOIN_URL),
+      joinUrlFingerprint: joinUrlFingerprint()
     };
     okResponse.subscriber = {
       status: subscriberStatus,
